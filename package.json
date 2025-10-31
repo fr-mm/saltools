@@ -1,0 +1,25 @@
+{
+  "name": "saltools",
+  "version": "0.1.0",
+  "description": "Vanilla JS utilities for Jenkins pipelines",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "files": [
+    "src/"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saltsystems/saltools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/saltsystems/saltools/issues"
+  },
+  "homepage": "https://github.com/saltsystems/saltools#readme",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "scripts": {
+    "test": "node test.js"
+  }
+}
