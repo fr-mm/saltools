@@ -1,9 +1,8 @@
 /**
- * Returns a friendly greeting.
- * @returns {string}
+ * Prints a friendly greeting.
  */
 function hello_world() {
-  return "Hello, World!";
+  console.log("Hello, World!")
 }
 
-module.exports = { hello_world };
+module.exports = { hello_world }
