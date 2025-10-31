@@ -1,5 +1,5 @@
 {
-  "name": "saltools",
+  "name": "@fr-mm/saltools",
   "version": "0.1.0",
   "description": "Vanilla JS utilities for Jenkins pipelines",
   "main": "src/index.js",
