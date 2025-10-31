@@ -10,12 +10,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/saltsystems/saltools.git"
+    "url": "git+https://github.com/fr-mm/saltools.git"
   },
   "bugs": {
-    "url": "https://github.com/saltsystems/saltools/issues"
+    "url": "https://github.com/fr-mm/saltools/issues"
   },
-  "homepage": "https://github.com/saltsystems/saltools#readme",
+  "homepage": "https://github.com/fr-mm/saltools#readme",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },

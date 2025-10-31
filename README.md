@@ -6,14 +6,12 @@ Utilitários em Vanilla JS para pipelines do Jenkins.
 
 ### 1. Configurar .npmrc
 
-Após criar seu repositório no GitHub, atualize `.npmrc` com o owner da sua org/usuário do GitHub:
+Configure o `.npmrc` com o owner do GitHub:
 
 ```
-registry=https://npm.pkg.github.com/@OWNER
+registry=https://npm.pkg.github.com/@fr-mm
 //npm.pkg.github.com/:_authToken=${NPM_TOKEN}
 ```
-
-Substitua `@OWNER` pelo seu nome de usuário ou organização do GitHub (ex: `@saltsystems`).
 
 ### 2. Publicar
 
@@ -40,15 +38,13 @@ A biblioteca deve ser instalada globalmente na máquina do Jenkins para estar di
 No servidor Jenkins, configure o `.npmrc` global do npm (ou no diretório home do usuário do Jenkins):
 
 ```bash
-echo "registry=https://npm.pkg.github.com/@OWNER" >> ~/.npmrc
+echo "registry=https://npm.pkg.github.com/@fr-mm" >> ~/.npmrc
 echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
 ```
 
-Substitua `@OWNER` pelo seu nome de usuário ou organização do GitHub.
-
 Ou configure globalmente para o sistema:
 ```bash
-sudo npm config set registry https://npm.pkg.github.com/@OWNER
+sudo npm config set registry https://npm.pkg.github.com/@fr-mm
 sudo npm config set //npm.pkg.github.com/:_authToken ${NPM_TOKEN}
 ```
 
