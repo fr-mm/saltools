@@ -1,10 +1,10 @@
 import { parse } from './commands/index.js';
 
-function hello_world() {
+function helloWorld() {
   console.log("Hello, World!")
 }
 
 export { 
-  hello_world, 
+  helloWorld, 
   parse 
 };
