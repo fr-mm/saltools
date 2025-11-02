@@ -1,8 +1,12 @@
-/**
- * Prints a friendly greeting.
- */
+const { parse } = require('./commands');
+
+
 function hello_world() {
   console.log("Hello, World!")
 }
 
-module.exports = { hello_world }
+
+module.exports = { 
+  hello_world, 
+  parse 
+}

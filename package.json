@@ -20,6 +20,11 @@
     "registry": "https://npm.pkg.github.com/"
   },
   "scripts": {
-    "test": "node test.js"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0"
   }
 }
