@@ -1,4 +1,5 @@
-const { hello_world, parse } = require('../src/index');
+import { describe, test, expect, jest } from '@jest/globals';
+import { hello_world, parse } from 'src/index.js';
 
 describe('index', () => {
   test('test_hello_world_WHEN_called_THEN_logsHelloWorld', () => {

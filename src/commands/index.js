@@ -1,3 +1,3 @@
-const parse = require('./parse');
+import * as parse from './parse/index.js';
 
-module.exports = { parse }
+export { parse };

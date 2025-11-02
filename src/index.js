@@ -1,12 +1,10 @@
-const { parse } = require('./commands');
-
+import { parse } from './commands/index.js';
 
 function hello_world() {
   console.log("Hello, World!")
 }
 
-
-module.exports = { 
+export { 
   hello_world, 
   parse 
-}
+};

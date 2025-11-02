@@ -1,4 +1,4 @@
-const CustomError = require('../../errors/custom-error');
+import CustomError from 'src/errors/custom-error.js';
 
 class StringParser {
   constructor(value, options) {
@@ -80,4 +80,4 @@ function parseString(value, {
   return new StringParser(value, { allowEmpty, cast, trim, capitalize, varName }).parse();
 }
 
-module.exports = { string: parseString };
+export const string = parseString;

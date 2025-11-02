@@ -1,4 +1,5 @@
-const CustomError = require('../../src/errors/custom-error');
+import { describe, test, expect } from '@jest/globals';
+import CustomError from 'src/errors/custom-error.js';
 
 describe('custom-error', () => {
   test('test_CustomError_WHEN_created_THEN_hasCorrectName', () => {

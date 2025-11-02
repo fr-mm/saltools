@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Vanilla JS utilities for Jenkins pipelines",
   "main": "src/index.js",
-  "type": "commonjs",
+  "type": "module",
   "files": [
     "src/"
   ],
@@ -20,9 +20,12 @@
     "registry": "https://npm.pkg.github.com/"
   },
   "scripts": {
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
+  },
+  "imports": {
+    "src/*": "./src/*.js"
   },
   "devDependencies": {
     "jest": "^30.2.0"

@@ -1,4 +1,5 @@
-const { string } = require('../../../src/commands/parse');
+import { describe, test, expect } from '@jest/globals';
+import { string } from 'src/commands/parse/index.js';
 
 describe('parse-string', () => {
   test('test_string_WHEN_validString_THEN_returnsTrimmedString', () => {

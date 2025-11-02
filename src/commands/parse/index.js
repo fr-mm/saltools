@@ -1,3 +1,3 @@
-const { string } = require('./parse-string');
+import { string } from './parse-string.js';
 
-module.exports = { string }
+export { string };
