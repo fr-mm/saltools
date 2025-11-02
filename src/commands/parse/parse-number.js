@@ -1,14 +1,15 @@
 import SaltoolsError from 'src/errors/saltools-error.js';
+import { param } from 'src/helper/index.js';
 
 class NumberParser {
   constructor(value, options) {
     this.value = value;
-    this.allowEmptyString = options.allowEmpty;
-    this.allowNull = options.allowNull;
-    this.allowNegative = options.allowNegative;
-    this.allowZero = options.allowZero;
-    this.integer = options.integer;
-    this.varName = options.varName;
+    this.allowEmptyString = param.bool({value: options.allowEmpty, name: 'allowEmpty'});
+    this.allowNull = param.bool({value: options.allowNull, name: 'allowNull'});
+    this.allowNegative = param.bool({value: options.allowNegative, name: 'allowNegative'});
+    this.allowZero = param.bool({value: options.allowZero, name: 'allowZero'});
+    this.integer = param.bool({value: options.integer, name: 'integer'});
+    this.varName = param.string({value: options.varName, name: 'varName'});
     this.originalValue = value;
   }
 
@@ -21,17 +22,15 @@ class NumberParser {
   }
 
   validateType() {
-    const allowedTypes = ['string', 'number'];
-    if (this.allowNull) {
-        allowedTypes.push('null');
+    if (this.value === null) {
+      if (!this.allowNull) {
+        this.throwError('null não é permitido quando {allowNull: false}');
+      }
+      return;
     }
-    if (!allowedTypes.includes(typeof this.value)) {
-        let message = `Não é possível converter ${typeof this.originalValue} ${this.originalValue} para número.`;
 
-        if (!this.allowNull && this.value === null) {
-            message += ' Para converter null pra 0, use o parâmetro {allowNull: true}.';
-        }
-        this.throwError(message);
+    if (typeof this.value !== 'string' && typeof this.value !== 'number') {
+        this.throwError(`Não é possível converter ${typeof this.originalValue} ${this.originalValue} para número.`);
     }
   }
 

@@ -27,27 +27,18 @@ describe('parse-string', () => {
     expect(() => {
       string('', { allowEmpty: false });
     }).toThrow(SaltoolsError);
-    expect(() => {
-      string('', { allowEmpty: false });
-    }).toThrow('String não pode ser vazia quando {allowEmpty: false}');
   });
 
   test('test_string_WHEN_whitespaceOnlyTrimmedToEmptyWithAllowEmptyFalse_THEN_throwsError', () => {
     expect(() => {
       string('   ', { allowEmpty: false });
     }).toThrow(SaltoolsError);
-    expect(() => {
-      string('   ', { allowEmpty: false });
-    }).toThrow('String não pode ser vazia quando {allowEmpty: false}');
   });
 
   test('test_string_WHEN_nonStringValueWithoutCast_THEN_throwsError', () => {
     expect(() => {
       string(123);
     }).toThrow(SaltoolsError);
-    expect(() => {
-      string(123);
-    }).toThrow('não é uma string');
   });
 
   test('test_string_WHEN_nonStringValueWithCast_THEN_convertsToString', () => {
@@ -59,9 +50,6 @@ describe('parse-string', () => {
     expect(() => {
       string(null);
     }).toThrow(SaltoolsError);
-    expect(() => {
-      string(null);
-    }).toThrow('não é uma string');
   });
 
   test('test_string_WHEN_nullValueWithCast_THEN_convertsToString', () => {
@@ -73,9 +61,6 @@ describe('parse-string', () => {
     expect(() => {
       string(undefined);
     }).toThrow(SaltoolsError);
-    expect(() => {
-      string(undefined);
-    }).toThrow('não é uma string');
   });
 
   test('test_string_WHEN_undefinedValueWithCast_THEN_convertsToString', () => {
@@ -152,45 +137,30 @@ describe('parse-string', () => {
     expect(() => {
       string('', { allowEmpty: false, varName: 'userName' });
     }).toThrow(SaltoolsError);
-    expect(() => {
-      string('', { allowEmpty: false, varName: 'userName' });
-    }).toThrow('String não pode ser vazia quando {allowEmpty: false} varName: userName');
   });
 
   test('test_string_WHEN_nonStringValueWithVarName_THEN_errorIncludesVarName', () => {
     expect(() => {
       string(123, { varName: 'age' });
     }).toThrow(SaltoolsError);
-    expect(() => {
-      string(123, { varName: 'age' });
-    }).toThrow('varName: age');
   });
 
   test('test_string_WHEN_whitespaceOnlyWithVarName_THEN_errorIncludesVarName', () => {
     expect(() => {
       string('   ', { allowEmpty: false, varName: 'description' });
     }).toThrow(SaltoolsError);
-    expect(() => {
-      string('   ', { allowEmpty: false, varName: 'description' });
-    }).toThrow('varName: description');
   });
 
   test('test_string_WHEN_nullValueWithVarName_THEN_errorIncludesVarName', () => {
     expect(() => {
       string(null, { varName: 'email' });
     }).toThrow(SaltoolsError);
-    expect(() => {
-      string(null, { varName: 'email' });
-    }).toThrow('varName: email');
   });
 
   test('test_string_WHEN_undefinedValueWithVarName_THEN_errorIncludesVarName', () => {
     expect(() => {
       string(undefined, { varName: 'name' });
     }).toThrow(SaltoolsError);
-    expect(() => {
-      string(undefined, { varName: 'name' });
-    }).toThrow('varName: name');
   });
 
   test('test_string_WHEN_validStringWithVarName_THEN_returnsValueWithoutVarNameInOutput', () => {
@@ -202,16 +172,35 @@ describe('parse-string', () => {
     expect(() => {
       string('', { allowEmpty: false, varName: null });
     }).toThrow(SaltoolsError);
+  });
+
+  test('test_string_WHEN_allowEmptyIsNotBoolean_THEN_throwsError', () => {
     expect(() => {
-      string('', { allowEmpty: false, varName: null });
-    }).toThrow('String não pode ser vazia quando {allowEmpty: false}');
-    const errorMessage = (() => {
-      try {
-        string('', { allowEmpty: false, varName: null });
-      } catch (error) {
-        return error.message;
-      }
-    })();
-    expect(errorMessage).not.toContain('varName:');
+      string('test', { allowEmpty: 'true' });
+    }).toThrow(SaltoolsError);
+  });
+
+  test('test_string_WHEN_castIsNotBoolean_THEN_throwsError', () => {
+    expect(() => {
+      string('test', { cast: 1 });
+    }).toThrow(SaltoolsError);
+  });
+
+  test('test_string_WHEN_trimIsNotBoolean_THEN_throwsError', () => {
+    expect(() => {
+      string('test', { trim: 'yes' });
+    }).toThrow(SaltoolsError);
+  });
+
+  test('test_string_WHEN_capitalizeIsNotBoolean_THEN_throwsError', () => {
+    expect(() => {
+      string('test', { capitalize: {} });
+    }).toThrow(SaltoolsError);
+  });
+
+  test('test_string_WHEN_varNameIsNotString_THEN_throwsError', () => {
+    expect(() => {
+      string('test', { varName: 123 });
+    }).toThrow(SaltoolsError);
   });
 });

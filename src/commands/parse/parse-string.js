@@ -1,13 +1,14 @@
 import SaltoolsError from 'src/errors/saltools-error.js';
+import { param } from 'src/helper/index.js';
 
 class StringParser {
   constructor(value, options) {
     this.value = value;
-    this.allowEmpty = options.allowEmpty
-    this.cast = options.cast
-    this.trim = options.trim
-    this.capitalize = options.capitalize
-    this.varName = options.varName
+    this.allowEmpty = param.bool({value: options.allowEmpty, name: 'allowEmpty'});
+    this.cast = param.bool({value: options.cast, name: 'cast'});
+    this.trim = param.bool({value: options.trim, name: 'trim'});
+    this.capitalize = param.bool({value: options.capitalize, name: 'capitalize'});
+    this.varName = param.string({value: options.varName, name: 'varName'});
     this.doNotCapitalize = ['de', 'do', 'da', 'dos', 'das', 'e'];
   }
 
