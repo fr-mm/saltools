@@ -1,10 +1,7 @@
-class SaltoolsError extends Error {
+export default class SaltoolsError extends Error {
   constructor(message, options = {}) {
     super(`[Saltools] ${message}`, options);
     this.name = 'SaltoolsError';
     this.options = options;
   }
 }
-
-export default SaltoolsError;
-

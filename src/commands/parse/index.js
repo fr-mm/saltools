@@ -1,3 +1,3 @@
-import { string } from './parse-string.js';
+import string from './parse-string.js';
 
 export { string };

@@ -1,10 +1,10 @@
 import { describe, test, expect, jest } from '@jest/globals';
-import { hello_world, parse } from 'src/index.js';
+import { helloWorld, parse } from 'src/index.js';
 
 describe('index', () => {
-  test('test_hello_world_WHEN_called_THEN_logsHelloWorld', () => {
+  test('test_helloWorld_WHEN_called_THEN_logsHelloWorld', () => {
     const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-    hello_world();
+    helloWorld();
     expect(consoleSpy).toHaveBeenCalledWith('Hello, World!');
     consoleSpy.mockRestore();
   });

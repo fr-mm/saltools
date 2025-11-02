@@ -70,7 +70,7 @@ class StringParser {
   }
 }
 
-function parseString(value, { 
+export default function string(value, { 
         allowEmpty = false, 
         cast = false, 
         trim = true, 
@@ -79,5 +79,3 @@ function parseString(value, {
     } = {}) {
   return new StringParser(value, { allowEmpty, cast, trim, capitalize, varName }).parse();
 }
-
-export const string = parseString;
