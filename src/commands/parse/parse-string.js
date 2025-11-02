@@ -63,9 +63,7 @@ class StringParser {
   }
 
   throwError(message) {
-    if (this.varName) {
-        message += ` varName: ${this.varName}`;
-    }
+    message = this.varName ? `${message} varName: ${this.varName}` : message;
     throw new SaltoolsError(message);
   }
 }
