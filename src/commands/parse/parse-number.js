@@ -4,7 +4,7 @@ import { param } from 'src/helper/index.js';
 class NumberParser {
   constructor(value, options) {
     this.value = value;
-    this.allowEmptyString = param.bool({value: options.allowEmpty, name: 'allowEmpty'});
+    this.allowEmptyString = param.bool({value: options.allowEmptyString, name: 'allowEmptyString'});
     this.allowNull = param.bool({value: options.allowNull, name: 'allowNull'});
     this.allowNegative = param.bool({value: options.allowNegative, name: 'allowNegative'});
     this.allowZero = param.bool({value: options.allowZero, name: 'allowZero'});
@@ -60,14 +60,14 @@ class NumberParser {
 }
 
 export function number(value, { 
-  allowEmpty = false, 
+  allowEmptyString = false, 
   allowNull = false,
   allowNegative = false,
   allowZero = false,
   varName = null
 } = {}) {
   return new NumberParser(value, { 
-    allowEmpty, 
+    allowEmptyString, 
     allowNull, 
     allowNegative, 
     allowZero, 
@@ -77,14 +77,14 @@ export function number(value, {
 }
 
 export function integer(value, { 
-  allowEmpty = false, 
+  allowEmptyString = false, 
   allowNull = false,
   allowNegative = false,
   allowZero = false,
   varName = null
 } = {}) {
   return new NumberParser(value, { 
-    allowEmpty, 
+    allowEmptyString, 
     allowNull, 
     allowNegative, 
     allowZero, 

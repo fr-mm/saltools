@@ -45,13 +45,13 @@ describe('parse-number', () => {
     });
 
     test('test_number_WHEN_emptyStringWithAllowEmptyTrue_THEN_returnsZero', () => {
-      const result = number('', { allowEmpty: true });
+      const result = number('', { allowEmptyString: true });
       expect(result).toBe(0);
     });
 
     test('test_number_WHEN_emptyStringWithAllowEmptyFalse_THEN_throwsError', () => {
       expect(() => {
-        number('', { allowEmpty: false });
+        number('', { allowEmptyString: false });
       }).toThrow(SaltoolsError);
     });
 
@@ -101,7 +101,7 @@ describe('parse-number', () => {
 
     test('test_number_WHEN_emptyStringWithVarName_THEN_errorIncludesVarName', () => {
       expect(() => {
-        number('', { allowEmpty: false, varName: 'age' });
+        number('', { allowEmptyString: false, varName: 'age' });
       }).toThrow(SaltoolsError);
     });
 
@@ -119,7 +119,7 @@ describe('parse-number', () => {
 
     test('test_number_WHEN_varNameIsNull_THEN_errorDoesNotIncludeVarName', () => {
       expect(() => {
-        number('', { allowEmpty: false, varName: null });
+        number('', { allowEmptyString: false, varName: null });
       }).toThrow(SaltoolsError);
     });
 
@@ -173,13 +173,13 @@ describe('parse-number', () => {
     });
 
     test('test_integer_WHEN_emptyStringWithAllowEmptyTrue_THEN_returnsZero', () => {
-      const result = integer('', { allowEmpty: true });
+      const result = integer('', { allowEmptyString: true });
       expect(result).toBe(0);
     });
 
     test('test_integer_WHEN_emptyStringWithAllowEmptyFalse_THEN_throwsError', () => {
       expect(() => {
-        integer('', { allowEmpty: false });
+        integer('', { allowEmptyString: false });
       }).toThrow(SaltoolsError);
     });
 
@@ -207,9 +207,9 @@ describe('parse-number', () => {
   });
 
   describe('option type validation', () => {
-    test('test_number_WHEN_allowEmptyIsNotBoolean_THEN_throwsError', () => {
+    test('test_number_WHEN_allowEmptyStringIsNotBoolean_THEN_throwsError', () => {
       expect(() => {
-        number(123, { allowEmpty: 'true' });
+        number(123, { allowEmptyString: 'true' });
       }).toThrow(SaltoolsError);
     });
 
@@ -237,9 +237,9 @@ describe('parse-number', () => {
       }).toThrow(SaltoolsError);
     });
 
-    test('test_integer_WHEN_allowEmptyIsNotBoolean_THEN_throwsError', () => {
+    test('test_integer_WHEN_allowEmptyStringIsNotBoolean_THEN_throwsError', () => {
       expect(() => {
-        integer(123, { allowEmpty: 'true' });
+        integer(123, { allowEmptyString: 'true' });
       }).toThrow(SaltoolsError);
     });
 
