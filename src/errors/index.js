@@ -1,3 +1,3 @@
-import CustomError from './custom-error.js';
+import SaltoolsError from './saltools-error.js';
 
-export { CustomError };
+export { SaltoolsError };

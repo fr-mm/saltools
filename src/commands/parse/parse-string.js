@@ -1,4 +1,4 @@
-import CustomError from 'src/errors/custom-error.js';
+import SaltoolsError from 'src/errors/saltools-error.js';
 
 class StringParser {
   constructor(value, options) {
@@ -66,7 +66,7 @@ class StringParser {
     if (this.varName) {
         message += ` varName: ${this.varName}`;
     }
-    throw new CustomError(message);
+    throw new SaltoolsError(message);
   }
 }
 

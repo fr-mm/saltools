@@ -1,5 +1,6 @@
 import { describe, test, expect } from '@jest/globals';
 import { string } from 'src/commands/parse/index.js';
+import SaltoolsError from 'src/errors/saltools-error.js';
 
 describe('parse-string', () => {
   test('test_string_WHEN_validString_THEN_returnsTrimmedString', () => {
@@ -25,16 +26,25 @@ describe('parse-string', () => {
   test('test_string_WHEN_emptyStringWithAllowEmptyFalse_THEN_throwsError', () => {
     expect(() => {
       string('', { allowEmpty: false });
+    }).toThrow(SaltoolsError);
+    expect(() => {
+      string('', { allowEmpty: false });
     }).toThrow('String não pode ser vazia quando {allowEmpty: false}');
   });
 
   test('test_string_WHEN_whitespaceOnlyTrimmedToEmptyWithAllowEmptyFalse_THEN_throwsError', () => {
     expect(() => {
       string('   ', { allowEmpty: false });
+    }).toThrow(SaltoolsError);
+    expect(() => {
+      string('   ', { allowEmpty: false });
     }).toThrow('String não pode ser vazia quando {allowEmpty: false}');
   });
 
   test('test_string_WHEN_nonStringValueWithoutCast_THEN_throwsError', () => {
+    expect(() => {
+      string(123);
+    }).toThrow(SaltoolsError);
     expect(() => {
       string(123);
     }).toThrow('não é uma string');
@@ -48,6 +58,9 @@ describe('parse-string', () => {
   test('test_string_WHEN_nullValueWithoutCast_THEN_throwsError', () => {
     expect(() => {
       string(null);
+    }).toThrow(SaltoolsError);
+    expect(() => {
+      string(null);
     }).toThrow('não é uma string');
   });
 
@@ -57,6 +70,9 @@ describe('parse-string', () => {
   });
 
   test('test_string_WHEN_undefinedValueWithoutCast_THEN_throwsError', () => {
+    expect(() => {
+      string(undefined);
+    }).toThrow(SaltoolsError);
     expect(() => {
       string(undefined);
     }).toThrow('não é uma string');
@@ -135,10 +151,16 @@ describe('parse-string', () => {
   test('test_string_WHEN_emptyStringWithVarName_THEN_errorIncludesVarName', () => {
     expect(() => {
       string('', { allowEmpty: false, varName: 'userName' });
+    }).toThrow(SaltoolsError);
+    expect(() => {
+      string('', { allowEmpty: false, varName: 'userName' });
     }).toThrow('String não pode ser vazia quando {allowEmpty: false} varName: userName');
   });
 
   test('test_string_WHEN_nonStringValueWithVarName_THEN_errorIncludesVarName', () => {
+    expect(() => {
+      string(123, { varName: 'age' });
+    }).toThrow(SaltoolsError);
     expect(() => {
       string(123, { varName: 'age' });
     }).toThrow('varName: age');
@@ -147,16 +169,25 @@ describe('parse-string', () => {
   test('test_string_WHEN_whitespaceOnlyWithVarName_THEN_errorIncludesVarName', () => {
     expect(() => {
       string('   ', { allowEmpty: false, varName: 'description' });
+    }).toThrow(SaltoolsError);
+    expect(() => {
+      string('   ', { allowEmpty: false, varName: 'description' });
     }).toThrow('varName: description');
   });
 
   test('test_string_WHEN_nullValueWithVarName_THEN_errorIncludesVarName', () => {
     expect(() => {
       string(null, { varName: 'email' });
+    }).toThrow(SaltoolsError);
+    expect(() => {
+      string(null, { varName: 'email' });
     }).toThrow('varName: email');
   });
 
   test('test_string_WHEN_undefinedValueWithVarName_THEN_errorIncludesVarName', () => {
+    expect(() => {
+      string(undefined, { varName: 'name' });
+    }).toThrow(SaltoolsError);
     expect(() => {
       string(undefined, { varName: 'name' });
     }).toThrow('varName: name');
@@ -168,6 +199,9 @@ describe('parse-string', () => {
   });
 
   test('test_string_WHEN_varNameIsNull_THEN_errorDoesNotIncludeVarName', () => {
+    expect(() => {
+      string('', { allowEmpty: false, varName: null });
+    }).toThrow(SaltoolsError);
     expect(() => {
       string('', { allowEmpty: false, varName: null });
     }).toThrow('String não pode ser vazia quando {allowEmpty: false}');
