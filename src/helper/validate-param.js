@@ -1,7 +1,10 @@
 import SaltoolsError from 'src/errors/saltools-error.js';
 
-function validateParam({value, type, name}) {
+function validateParam({value, type, name, required = false}) {
     if (value === null || value === undefined) {
+        if (required) {
+            throw new SaltoolsError(`${name} é obrigatório`);
+        }
         return value;
     }
     if (typeof value !== type) {
@@ -10,20 +13,20 @@ function validateParam({value, type, name}) {
     return value;
 }
 
-function bool({value, name}) {
-    return validateParam({value, type: 'boolean', name});
+function bool({value, name, required = false}) {
+    return validateParam({value, type: 'boolean', name, required});
 }
 
-function string({value, name}) {
-    return validateParam({value, type: 'string', name});
+function string({value, name, required = false}) {
+    return validateParam({value, type: 'string', name, required});
 }
 
-function number({value, name}) {
-    return validateParam({value, type: 'number', name});
+function number({value, name, required = false}) {
+    return validateParam({value, type: 'number', name, required});
 }
 
-function integer({value, name}) {
-    const number = validateParam({value, type: 'number', name});
+function integer({value, name, required = false}) {
+    const number = validateParam({value, type: 'number', name, required});
     if (number === null || number === undefined) {
         return number;
     }
@@ -33,7 +36,7 @@ function integer({value, name}) {
     return number;
 }
 
-export const param ={
+export const param = {
     bool,
     string,
     number,

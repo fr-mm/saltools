@@ -41,6 +41,23 @@ describe('param', () => {
         param.bool({ value: {}, name: 'trim' });
       }).toThrow(SaltoolsError);
     });
+
+    test('test_bool_WHEN_requiredTrueAndNull_THEN_throwsError', () => {
+      expect(() => {
+        param.bool({ value: null, name: 'test', required: true });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_bool_WHEN_requiredTrueAndUndefined_THEN_throwsError', () => {
+      expect(() => {
+        param.bool({ value: undefined, name: 'test', required: true });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_bool_WHEN_requiredTrueAndValidValue_THEN_returnsValue', () => {
+      const result = param.bool({ value: true, name: 'test', required: true });
+      expect(result).toBe(true);
+    });
   });
 
   describe('string', () => {
@@ -74,6 +91,23 @@ describe('param', () => {
       expect(() => {
         param.string({ value: 123, name: 'varName' });
       }).toThrow(SaltoolsError);
+    });
+
+    test('test_string_WHEN_requiredTrueAndNull_THEN_throwsError', () => {
+      expect(() => {
+        param.string({ value: null, name: 'varName', required: true });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_string_WHEN_requiredTrueAndUndefined_THEN_throwsError', () => {
+      expect(() => {
+        param.string({ value: undefined, name: 'varName', required: true });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_string_WHEN_requiredTrueAndValidValue_THEN_returnsValue', () => {
+      const result = param.string({ value: 'test', name: 'varName', required: true });
+      expect(result).toBe('test');
     });
   });
 
@@ -113,6 +147,23 @@ describe('param', () => {
         param.number({ value: '123', name: 'count' });
       }).toThrow(SaltoolsError);
     });
+
+    test('test_number_WHEN_requiredTrueAndNull_THEN_throwsError', () => {
+      expect(() => {
+        param.number({ value: null, name: 'count', required: true });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_number_WHEN_requiredTrueAndUndefined_THEN_throwsError', () => {
+      expect(() => {
+        param.number({ value: undefined, name: 'count', required: true });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_number_WHEN_requiredTrueAndValidValue_THEN_returnsValue', () => {
+      const result = param.number({ value: 123, name: 'count', required: true });
+      expect(result).toBe(123);
+    });
   });
 
   describe('integer', () => {
@@ -151,6 +202,23 @@ describe('param', () => {
       expect(() => {
         param.integer({ value: '123', name: 'count' });
       }).toThrow(SaltoolsError);
+    });
+
+    test('test_integer_WHEN_requiredTrueAndNull_THEN_throwsError', () => {
+      expect(() => {
+        param.integer({ value: null, name: 'count', required: true });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_integer_WHEN_requiredTrueAndUndefined_THEN_throwsError', () => {
+      expect(() => {
+        param.integer({ value: undefined, name: 'count', required: true });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_integer_WHEN_requiredTrueAndValidValue_THEN_returnsValue', () => {
+      const result = param.integer({ value: 123, name: 'count', required: true });
+      expect(result).toBe(123);
     });
   });
 });
