@@ -14,13 +14,11 @@ describe('parse-csv', () => {
   });
 
   afterEach(() => {
-    if (fs.existsSync(testDir)) {
-      const files = fs.readdirSync(testDir);
-      files.forEach(file => {
-        fs.unlinkSync(path.join(testDir, file));
-      });
-      fs.rmdirSync(testDir);
-    }
+    try {
+      if (fs.existsSync(testDir)) {
+        fs.rmSync(testDir, { recursive: true, force: true });
+      }
+    } catch (_) { /* ignore cleanup errors */ }
   });
 
   test('test_csv_WHEN_validCSVFile_THEN_returnsArrayOfObjects', () => {
@@ -208,6 +206,30 @@ describe('parse-csv', () => {
     expect(() => {
       csv(filePath);
     }).toThrow('não é um arquivo CSV');
+  });
+
+  describe('throwError option', () => {
+    test('test_csv_WHEN_fileNotFoundAndThrowErrorFalse_THEN_returnsNull', () => {
+      const filePath = path.join(testDir, 'missing.csv');
+      const result = csv(filePath, { throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_csv_WHEN_notCSVFileAndThrowErrorFalse_THEN_returnsNull', () => {
+      const filePath = path.join(testDir, 'notcsv.txt');
+      fs.writeFileSync(filePath, 'x');
+      const result = csv(filePath, { throwError: false });
+      expect(result).toBeNull();
+    });
+
+    // invalid option types are validated before reaching CSVParser; still throw
+    test('test_csv_WHEN_invalidOptionTypesAndThrowErrorFalse_THEN_throwsError', () => {
+      const filePath = path.join(testDir, 'opt.csv');
+      fs.writeFileSync(filePath, 'a,b');
+      expect(() => {
+        csv(filePath, { delimiter: 1, throwError: false });
+      }).toThrow(SaltoolsError);
+    });
   });
 
   test('test_csv_WHEN_pathIsNotString_THEN_throwsError', () => {

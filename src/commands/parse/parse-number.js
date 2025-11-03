@@ -10,15 +10,24 @@ class NumberParser {
     this.allowZero = param.bool({value: options.allowZero, name: 'allowZero'});
     this.integer = param.bool({value: options.integer, name: 'integer'});
     this.varName = param.string({value: options.varName, name: 'varName'});
+    this.shouldThrowError = param.bool({value: options.throwError, name: 'throwError'});
     this.originalValue = value;
   }
 
   parse() {
-    this.validateType();
-    this.validateEmptyString();
-    this.parseType();
-    this.validateInteger();
-    return this.value;
+    try {
+      this.validateType();
+      this.validateEmptyString();
+      this.parseType();
+      this.validateInteger();
+      return this.value;
+    }
+    catch (error) {
+      if (!this.shouldThrowError && error instanceof SaltoolsError) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   validateType() {
@@ -64,7 +73,8 @@ export function number(value, {
   allowNull = false,
   allowNegative = false,
   allowZero = false,
-  varName = null
+  varName = null,
+  throwError = true
 } = {}) {
   return new NumberParser(value, { 
     allowEmptyString, 
@@ -72,7 +82,8 @@ export function number(value, {
     allowNegative, 
     allowZero, 
     varName, 
-    integer: false 
+    throwError,
+    integer: false
 }).parse();
 }
 
@@ -81,7 +92,8 @@ export function integer(value, {
   allowNull = false,
   allowNegative = false,
   allowZero = false,
-  varName = null
+  varName = null,
+  throwError = true
 } = {}) {
   return new NumberParser(value, { 
     allowEmptyString, 
@@ -89,6 +101,7 @@ export function integer(value, {
     allowNegative, 
     allowZero, 
     varName, 
-    integer: true 
+    throwError,
+    integer: true
 }).parse();
 }

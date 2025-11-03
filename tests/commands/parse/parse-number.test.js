@@ -255,5 +255,27 @@ describe('parse-number', () => {
       }).toThrow(SaltoolsError);
     });
   });
+
+  describe('throwError option', () => {
+    test('test_number_WHEN_invalidInputAndThrowErrorFalse_THEN_returnsNull', () => {
+      const result = number('abc', { throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_number_WHEN_nullNotAllowedAndThrowErrorFalse_THEN_returnsNull', () => {
+      const result = number(null, { allowNull: false, throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_integer_WHEN_decimalAndThrowErrorFalse_THEN_returnsNull', () => {
+      const result = integer('1.2', { throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_integer_WHEN_nullNotAllowedAndThrowErrorFalse_THEN_returnsNull', () => {
+      const result = integer(null, { allowNull: false, throwError: false });
+      expect(result).toBeNull();
+    });
+  });
 });
 

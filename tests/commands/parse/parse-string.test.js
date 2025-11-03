@@ -203,4 +203,26 @@ describe('parse-string', () => {
       string('test', { varName: 123 });
     }).toThrow(SaltoolsError);
   });
+  
+  describe('throwError option', () => {
+    test('test_string_WHEN_nonStringWithoutCastAndThrowErrorFalse_THEN_returnsNull', () => {
+      const result = string(123, { throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_string_WHEN_emptyStringNotAllowedAndThrowErrorFalse_THEN_returnsNull', () => {
+      const result = string('', { allowEmpty: false, throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_string_WHEN_whitespaceOnlyTrimmedToEmptyAndThrowErrorFalse_THEN_returnsNull', () => {
+      const result = string('   ', { allowEmpty: false, throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_string_WHEN_varNameProvidedAndThrowErrorFalse_THEN_returnsNull', () => {
+      const result = string('', { allowEmpty: false, throwError: false, varName: 'name' });
+      expect(result).toBeNull();
+    });
+  });
 });

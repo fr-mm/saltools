@@ -1,3 +1,4 @@
+import SaltoolsError from 'src/errors/saltools-error.js';
 import CSVFileReader from './csv-file-reader.js';
 import CSVLineSplitter from './csv-line-splitter.js';
 import CSVRowParser from './csv-row-parser.js';
@@ -16,11 +17,20 @@ class CSVParser {
       escapeChar: options.escapeChar
     });
     this.valueConverter = new CSVValueConverter();
+    this.shouldThrowError = options.throwError;
   }
 
   parse() {
-    const content = this.fileReader.read();
-    return this._parseFileContent(content);
+    try {
+      const content = this.fileReader.read();
+      return this._parseFileContent(content);
+    }
+    catch (error) {
+      if (!this.shouldThrowError && error instanceof SaltoolsError) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   _parseFileContent(content) {

@@ -9,15 +9,24 @@ class StringParser {
     this.trim = param.bool({value: options.trim, name: 'trim'});
     this.capitalize = param.bool({value: options.capitalize, name: 'capitalize'});
     this.varName = param.string({value: options.varName, name: 'varName'});
+    this.shouldThrowError = param.bool({value: options.throwError, name: 'throwError'});
     this.doNotCapitalize = ['de', 'do', 'da', 'dos', 'das', 'e'];
   }
 
   parse() {
-    this.parseType();
-    this.parseTrim();
-    this.parseEmpty();
-    this.parseCapitalize();
-    return this.value;
+    try {
+      this.parseType();
+      this.parseTrim();
+      this.parseEmpty();
+      this.parseCapitalize();
+      return this.value;
+    }
+    catch (error) {
+      if (!this.shouldThrowError && error instanceof SaltoolsError) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   parseType() {
@@ -74,7 +83,8 @@ export default function string(value, {
         cast = false, 
         trim = true, 
         capitalize = false ,
-        varName = null
+        varName = null,
+        throwError = true
     } = {}) {
-  return new StringParser(value, { allowEmpty, cast, trim, capitalize, varName }).parse();
+  return new StringParser(value, { allowEmpty, cast, trim, capitalize, varName, throwError }).parse();
 }
