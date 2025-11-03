@@ -148,3 +148,89 @@ saltools.parse.csv('./data.csv');
 saltools.parse.csv('./data.csv', { delimiter: ';' });
 // Retorna: Array parseado com delimitador ';'
 ```
+
+### saltools.parse.date()
+
+Converte uma string de data de um formato para outro formato.
+
+```javascript
+saltools.parse.date(date, {
+  inputFormat: 'iso',        // Formato de entrada (padrão: 'iso')
+  outputFormat: 'iso',       // Formato de saída (padrão: 'iso')
+  throwError: true           // Lança erro se inválido, senão retorna null (padrão: true)
+})
+```
+
+**Formatos suportados:**
+- `'iso'` - Formato ISO 8601 (ex: `2024-03-15T10:30:00Z`)
+- `'dd/mm/yyyy'` - Dia/mês/ano com separador `/` (ex: `15/03/2024`)
+- `'dd-mm-yyyy'` - Dia/mês/ano com separador `-` (ex: `15-03-2024`)
+- `'dd.mm.yyyy'` - Dia/mês/ano com separador `.` (ex: `15.03.2024`)
+- `'mm/dd/yyyy'` - Mês/dia/ano com separador `/` (ex: `03/15/2024`)
+- `'yyyy/mm/dd'` - Ano/mês/dia com separador `/` (ex: `2024/03/15`)
+- `'ddmmyyyy'` - Sem separadores (ex: `15032024`)
+- `'yyyymmdd'` - Sem separadores (ex: `20240315`)
+- `'d/m/yyyy'`, `'dd/mm/yy'`, etc. - Variações com 1 ou 2 dígitos para dia/mês e 2 ou 4 dígitos para ano
+
+**Exemplo:**
+```javascript
+saltools.parse.date('2024-03-15T10:30:00Z', {
+  inputFormat: 'iso',
+  outputFormat: 'dd/mm/yyyy'
+});
+// Retorna: "15/03/2024"
+
+saltools.parse.date('15/03/2024', {
+  inputFormat: 'dd/mm/yyyy',
+  outputFormat: 'mm/dd/yyyy'
+});
+// Retorna: "03/15/2024"
+
+saltools.parse.date('15032024', {
+  inputFormat: 'ddmmyyyy',
+  outputFormat: 'dd/mm/yyyy'
+});
+// Retorna: "15/03/2024"
+
+saltools.parse.date('15/03/2024', {
+  inputFormat: 'dd/mm/yyyy',
+  outputFormat: 'dd/mm/yy'
+});
+// Retorna: "15/03/24"
+```
+
+### saltools.parse.email()
+
+Valida e verifica emails através de múltiplas validações.
+
+```javascript
+await saltools.parse.email(email, {
+  allowAlias: false,         // Permite emails com aliases (ex: nome+tag@domain.com) (padrão: false)
+  allowDisposable: false,    // Permite emails temporários/descartáveis (padrão: false)
+  useMailbox: false,         // Verifica se a caixa postal existe (padrão: false)
+  useNeverbounce: false,     // Usa Neverbounce para validação (padrão: false)
+  validateSPF: true,         // Valida registro SPF (padrão: true)
+  validateDMARC: true,       // Valida registro DMARC (padrão: true)
+  validateDKIM: true,        // Valida registro DKIM (padrão: true)
+  validateMX: true,          // Valida registro MX (padrão: true)
+  validateSMTP: true         // Valida através de SMTP (padrão: true)
+})
+```
+
+**Exemplo:**
+```javascript
+await saltools.parse.email('usuario@exemplo.com');
+// Valida sintaxe, SPF, DMARC, DKIM, MX e SMTP
+
+await saltools.parse.email('usuario@exemplo.com', {
+  allowAlias: true,
+  validateSPF: false
+});
+// Permite aliases e não valida SPF
+
+await saltools.parse.email('usuario@exemplo.com', {
+  useMailbox: true,
+  useNeverbounce: true
+});
+// Valida se a caixa postal existe e usa Neverbounce
+```
