@@ -196,6 +196,9 @@ describe('parse-csv', () => {
   });
 
   test('test_csv_WHEN_notCSVFile_THEN_throwsError', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'test.txt');
     fs.writeFileSync(filePath, 'some content');
 

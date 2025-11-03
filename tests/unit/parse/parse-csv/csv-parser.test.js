@@ -13,16 +13,19 @@ describe('CSVParser', () => {
   });
 
   afterEach(() => {
-    if (fs.existsSync(testDir)) {
-      const files = fs.readdirSync(testDir);
-      files.forEach(file => {
-        fs.unlinkSync(path.join(testDir, file));
-      });
-      fs.rmdirSync(testDir);
+    try {
+      if (fs.existsSync(testDir)) {
+        fs.rmSync(testDir, { recursive: true, force: true });
+      }
+    } catch (_) {
+      /* ignore cleanup errors */
     }
   });
 
   test('test_parse_WHEN_validCSVFile_THEN_returnsArrayOfObjects', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'test.csv');
     const csvContent = 'name,age,city\nJohn,30,New York\nJane,25,London';
     fs.writeFileSync(filePath, csvContent);
@@ -37,6 +40,9 @@ describe('CSVParser', () => {
   });
 
   test('test_parse_WHEN_emptyCSVFile_THEN_returnsEmptyArray', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'empty.csv');
     fs.writeFileSync(filePath, '');
 
@@ -47,6 +53,9 @@ describe('CSVParser', () => {
   });
 
   test('test_parse_WHEN_onlyHeaders_THEN_returnsEmptyArray', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'headers-only.csv');
     fs.writeFileSync(filePath, 'name,age,city');
 
@@ -57,6 +66,9 @@ describe('CSVParser', () => {
   });
 
   test('test_parse_WHEN_booleanAndNumericValues_THEN_convertsToTypes', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'types.csv');
     const csvContent = 'name,age,active\nJohn,30,true\nJane,25,false';
     fs.writeFileSync(filePath, csvContent);
@@ -73,6 +85,9 @@ describe('CSVParser', () => {
   });
 
   test('test_parse_WHEN_customDelimiter_THEN_parsesCorrectly', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'custom-delimiter.csv');
     const csvContent = 'name|age|city\nJohn|30|New York\nJane|25|London';
     fs.writeFileSync(filePath, csvContent);
@@ -87,6 +102,9 @@ describe('CSVParser', () => {
   });
 
   test('test_parse_WHEN_quotedFieldsWithNewlines_THEN_preservesNewlines', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'quoted-newline.csv');
     const csvContent = 'name,note\nJohn,"First line\nSecond line"\nJane,"Single note"';
     fs.writeFileSync(filePath, csvContent);
@@ -101,6 +119,9 @@ describe('CSVParser', () => {
   });
 
   test('test_parse_WHEN_blankLines_THEN_skipsBlankLines', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'blank-lines.csv');
     const csvContent = 'name,age\nJohn,30\n\nJane,25\n  \nBob,40';
     fs.writeFileSync(filePath, csvContent);
@@ -116,6 +137,9 @@ describe('CSVParser', () => {
   });
 
   test('test_parse_WHEN_rowHasMoreColumnsThanHeaders_THEN_ignoresExtraColumns', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'extra-columns.csv');
     const csvContent = 'name,age\nJohn,30,extra1,extra2\nJane,25';
     fs.writeFileSync(filePath, csvContent);
@@ -130,6 +154,9 @@ describe('CSVParser', () => {
   });
 
   test('test_parse_WHEN_rowHasFewerColumnsThanHeaders_THEN_fillsWithEmptyStrings', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'fewer-columns.csv');
     const csvContent = 'name,age,city,country\nJohn,30\nJane,25,London';
     fs.writeFileSync(filePath, csvContent);
@@ -144,6 +171,9 @@ describe('CSVParser', () => {
   });
 
   test('test_parse_WHEN_duplicateHeaders_THEN_lastHeaderWins', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'duplicate-headers.csv');
     const csvContent = 'name,name,age\nJohn,Doe,30\nJane,Smith,25';
     fs.writeFileSync(filePath, csvContent);

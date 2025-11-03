@@ -14,16 +14,19 @@ describe('CSVFileReader', () => {
   });
 
   afterEach(() => {
-    if (fs.existsSync(testDir)) {
-      const files = fs.readdirSync(testDir);
-      files.forEach(file => {
-        fs.unlinkSync(path.join(testDir, file));
-      });
-      fs.rmdirSync(testDir);
+    try {
+      if (fs.existsSync(testDir)) {
+        fs.rmSync(testDir, { recursive: true, force: true });
+      }
+    } catch (_) {
+      /* ignore cleanup errors */
     }
   });
 
   test('test_read_WHEN_validCSVFile_THEN_returnsFileContent', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'test.csv');
     const content = 'name,age\nJohn,30\nJane,25';
     fs.writeFileSync(filePath, content);
@@ -48,6 +51,9 @@ describe('CSVFileReader', () => {
   });
 
   test('test_read_WHEN_notCSVFile_THEN_throwsError', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'test.txt');
     fs.writeFileSync(filePath, 'some content');
     const reader = new CSVFileReader(filePath);
@@ -62,6 +68,9 @@ describe('CSVFileReader', () => {
   });
 
   test('test_read_WHEN_emptyCSVFile_THEN_returnsEmptyString', () => {
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true });
+    }
     const filePath = path.join(testDir, 'empty.csv');
     fs.writeFileSync(filePath, '');
     const reader = new CSVFileReader(filePath);

@@ -8,6 +8,7 @@ export default {
     '**/tests/**/*.test.js',
     '**/tests/**/*.spec.js'
   ],
+  setupFiles: ['<rootDir>/tests/setup.js'],
   collectCoverageFrom: [
     'src/**/*.js',
     '!src/**/index.js'
