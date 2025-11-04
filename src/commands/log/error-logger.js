@@ -6,8 +6,8 @@ import { param } from 'src/helper/index.js';
 
 export default class ErrorLogger {
   run(error, {
-    directory = null,
-    filename = null,
+    directory = undefined,
+    filename = undefined,
     addTimestamp = true,
     print = true,
     throwError = false,

@@ -84,7 +84,7 @@ export const parse: {
    *  @param options.cast - Default: false
    *  @param options.trim - Default: true
    *  @param options.capitalize - Default: false
-   *  @param options.varName - Default: null
+   *  @param options.varName - Default: undefined
    *  @param options.throwError - Default: true */
   string: (value: any, options?: {
     /** @default false */
@@ -95,7 +95,7 @@ export const parse: {
     trim?: boolean;
     /** @default false */
     capitalize?: boolean;
-    /** @default null */
+    /** @default undefined */
     varName?: string | null;
     /** @default true */
     throwError?: boolean;
@@ -106,7 +106,7 @@ export const parse: {
    *  @param options.allowNull - Default: false
    *  @param options.allowNegative - Default: false
    *  @param options.allowZero - Default: false
-   *  @param options.varName - Default: null
+   *  @param options.varName - Default: undefined
    *  @param options.throwError - Default: true */
   number: (value: any, options?: {
     /** @default false */
@@ -117,7 +117,7 @@ export const parse: {
     allowNegative?: boolean;
     /** @default false */
     allowZero?: boolean;
-    /** @default null */
+    /** @default undefined */
     varName?: string | null;
     /** @default true */
     throwError?: boolean;
@@ -128,7 +128,7 @@ export const parse: {
    *  @param options.allowNull - Default: false
    *  @param options.allowNegative - Default: false
    *  @param options.allowZero - Default: false
-   *  @param options.varName - Default: null
+   *  @param options.varName - Default: undefined
    *  @param options.throwError - Default: true */
   integer: (value: any, options?: {
     /** @default false */
@@ -139,7 +139,7 @@ export const parse: {
     allowNegative?: boolean;
     /** @default false */
     allowZero?: boolean;
-    /** @default null */
+    /** @default undefined */
     varName?: string | null;
     /** @default true */
     throwError?: boolean;
@@ -237,15 +237,15 @@ export const parse: {
 export const log: {
   /** @param error - The error object to log
    *  @param options - Options object
-   *  @param options.directory - Directory to save log file. Default: null
-   *  @param options.filename - Filename for log file. Default: null
+   *  @param options.directory - Directory to save log file. Default: undefined
+   *  @param options.filename - Filename for log file. Default: undefined
    *  @param options.addTimestamp - Add timestamp to filename. Default: true
    *  @param options.print - Print error to console. Default: true
    *  @param options.throwError - Re-throw the error after logging. Default: false */
   error: (error: Error, options?: {
-    /** @default null */
+    /** @default undefined */
     directory?: string | null;
-    /** @default null */
+    /** @default undefined */
     filename?: string | null;
     /** @default true */
     addTimestamp?: boolean;
@@ -256,13 +256,13 @@ export const log: {
   }) => void;
   /** @param content - The content to save
    *  @param options - Options object
-   *  @param options.directory - Directory to save log file. Default: null
-   *  @param options.filename - Filename for log file. Default: null
+   *  @param options.directory - Directory to save log file. Default: undefined
+   *  @param options.filename - Filename for log file. Default: undefined
    *  @param options.addTimestamp - Add timestamp to filename. Default: true */
   saveLog: (content: string, options?: {
-    /** @default null */
+    /** @default undefined */
     directory?: string | null;
-    /** @default null */
+    /** @default undefined */
     filename?: string | null;
     /** @default true */
     addTimestamp?: boolean;

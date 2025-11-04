@@ -11,13 +11,17 @@ describe('ErrorLogger', () => {
   const testDir = path.join(process.cwd(), 'tests', 'temp', 'logs');
 
   beforeEach(() => {
+    try {
+      if (!fs.existsSync(testDir)) {
+        fs.mkdirSync(testDir, { recursive: true });
+      }
+    } catch (_) {
+      /* ignore directory creation errors */
+    }
+
     logger = new ErrorLogger();
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     fsWriteFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation();
-
-    if (!fs.existsSync(testDir)) {
-      fs.mkdirSync(testDir, { recursive: true });
-    }
   });
 
   afterEach(() => {

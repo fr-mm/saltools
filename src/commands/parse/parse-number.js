@@ -97,7 +97,7 @@ export function number(value, {
   allowNull = false,
   allowNegative = false,
   allowZero = false,
-  varName = null,
+  varName = undefined,
   throwError = true
 } = {}) {
   return new NumberParser(value, { 
@@ -116,7 +116,7 @@ export function integer(value, {
   allowNull = false,
   allowNegative = false,
   allowZero = false,
-  varName = null,
+  varName = undefined,
   throwError = true
 } = {}) {
   return new NumberParser(value, { 

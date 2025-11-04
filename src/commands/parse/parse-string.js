@@ -92,7 +92,7 @@ export default function string(value, {
         cast = false, 
         trim = true, 
         capitalize = false ,
-        varName = null,
+        varName = undefined,
         throwError = true
     } = {}) {
   return new StringParser(value, { allowEmpty, cast, trim, capitalize, varName, throwError }).parse();

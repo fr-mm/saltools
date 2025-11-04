@@ -5,8 +5,8 @@ import { param } from 'src/helper/index.js';
 
 export default class LogSaver {
   run(content, {
-    directory = null,
-    filename = null,
+    directory = undefined,
+    filename = undefined,
     addTimestamp = true,
   } = {}) {
     this.#validateParameters({ content, directory, filename, addTimestamp });

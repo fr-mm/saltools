@@ -10,12 +10,16 @@ describe('LogSaver', () => {
   const testDir = path.join(process.cwd(), 'tests', 'temp', 'logs');
 
   beforeEach(() => {
+    try {
+      if (!fs.existsSync(testDir)) {
+        fs.mkdirSync(testDir, { recursive: true });
+      }
+    } catch (_) {
+      /* ignore directory creation errors */
+    }
+
     saver = new LogSaver();
     fsWriteFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation();
-
-    if (!fs.existsSync(testDir)) {
-      fs.mkdirSync(testDir, { recursive: true });
-    }
   });
 
   afterEach(() => {
