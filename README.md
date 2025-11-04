@@ -29,6 +29,20 @@ stage('Update saltools') {
 const saltools = require('@fr-mm/saltools');
 ```
 
+### saltools.timestamp()
+
+Gera uma string com timestamp no formato `DD-MM-YYYY-hh-mm-ss-mmm`.
+
+```javascript
+saltools.timestamp()
+```
+
+**Exemplo:**
+```javascript
+saltools.timestamp();
+// Retorna: "15-03-2024-14h-30m-45s-123ms"
+```
+
 ### saltools.parse.phone()
 
 Valida e formata números de telefone.
@@ -225,4 +239,40 @@ await saltools.parse.email('usuario@exemplo.com', {
   validateSPF: false
 });
 // Permite aliases e não valida SPF
+```
+
+### saltools.parse.doc()
+
+Valida e formata documentos CPF ou CNPJ.
+
+```javascript
+saltools.parse.doc(doc, {
+  numbersOnly: true,         // Retorna apenas números (padrão: true)
+  type: null,                // Tipo do documento: 'cpf', 'cnpj' ou null para inferir (padrão: null)
+  throwError: true           // Lança erro se inválido, senão retorna null (padrão: true)
+})
+```
+
+**Exemplo:**
+```javascript
+saltools.parse.doc('123.456.789-00');
+// Retorna: "12345678900" (formato padrão: apenas números)
+
+saltools.parse.doc('12.345.678/0001-90');
+// Retorna: "12345678000190" (CNPJ: apenas números)
+
+saltools.parse.doc(12345678900);
+// Retorna: "12345678900" (aceita número como entrada)
+
+saltools.parse.doc(12345678900, { type: 'cpf' });
+// Retorna: "12345678900" (força tipo CPF)
+
+saltools.parse.doc(123456780001, { type: 'cnpj' });
+// Retorna: "00012345678001" (força tipo CNPJ e preenche zeros)
+
+saltools.parse.doc('123.456.789-00', { numbersOnly: false });
+// Retorna: "123.456.789-00" (formatado)
+
+saltools.parse.doc('12.345.678/0001-90', { numbersOnly: false });
+// Retorna: "12.345.678/0001-90" (CNPJ formatado)
 ```

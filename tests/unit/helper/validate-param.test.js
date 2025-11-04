@@ -109,6 +109,60 @@ describe('param', () => {
       const result = param.string({ value: 'test', name: 'varName', required: true });
       expect(result).toBe('test');
     });
+
+    test('test_string_WHEN_optionsIsNull_THEN_returnsValue', () => {
+      const result = param.string({ value: 'test', name: 'varName', options: null });
+      expect(result).toBe('test');
+    });
+
+    test('test_string_WHEN_optionsIsArrayAndValueInOptions_THEN_returnsValue', () => {
+      const result = param.string({ value: 'option1', name: 'varName', options: ['option1', 'option2', 'option3'] });
+      expect(result).toBe('option1');
+    });
+
+    test('test_string_WHEN_optionsIsArrayAndValueInOptionsWithDifferentIndex_THEN_returnsValue', () => {
+      const result = param.string({ value: 'option3', name: 'varName', options: ['option1', 'option2', 'option3'] });
+      expect(result).toBe('option3');
+    });
+
+    test('test_string_WHEN_optionsIsNotArray_THEN_throwsError', () => {
+      expect(() => {
+        param.string({ value: 'test', name: 'varName', options: 'not-an-array' });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_string_WHEN_optionsIsNotArrayWithNumber_THEN_throwsError', () => {
+      expect(() => {
+        param.string({ value: 'test', name: 'varName', options: 123 });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_string_WHEN_optionsIsNotArrayWithObject_THEN_throwsError', () => {
+      expect(() => {
+        param.string({ value: 'test', name: 'varName', options: {} });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_string_WHEN_optionsIsArrayAndValueNotInOptions_THEN_throwsError', () => {
+      expect(() => {
+        param.string({ value: 'invalid', name: 'varName', options: ['option1', 'option2', 'option3'] });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_string_WHEN_optionsIsArrayAndNullValue_THEN_returnsNull', () => {
+      const result = param.string({ value: null, name: 'varName', options: ['option1', 'option2'] });
+      expect(result).toBeNull();
+    });
+
+    test('test_string_WHEN_optionsIsArrayAndUndefinedValue_THEN_returnsUndefined', () => {
+      const result = param.string({ value: undefined, name: 'varName', options: ['option1', 'option2'] });
+      expect(result).toBeUndefined();
+    });
+
+    test('test_string_WHEN_optionsIsArrayAndRequiredTrueAndValueInOptions_THEN_returnsValue', () => {
+      const result = param.string({ value: 'option1', name: 'varName', required: true, options: ['option1', 'option2'] });
+      expect(result).toBe('option1');
+    });
   });
 
   describe('number', () => {

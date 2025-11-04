@@ -28,6 +28,8 @@ describe('saltools - integration tests', () => {
       expect(typeof saltools.parse.csv).toBe('function');
       expect(saltools.parse.email).toBeDefined();
       expect(typeof saltools.parse.email).toBe('function');
+      expect(saltools.parse.doc).toBeDefined();
+      expect(typeof saltools.parse.doc).toBe('function');
     });
   });
 
@@ -193,6 +195,65 @@ describe('saltools - integration tests', () => {
     });
   });
 
+  describe('parse.doc', () => {
+    test('test_parseDoc_WHEN_validCPFString_THEN_returnsNumbersOnly', () => {
+      const result = saltools.parse.doc('123.456.789-00');
+      expect(result).toBe('12345678900');
+    });
+
+    test('test_parseDoc_WHEN_validCPFStringWithNumbersOnlyFalse_THEN_returnsFormattedCPF', () => {
+      const result = saltools.parse.doc('12345678900', { numbersOnly: false });
+      expect(result).toBe('123.456.789-00');
+    });
+
+    test('test_parseDoc_WHEN_validCNPJString_THEN_returnsNumbersOnly', () => {
+      const result = saltools.parse.doc('12.345.678/0001-90');
+      expect(result).toBe('12345678000190');
+    });
+
+    test('test_parseDoc_WHEN_validCNPJStringWithNumbersOnlyFalse_THEN_returnsFormattedCNPJ', () => {
+      const result = saltools.parse.doc('12345678000190', { numbersOnly: false });
+      expect(result).toBe('12.345.678/0001-90');
+    });
+
+    test('test_parseDoc_WHEN_validCPFNumber_THEN_returnsNumbersOnly', () => {
+      const result = saltools.parse.doc(12345678900);
+      expect(result).toBe('12345678900');
+    });
+
+    test('test_parseDoc_WHEN_validCPFWithSpecialChars_THEN_removesSpecialChars', () => {
+      const result = saltools.parse.doc('123.456-789/00');
+      expect(result).toBe('12345678900');
+    });
+
+    test('test_parseDoc_WHEN_validCNPJWithSpecialChars_THEN_removesSpecialChars', () => {
+      const result = saltools.parse.doc('12.345-678/0001.90');
+      expect(result).toBe('12345678000190');
+    });
+
+    test('test_parseDoc_WHEN_invalidLength_THEN_throwsError', () => {
+      expect(() => {
+        saltools.parse.doc('123456789');
+      }).toThrow();
+    });
+
+    test('test_parseDoc_WHEN_invalidLengthWithThrowErrorFalse_THEN_returnsNull', () => {
+      const result = saltools.parse.doc('123456789', { throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_parseDoc_WHEN_invalidType_THEN_throwsError', () => {
+      expect(() => {
+        saltools.parse.doc(null);
+      }).toThrow();
+    });
+
+    test('test_parseDoc_WHEN_invalidTypeWithThrowErrorFalse_THEN_returnsNull', () => {
+      const result = saltools.parse.doc(null, { throwError: false });
+      expect(result).toBeNull();
+    });
+  });
+
   describe('error handling', () => {
     test('test_errorsExport_WHEN_accessed_THEN_exportsErrorClass', () => {
       expect(saltools.errors.SaltoolsError).toBeDefined();
@@ -255,10 +316,39 @@ describe('saltools - integration tests', () => {
       const invalidName = saltools.parse.string('', { throwError: false });
       const invalidNumber = saltools.parse.number('', { throwError: false });
       const invalidPhone = saltools.parse.phone('', { throwError: false });
+      const invalidDoc = saltools.parse.doc('123', { throwError: false });
 
       expect(invalidName).toBeNull();
       expect(invalidNumber).toBeNull();
       expect(invalidPhone).toBeNull();
+      expect(invalidDoc).toBeNull();
+    });
+
+    test('test_parseUserDataWithDoc_WHEN_processingUserInput_THEN_validatesAllFields', () => {
+      const userData = {
+        name: '  joão silva  ',
+        phone: '11987654321',
+        age: '25',
+        cpf: '123.456.789-00',
+        cnpj: '12.345.678/0001-90'
+      };
+
+      const parsed = {
+        name: saltools.parse.string(userData.name, { capitalize: true }),
+        phone: saltools.parse.phone(userData.phone, { 
+          numbersOnly: false, 
+          addCountryCode: false 
+        }),
+        age: saltools.parse.integer(userData.age, { allowZero: true }),
+        cpf: saltools.parse.doc(userData.cpf),
+        cnpj: saltools.parse.doc(userData.cnpj, { numbersOnly: false })
+      };
+
+      expect(parsed.name).toBe('João Silva');
+      expect(parsed.phone).toBe('(11) 98765-4321');
+      expect(parsed.age).toBe(25);
+      expect(parsed.cpf).toBe('12345678900');
+      expect(parsed.cnpj).toBe('12.345.678/0001-90');
     });
   });
 

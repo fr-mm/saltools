@@ -17,8 +17,17 @@ function bool({value, name, required = false}) {
     return validateParam({value, type: 'boolean', name, required});
 }
 
-function string({value, name, required = false}) {
-    return validateParam({value, type: 'string', name, required});
+function string({value, name, required = false, options = null }) {
+    const validated = validateParam({value, type: 'string', name, required});
+    if (options !== null && validated !== null && validated !== undefined) {
+        if (!Array.isArray(options)) {
+            throw new SaltoolsError(`${name} deve ser um array, recebeu ${typeof options} ${options}`);
+        }
+        if (!options.includes(validated)) {
+            throw new SaltoolsError(`${name} não é uma option valida ${options.join(', ')}`)
+        }
+    }
+    return validated;
 }
 
 function number({value, name, required = false}) {
