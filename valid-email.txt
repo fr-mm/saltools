@@ -1,0 +1,5 @@
+alias nao invalida
+
+SPF DMARK DKIM pode tirar (ja tao incluidos no MX)
+
+nunca bloqueia um item de entrar na carga

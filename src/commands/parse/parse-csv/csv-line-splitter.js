@@ -1,7 +1,10 @@
 export default class CSVLineSplitter {
+  #quoteChar;
+  #escapeChar;
+
   constructor({quoteChar, escapeChar} = {}) {
-    this.quoteChar = quoteChar;
-    this.escapeChar = escapeChar;
+    this.#quoteChar = quoteChar;
+    this.#escapeChar = escapeChar;
   }
 
   split(content) {
@@ -12,30 +15,30 @@ export default class CSVLineSplitter {
 
     while (i < content.length) {
       const char = content[i];
-      const nextChar = this._getNextChar(content, i);
+      const nextChar = this.#getNextChar(content, i);
 
-      if (this._isEscapedQuote(char, nextChar)) {
-        currentLine = this._addEscapedQuote(currentLine);
+      if (this.#isEscapedQuote(char, nextChar)) {
+        currentLine = this.#addEscapedQuote(currentLine);
         i += 2;
         continue;
       }
 
-      if (char === this.quoteChar) {
+      if (char === this.#quoteChar) {
         inQuotes = !inQuotes;
         currentLine += char;
         i++;
         continue;
       }
 
-      if (this._isCarriageReturnNewline(char, inQuotes, nextChar)) {
-        this._finishLine(lines, currentLine);
+      if (this.#isCarriageReturnNewline(char, inQuotes, nextChar)) {
+        this.#finishLine(lines, currentLine);
         currentLine = '';
         i += 2;
         continue;
       }
 
-      if (this._isNewline(char, inQuotes)) {
-        this._finishLine(lines, currentLine);
+      if (this.#isNewline(char, inQuotes)) {
+        this.#finishLine(lines, currentLine);
         currentLine = '';
         i += 1;
         continue;
@@ -45,37 +48,37 @@ export default class CSVLineSplitter {
       i++;
     }
 
-    this._addRemainingLine(lines, currentLine);
+    this.#addRemainingLine(lines, currentLine);
     return lines;
   }
 
-  _getNextChar(content, index) {
+  #getNextChar(content, index) {
     return index + 1 < content.length ? content[index + 1] : '';
   }
 
-  _addRemainingLine(lines, currentLine) {
+  #addRemainingLine(lines, currentLine) {
     if (currentLine.length > 0) {
       lines.push(currentLine);
     }
   }
 
-  _finishLine(lines, currentLine) {
+  #finishLine(lines, currentLine) {
     lines.push(currentLine);
   }
 
-  _addEscapedQuote(currentLine) {
-    return currentLine + this.quoteChar;
+  #addEscapedQuote(currentLine) {
+    return currentLine + this.#quoteChar;
   }
 
-  _isEscapedQuote(char, nextChar) {
-    return char === this.escapeChar && nextChar === this.quoteChar;
+  #isEscapedQuote(char, nextChar) {
+    return char === this.#escapeChar && nextChar === this.#quoteChar;
   }
 
-  _isCarriageReturnNewline(char, inQuotes, nextChar) {
+  #isCarriageReturnNewline(char, inQuotes, nextChar) {
     return char === '\r' && !inQuotes && nextChar === '\n';
   }
 
-  _isNewline(char, inQuotes) {
+  #isNewline(char, inQuotes) {
     return char === '\n' && !inQuotes;
   }
 }

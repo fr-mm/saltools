@@ -1,42 +1,42 @@
 export default class CSVValueConverter {
   convert(value) {
-    if (this._isEmpty(value)) {
+    if (this.#isEmpty(value)) {
       return '';
     }
 
-    if (this._isBoolean(value)) {
-      return this._toBoolean(value);
+    if (this.#isBoolean(value)) {
+      return this.#toBoolean(value);
     }
 
-    if (this._isNumeric(value)) {
-      return this._toNumber(value);
+    if (this.#isNumeric(value)) {
+      return this.#toNumber(value);
     }
 
     return value;
   }
 
-  _isEmpty(value) {
+  #isEmpty(value) {
     return value === '' || value.trim() === '';
   }
 
-  _isBoolean(value) {
+  #isBoolean(value) {
     const lowerValue = value.toLowerCase().trim();
     return lowerValue === 'true' || lowerValue === 'false';
   }
 
-  _toBoolean(value) {
+  #toBoolean(value) {
     const lowerValue = value.toLowerCase().trim();
     return lowerValue === 'true';
   }
 
-  _isNumeric(value) {
+  #isNumeric(value) {
     if (value.trim() === '') {
       return false;
     }
     return !isNaN(value);
   }
 
-  _toNumber(value) {
+  #toNumber(value) {
     const numValue = Number(value);
     if (!isNaN(numValue) && isFinite(numValue)) {
       return numValue;
