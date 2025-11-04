@@ -207,8 +207,6 @@ Valida e verifica emails através de múltiplas validações.
 await saltools.parse.email(email, {
   allowAlias: false,         // Permite emails com aliases (ex: nome+tag@domain.com) (padrão: false)
   allowDisposable: false,    // Permite emails temporários/descartáveis (padrão: false)
-  useMailbox: false,         // Verifica se a caixa postal existe (padrão: false)
-  useNeverbounce: false,     // Usa Neverbounce para validação (padrão: false)
   validateSPF: true,         // Valida registro SPF (padrão: true)
   validateDMARC: true,       // Valida registro DMARC (padrão: true)
   validateDKIM: true,        // Valida registro DKIM (padrão: true)
@@ -227,10 +225,4 @@ await saltools.parse.email('usuario@exemplo.com', {
   validateSPF: false
 });
 // Permite aliases e não valida SPF
-
-await saltools.parse.email('usuario@exemplo.com', {
-  useMailbox: true,
-  useNeverbounce: true
-});
-// Valida se a caixa postal existe e usa Neverbounce
 ```

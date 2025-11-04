@@ -33,14 +33,16 @@ export default class EmailParser {
   async parse(email, {
     allowAlias = false, 
     allowDisposable = false, 
-    useMailbox = false, 
-    useNeverbounce = false,
+    //useMailbox = false, 
+    //useNeverbounce = false,
     validateSPF = true,
     validateDMARC = true,
     validateDKIM = true,
     validateMX = true,
     validateSMTP = true,
   } = {}) {
+    const useMailbox = false;
+    const useNeverbounce = false;
     this.#validateParameters({
       email, 
       allowAlias, 

@@ -1,4 +1,4 @@
-import EmailParser from './parse-email/email-parser.js';
+import EmailParser from './email-parser.js';
 
 
 const emailParser = new EmailParser();

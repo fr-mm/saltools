@@ -4,16 +4,12 @@ import Email from 'src/commands/parse/parse-email/email.js';
 import DNSValidator from 'src/commands/parse/parse-email/dns-validator.js';
 import AliasVerifier from 'src/commands/parse/parse-email/alias-verifier.js';
 import DisposableVerifier from 'src/commands/parse/parse-email/disposable-verifier.js';
-import MailboxVerifier from 'src/commands/parse/parse-email/mailbox-verifier.js';
-import NeverbounceVerifier from 'src/commands/parse/parse-email/neverbounce-verifier.js';
 import SaltoolsError from 'src/errors/saltools-error.js';
 
 describe('EmailParser', () => {
   let mockDnsValidator;
   let mockAliasVerifier;
   let mockDisposableVerifier;
-  let mockMailboxVerifier;
-  let mockNeverbounceVerifier;
   let emailParser;
 
   beforeEach(() => {
@@ -26,18 +22,10 @@ describe('EmailParser', () => {
     mockDisposableVerifier = {
       isDisposable: jest.fn().mockReturnValue(false),
     };
-    mockMailboxVerifier = {
-      verify: jest.fn().mockResolvedValue(undefined),
-    };
-    mockNeverbounceVerifier = {
-      verify: jest.fn().mockResolvedValue(undefined),
-    };
     emailParser = new EmailParser({
       dnsValidator: mockDnsValidator,
       aliasVerifier: mockAliasVerifier,
       disposableVerifier: mockDisposableVerifier,
-      mailboxVerifier: mockMailboxVerifier,
-      neverbounceVerifier: mockNeverbounceVerifier,
     });
   });
 
@@ -52,8 +40,6 @@ describe('EmailParser', () => {
         dnsValidator: mockDnsValidator,
         aliasVerifier: mockAliasVerifier,
         disposableVerifier: mockDisposableVerifier,
-        mailboxVerifier: mockMailboxVerifier,
-        neverbounceVerifier: mockNeverbounceVerifier,
       });
       expect(parser).toBeInstanceOf(EmailParser);
     });
@@ -115,26 +101,6 @@ describe('EmailParser', () => {
       mockDisposableVerifier.isDisposable.mockReturnValue(true);
       const result = await emailParser.parse('test@mailinator.com', { allowDisposable: true });
       expect(result).toBe('test@mailinator.com');
-    });
-
-    test('test_parse_WHEN_useMailboxTrue_THEN_callsMailboxVerifier', async () => {
-      await emailParser.parse('test@example.com', { useMailbox: true });
-      expect(mockMailboxVerifier.verify).toHaveBeenCalledWith(expect.any(Email));
-    });
-
-    test('test_parse_WHEN_useMailboxFalse_THEN_doesNotCallMailboxVerifier', async () => {
-      await emailParser.parse('test@example.com', { useMailbox: false });
-      expect(mockMailboxVerifier.verify).not.toHaveBeenCalled();
-    });
-
-    test('test_parse_WHEN_useNeverbounceTrue_THEN_callsNeverbounceVerifier', async () => {
-      await emailParser.parse('test@example.com', { useNeverbounce: true });
-      expect(mockNeverbounceVerifier.verify).toHaveBeenCalledWith(expect.any(Email));
-    });
-
-    test('test_parse_WHEN_useNeverbounceFalse_THEN_doesNotCallNeverbounceVerifier', async () => {
-      await emailParser.parse('test@example.com', { useNeverbounce: false });
-      expect(mockNeverbounceVerifier.verify).not.toHaveBeenCalled();
     });
 
     test('test_parse_WHEN_validateSPFFalse_THEN_passesFalseToDnsValidator', async () => {
@@ -209,8 +175,6 @@ describe('EmailParser', () => {
           validateSMTP: true,
         }
       );
-      expect(mockMailboxVerifier.verify).not.toHaveBeenCalled();
-      expect(mockNeverbounceVerifier.verify).not.toHaveBeenCalled();
       expect(mockAliasVerifier.isAlias).toHaveBeenCalled();
       expect(mockDisposableVerifier.isDisposable).toHaveBeenCalled();
     });
@@ -223,30 +187,10 @@ describe('EmailParser', () => {
       await expect(emailParser.parse('test@example.com', { allowDisposable: 'false' })).rejects.toThrow(SaltoolsError);
     });
 
-    test('test_parse_WHEN_useMailboxIsNotBoolean_THEN_throwsSaltoolsError', async () => {
-      await expect(emailParser.parse('test@example.com', { useMailbox: 'true' })).rejects.toThrow(SaltoolsError);
-    });
-
-    test('test_parse_WHEN_useNeverbounceIsNotBoolean_THEN_throwsSaltoolsError', async () => {
-      await expect(emailParser.parse('test@example.com', { useNeverbounce: 'false' })).rejects.toThrow(SaltoolsError);
-    });
-
     test('test_parse_WHEN_dnsValidatorThrowsError_THEN_propagatesError', async () => {
       const error = new SaltoolsError('DNS validation failed');
       mockDnsValidator.verify.mockRejectedValue(error);
       await expect(emailParser.parse('test@example.com')).rejects.toThrow(error);
-    });
-
-    test('test_parse_WHEN_mailboxVerifierThrowsError_THEN_propagatesError', async () => {
-      const error = new SaltoolsError('Mailbox validation failed');
-      mockMailboxVerifier.verify.mockRejectedValue(error);
-      await expect(emailParser.parse('test@example.com', { useMailbox: true })).rejects.toThrow(error);
-    });
-
-    test('test_parse_WHEN_neverbounceVerifierThrowsError_THEN_propagatesError', async () => {
-      const error = new SaltoolsError('Neverbounce validation failed');
-      mockNeverbounceVerifier.verify.mockRejectedValue(error);
-      await expect(emailParser.parse('test@example.com', { useNeverbounce: true })).rejects.toThrow(error);
     });
   });
 });
