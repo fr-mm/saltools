@@ -78,19 +78,78 @@ export interface LogSaverOptions {
 }
 
 export const parse: {
-  string: (value: any, options?: StringParseOptions) => string | null;
-  number: (value: any, options?: NumberParseOptions) => number | null;
-  integer: (value: any, options?: IntegerParseOptions) => number | null;
-  csv: (path: string, options?: CSVParseOptions) => any;
-  phone: (phone: string, options?: PhoneParseOptions) => string | null;
-  date: (value: any, options?: DateParseOptions) => any;
-  email: (value: any, options?: EmailParseOptions) => Promise<string | null>;
-  doc: (doc: string | number, options?: DocParseOptions) => string | null;
+  string: (value: any, options?: {
+    allowEmpty?: boolean;
+    cast?: boolean;
+    trim?: boolean;
+    capitalize?: boolean;
+    varName?: string | null;
+    throwError?: boolean;
+  }) => string | null;
+  number: (value: any, options?: {
+    allowEmptyString?: boolean;
+    allowNull?: boolean;
+    allowNegative?: boolean;
+    allowZero?: boolean;
+    varName?: string | null;
+    throwError?: boolean;
+  }) => number | null;
+  integer: (value: any, options?: {
+    allowEmptyString?: boolean;
+    allowNull?: boolean;
+    allowNegative?: boolean;
+    allowZero?: boolean;
+    varName?: string | null;
+    throwError?: boolean;
+  }) => number | null;
+  csv: (path: string, options?: {
+    delimiter?: string;
+    quoteChar?: string;
+    escapeChar?: string;
+    throwError?: boolean;
+  }) => any;
+  phone: (phone: string, options?: {
+    addCountryCode?: boolean;
+    addPlusPrefix?: boolean;
+    addAreaCode?: boolean;
+    numbersOnly?: boolean;
+    throwError?: boolean;
+  }) => string | null;
+  date: (value: any, options?: {
+    inputFormat?: string;
+    outputFormat?: string;
+    throwError?: boolean;
+  }) => any;
+  email: (value: any, options?: {
+    allowAlias?: boolean;
+    allowDisposable?: boolean;
+    validateSPF?: boolean;
+    validateDMARC?: boolean;
+    validateDKIM?: boolean;
+    validateMX?: boolean;
+    validateSMTP?: boolean;
+    throwError?: boolean;
+  }) => Promise<string | null>;
+  doc: (doc: string | number, options?: {
+    numbersOnly?: boolean;
+    type?: 'cpf' | 'cnpj';
+    throwError?: boolean;
+  }) => string | null;
 };
 
 export const log: {
-  error: (error: Error, options?: ErrorLoggerOptions) => void;
-  saveLog: (content: string, options?: LogSaverOptions) => void;
+  error: (error: Error, options?: {
+    directory?: string | null;
+    filename?: string | null;
+    addTimestamp?: boolean;
+    print?: boolean;
+    throwError?: boolean;
+  }) => void;
+  saveLog: (content: string, options?: {
+    directory?: string | null;
+    filename?: string | null;
+    addTimestamp?: boolean;
+  }) => void;
 };
 
 export function timestamp(): string;
