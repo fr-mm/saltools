@@ -41,11 +41,20 @@ export interface PhoneParseOptions {
 }
 
 export interface DateParseOptions {
-  [key: string]: any;
+  inputFormat?: string;
+  outputFormat?: string;
+  throwError?: boolean;
 }
 
 export interface EmailParseOptions {
-  [key: string]: any;
+  allowAlias?: boolean;
+  allowDisposable?: boolean;
+  validateSPF?: boolean;
+  validateDMARC?: boolean;
+  validateDKIM?: boolean;
+  validateMX?: boolean;
+  validateSMTP?: boolean;
+  throwError?: boolean;
 }
 
 export interface DocParseOptions {
@@ -75,7 +84,7 @@ export const parse: {
   csv: (path: string, options?: CSVParseOptions) => any;
   phone: (phone: string, options?: PhoneParseOptions) => string | null;
   date: (value: any, options?: DateParseOptions) => any;
-  email: (value: any, options?: EmailParseOptions) => any;
+  email: (value: any, options?: EmailParseOptions) => Promise<string | null>;
   doc: (doc: string | number, options?: DocParseOptions) => string | null;
 };
 
