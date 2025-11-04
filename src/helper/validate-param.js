@@ -45,9 +45,22 @@ function integer({value, name, required = false}) {
     return number;
 }
 
+function object({value, name, required = false}) {
+    return validateParam({value, type: 'object', name, required});
+}
+
+function error({value, name, required = false}) {
+    const validated = object({value, name, required});
+    if (!required && (validated === null || validated === undefined)) return validated;
+    if (validated instanceof Error) return validated;
+    throw new SaltoolsError(`${name} deve ser um erro, recebeu ${typeof validated} ${validated}`);
+}
+
 export const param = {
     bool,
     string,
     number,
-    integer
+    integer,
+    object,
+    error
 }
