@@ -1,4 +1,4 @@
-import { parse, timestamp, helloWorld } from './commands/index.js';
+import { parse, timestamp, helloWorld, log } from './commands/index.js';
 import { SaltoolsError } from './errors/index.js';
 
 
@@ -8,5 +8,6 @@ export {
   helloWorld, 
   parse,
   timestamp,
+  log,
   errors
 };
