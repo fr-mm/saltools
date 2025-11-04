@@ -3,7 +3,7 @@ export interface StringParseOptions {
   cast?: boolean;
   trim?: boolean;
   capitalize?: boolean;
-  varName?: string | null;
+  varName?: string;
   throwError?: boolean;
 }
 
@@ -12,7 +12,7 @@ export interface NumberParseOptions {
   allowNull?: boolean;
   allowNegative?: boolean;
   allowZero?: boolean;
-  varName?: string | null;
+  varName?: string;
   throwError?: boolean;
 }
 
@@ -21,7 +21,7 @@ export interface IntegerParseOptions {
   allowNull?: boolean;
   allowNegative?: boolean;
   allowZero?: boolean;
-  varName?: string | null;
+  varName?: string;
   throwError?: boolean;
 }
 
@@ -64,16 +64,16 @@ export interface DocParseOptions {
 }
 
 export interface ErrorLoggerOptions {
-  directory?: string | null;
-  filename?: string | null;
+  directory?: string;
+  filename?: string;
   addTimestamp?: boolean;
   print?: boolean;
   throwError?: boolean;
 }
 
 export interface LogSaverOptions {
-  directory?: string | null;
-  filename?: string | null;
+  directory?: string;
+  filename?: string;
   addTimestamp?: boolean;
 }
 
@@ -96,7 +96,7 @@ export const parse: {
     /** @default false */
     capitalize?: boolean;
     /** @default undefined */
-    varName?: string | null;
+    varName?: string;
     /** @default true */
     throwError?: boolean;
   }) => string | null;
@@ -118,7 +118,7 @@ export const parse: {
     /** @default false */
     allowZero?: boolean;
     /** @default undefined */
-    varName?: string | null;
+    varName?: string;
     /** @default true */
     throwError?: boolean;
   }) => number | null;
@@ -140,7 +140,7 @@ export const parse: {
     /** @default false */
     allowZero?: boolean;
     /** @default undefined */
-    varName?: string | null;
+    varName?: string;
     /** @default true */
     throwError?: boolean;
   }) => number | null;
@@ -244,9 +244,9 @@ export const log: {
    *  @param options.throwError - Re-throw the error after logging. Default: false */
   error: (error: Error, options?: {
     /** @default undefined */
-    directory?: string | null;
+    directory?: string;
     /** @default undefined */
-    filename?: string | null;
+    filename?: string;
     /** @default true */
     addTimestamp?: boolean;
     /** @default true */
@@ -261,9 +261,9 @@ export const log: {
    *  @param options.addTimestamp - Add timestamp to filename. Default: true */
   saveLog: (content: string, options?: {
     /** @default undefined */
-    directory?: string | null;
+    directory?: string;
     /** @default undefined */
-    filename?: string | null;
+    filename?: string;
     /** @default true */
     addTimestamp?: boolean;
   }) => void;
