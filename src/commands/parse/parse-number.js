@@ -30,6 +30,8 @@ class NumberParser {
       this.#validateEmptyString();
       this.#parseType();
       this.#validateInteger();
+      this.#validateNegative();
+      this.#validateZero();
       return this.#value;
     }
     catch (error) {
@@ -69,6 +71,18 @@ class NumberParser {
   #validateInteger() {
     if (this.#integer && !Number.isInteger(this.#value)) {
         this.#throwError(`${this.#value} não é um inteiro.`)
+    }
+  }
+  
+  #validateNegative() {
+    if (!this.#allowNegative && this.#value < 0) {
+      this.#throwError('Número não pode ser negativo quando {allowNegative: false}');
+    }
+  }
+
+  #validateZero() {
+    if (!this.#allowZero && this.#value === 0) {
+      this.#throwError('Número não pode ser zero quando {allowZero: false}');
     }
   }
 

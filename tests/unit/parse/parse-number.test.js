@@ -24,28 +24,58 @@ describe('parse-number', () => {
       expect(result).toBe(123.456);
     });
 
-    test('test_number_WHEN_zeroString_THEN_returnsZero', () => {
-      const result = number('0');
+    test('test_number_WHEN_zeroStringWithAllowZeroTrue_THEN_returnsZero', () => {
+      const result = number('0', { allowZero: true });
       expect(result).toBe(0);
     });
 
-    test('test_number_WHEN_zero_THEN_returnsZero', () => {
-      const result = number(0);
+    test('test_number_WHEN_zeroWithAllowZeroTrue_THEN_returnsZero', () => {
+      const result = number(0, { allowZero: true });
       expect(result).toBe(0);
     });
 
-    test('test_number_WHEN_negativeString_THEN_returnsNegativeNumber', () => {
-      const result = number('-123');
+    test('test_number_WHEN_zeroStringWithAllowZeroFalse_THEN_throwsError', () => {
+      expect(() => {
+        number('0', { allowZero: false });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_number_WHEN_zeroWithAllowZeroFalse_THEN_throwsError', () => {
+      expect(() => {
+        number(0, { allowZero: false });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_number_WHEN_negativeStringWithAllowNegativeTrue_THEN_returnsNegativeNumber', () => {
+      const result = number('-123', { allowNegative: true });
       expect(result).toBe(-123);
     });
 
-    test('test_number_WHEN_negativeNumber_THEN_returnsNegativeNumber', () => {
-      const result = number(-123);
+    test('test_number_WHEN_negativeNumberWithAllowNegativeTrue_THEN_returnsNegativeNumber', () => {
+      const result = number(-123, { allowNegative: true });
       expect(result).toBe(-123);
+    });
+
+    test('test_number_WHEN_negativeStringWithAllowNegativeFalse_THEN_throwsError', () => {
+      expect(() => {
+        number('-123', { allowNegative: false });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_number_WHEN_negativeNumberWithAllowNegativeFalse_THEN_throwsError', () => {
+      expect(() => {
+        number(-123, { allowNegative: false });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_number_WHEN_negativeZeroWithAllowNegativeFalse_THEN_throwsError', () => {
+      expect(() => {
+        number(-0, { allowNegative: false });
+      }).toThrow(SaltoolsError);
     });
 
     test('test_number_WHEN_emptyStringWithAllowEmptyTrue_THEN_returnsZero', () => {
-      const result = number('', { allowEmptyString: true });
+      const result = number('', { allowEmptyString: true, allowZero: true });
       expect(result).toBe(0);
     });
 
@@ -56,7 +86,7 @@ describe('parse-number', () => {
     });
 
     test('test_number_WHEN_nullWithAllowNullTrue_THEN_returnsZero', () => {
-      const result = number(null, { allowNull: true });
+      const result = number(null, { allowNull: true, allowZero: true });
       expect(result).toBe(0);
     });
 
@@ -127,6 +157,18 @@ describe('parse-number', () => {
       const result = number(123, { varName: 'testVar' });
       expect(result).toBe(123);
     });
+
+    test('test_number_WHEN_zeroWithVarNameAndAllowZeroFalse_THEN_errorIncludesVarName', () => {
+      expect(() => {
+        number(0, { allowZero: false, varName: 'count' });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_number_WHEN_negativeWithVarNameAndAllowNegativeFalse_THEN_errorIncludesVarName', () => {
+      expect(() => {
+        number(-123, { allowNegative: false, varName: 'price' });
+      }).toThrow(SaltoolsError);
+    });
   });
 
   describe('integer function', () => {
@@ -140,24 +182,48 @@ describe('parse-number', () => {
       expect(result).toBe(123);
     });
 
-    test('test_integer_WHEN_zeroString_THEN_returnsZero', () => {
-      const result = integer('0');
+    test('test_integer_WHEN_zeroStringWithAllowZeroTrue_THEN_returnsZero', () => {
+      const result = integer('0', { allowZero: true });
       expect(result).toBe(0);
     });
 
-    test('test_integer_WHEN_zero_THEN_returnsZero', () => {
-      const result = integer(0);
+    test('test_integer_WHEN_zeroWithAllowZeroTrue_THEN_returnsZero', () => {
+      const result = integer(0, { allowZero: true });
       expect(result).toBe(0);
     });
 
-    test('test_integer_WHEN_negativeIntegerString_THEN_returnsNegativeInteger', () => {
-      const result = integer('-123');
+    test('test_integer_WHEN_zeroStringWithAllowZeroFalse_THEN_throwsError', () => {
+      expect(() => {
+        integer('0', { allowZero: false });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_integer_WHEN_zeroWithAllowZeroFalse_THEN_throwsError', () => {
+      expect(() => {
+        integer(0, { allowZero: false });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_integer_WHEN_negativeIntegerStringWithAllowNegativeTrue_THEN_returnsNegativeInteger', () => {
+      const result = integer('-123', { allowNegative: true });
       expect(result).toBe(-123);
     });
 
-    test('test_integer_WHEN_negativeInteger_THEN_returnsNegativeInteger', () => {
-      const result = integer(-123);
+    test('test_integer_WHEN_negativeIntegerWithAllowNegativeTrue_THEN_returnsNegativeInteger', () => {
+      const result = integer(-123, { allowNegative: true });
       expect(result).toBe(-123);
+    });
+
+    test('test_integer_WHEN_negativeIntegerStringWithAllowNegativeFalse_THEN_throwsError', () => {
+      expect(() => {
+        integer('-123', { allowNegative: false });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_integer_WHEN_negativeIntegerWithAllowNegativeFalse_THEN_throwsError', () => {
+      expect(() => {
+        integer(-123, { allowNegative: false });
+      }).toThrow(SaltoolsError);
     });
 
     test('test_integer_WHEN_decimalString_THEN_throwsError', () => {
@@ -173,7 +239,7 @@ describe('parse-number', () => {
     });
 
     test('test_integer_WHEN_emptyStringWithAllowEmptyTrue_THEN_returnsZero', () => {
-      const result = integer('', { allowEmptyString: true });
+      const result = integer('', { allowEmptyString: true, allowZero: true });
       expect(result).toBe(0);
     });
 
@@ -184,7 +250,7 @@ describe('parse-number', () => {
     });
 
     test('test_integer_WHEN_nullWithAllowNullTrue_THEN_returnsZero', () => {
-      const result = integer(null, { allowNull: true });
+      const result = integer(null, { allowNull: true, allowZero: true });
       expect(result).toBe(0);
     });
 
@@ -203,6 +269,18 @@ describe('parse-number', () => {
     test('test_integer_WHEN_validIntegerWithVarName_THEN_returnsInteger', () => {
       const result = integer(123, { varName: 'testVar' });
       expect(result).toBe(123);
+    });
+
+    test('test_integer_WHEN_zeroWithVarNameAndAllowZeroFalse_THEN_errorIncludesVarName', () => {
+      expect(() => {
+        integer(0, { allowZero: false, varName: 'count' });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_integer_WHEN_negativeWithVarNameAndAllowNegativeFalse_THEN_errorIncludesVarName', () => {
+      expect(() => {
+        integer(-123, { allowNegative: false, varName: 'price' });
+      }).toThrow(SaltoolsError);
     });
   });
 
@@ -254,6 +332,18 @@ describe('parse-number', () => {
         integer(123, { varName: false });
       }).toThrow(SaltoolsError);
     });
+
+    test('test_integer_WHEN_allowNegativeIsNotBoolean_THEN_throwsError', () => {
+      expect(() => {
+        integer(123, { allowNegative: 'yes' });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_integer_WHEN_allowZeroIsNotBoolean_THEN_throwsError', () => {
+      expect(() => {
+        integer(123, { allowZero: {} });
+      }).toThrow(SaltoolsError);
+    });
   });
 
   describe('throwError option', () => {
@@ -274,6 +364,26 @@ describe('parse-number', () => {
 
     test('test_integer_WHEN_nullNotAllowedAndThrowErrorFalse_THEN_returnsNull', () => {
       const result = integer(null, { allowNull: false, throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_number_WHEN_zeroNotAllowedAndThrowErrorFalse_THEN_returnsNull', () => {
+      const result = number(0, { allowZero: false, throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_number_WHEN_negativeNotAllowedAndThrowErrorFalse_THEN_returnsNull', () => {
+      const result = number(-123, { allowNegative: false, throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_integer_WHEN_zeroNotAllowedAndThrowErrorFalse_THEN_returnsNull', () => {
+      const result = integer(0, { allowZero: false, throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_integer_WHEN_negativeNotAllowedAndThrowErrorFalse_THEN_returnsNull', () => {
+      const result = integer(-123, { allowNegative: false, throwError: false });
       expect(result).toBeNull();
     });
   });
