@@ -1,29 +1,40 @@
 import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
+import CachedOptions from 'src/helper/cachedOptions.js';
 
 class StringParser {
   static #DO_NOT_CAPITALIZE = ['de', 'do', 'da', 'dos', 'das', 'e'];
 
+  static #cachedOptions = new CachedOptions();
+
   static parse(value, options) {
-    const allowEmpty = param.bool({ value: options.allowEmpty, name: 'allowEmpty' });
-    const cast = param.bool({ value: options.cast, name: 'cast' });
-    const trim = param.bool({ value: options.trim, name: 'trim' });
-    const capitalize = param.bool({ value: options.capitalize, name: 'capitalize' });
-    const varName = param.string({ value: options.varName, name: 'varName' });
-    const shouldThrowError = param.bool({ value: options.throwError, name: 'throwError' });
+    this.#validateOptions(options);
 
     try {
-      value = this.#parseType(value, cast, varName);
-      value = this.#parseTrim(value, trim);
-      this.#parseEmpty(value, allowEmpty, varName);
-      value = this.#parseCapitalize(value, capitalize);
+      value = this.#parseType(value, options.cast, options.varName);
+      value = this.#parseTrim(value, options.trim);
+      this.#parseEmpty(value, options.allowEmpty, options.varName);
+      value = this.#parseCapitalize(value, options.capitalize);
       return value;
     } catch (error) {
-      if (!shouldThrowError && error instanceof SaltoolsError) {
+      if (!options.throwError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
     }
+  }
+
+  static #validateOptions(options) {
+    if (this.#cachedOptions.isCached(options)) return;
+
+    param.bool({ value: options.allowEmpty, name: 'allowEmpty' });
+    param.bool({ value: options.cast, name: 'cast' });
+    param.bool({ value: options.trim, name: 'trim' });
+    param.bool({ value: options.capitalize, name: 'capitalize' });
+    param.string({ value: options.varName, name: 'varName' });
+    param.bool({ value: options.throwError, name: 'throwError' });
+
+    this.#cachedOptions.cache(options);
   }
 
   static #parseType(value, cast, varName) {

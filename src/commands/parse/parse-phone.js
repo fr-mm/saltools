@@ -1,48 +1,51 @@
 import { parsePhoneNumberWithError, isValidPhoneNumber } from 'libphonenumber-js';
 import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
+import CachedOptions from 'src/helper/cachedOptions.js';
 
 class PhoneParser {
-  static parse(phone, {
-    addCountryCode,
-    addPlusPrefix,
-    addAreaCode,
-    numbersOnly,
-    throwError,
-  }) {
-    try {
-      this.#validateParameters({ phone, addCountryCode, addPlusPrefix, addAreaCode, numbersOnly, throwError });
+  static #cachedOptions = new CachedOptions();
 
-      const country = this.#getCountryCode(phone);
-      const phoneNumber = this.#parsePhoneNumber(phone, country);
-      this.#validatePhoneNumber(phone, country);
-      let result = this.#formatPhoneNumber(phoneNumber, { addCountryCode, addPlusPrefix, numbersOnly });
-      
-      if (numbersOnly) {
-        if (addPlusPrefix && addCountryCode) {
-          result = `+${result}`;
-        }
-      }
-      
-      return result;
+  static parse(phone, options) {
+    try {
+      this.#validateOptions(options);
+      return this.#parse(phone, options);
     } catch (error) {
-      if (!throwError) {
+      if (!options.throwError) {
         return null;
       }
       if (!(error instanceof SaltoolsError)) {
-        throw new SaltoolsError(`Número de telefone inválido: ${phone}`);
+        throw new SaltoolsError(`Número de telefone inválido ${phone} ${error.message}`);
       }
       throw error;
     }
   }
 
-  static #validateParameters({ phone, addCountryCode, addPlusPrefix, addAreaCode, numbersOnly, throwError }) {
-    param.string({ value: phone, name: 'phone' });
-    param.bool({ value: addCountryCode, name: 'addCountryCode' });
-    param.bool({ value: addPlusPrefix, name: 'addPlusPrefix' });
-    param.bool({ value: addAreaCode, name: 'addAreaCode' });
-    param.bool({ value: numbersOnly, name: 'numbersOnly' });
-    param.bool({ value: throwError, name: 'throwError' });
+  static #parse(phone, options) {
+    const country = this.#getCountryCode(phone);
+    const phoneNumber = this.#parsePhoneNumber(phone, country);
+    this.#validatePhoneNumber(phone, country);
+    const formattedPhone = this.#formatPhoneNumber(phoneNumber, options);
+    return this.#addPlusPrefix(formattedPhone, options);
+  }
+
+  static #addPlusPrefix(result, options) {
+    if (options.addPlusPrefix && options.addCountryCode && !result.startsWith('+')) {
+      return `+${result}`;
+    }
+    return result;
+  }
+
+  static #validateOptions(options) {
+    if (this.#cachedOptions.isCached(options)) return;
+
+    param.bool({ value: options.addCountryCode, name: 'addCountryCode' });
+    param.bool({ value: options.addPlusPrefix, name: 'addPlusPrefix' });
+    param.bool({ value: options.addAreaCode, name: 'addAreaCode' });
+    param.bool({ value: options.numbersOnly, name: 'numbersOnly' });
+    param.bool({ value: options.throwError, name: 'throwError' });
+
+    this.#cachedOptions.cache(options);
   }
 
   static #parsePhoneNumber(phone, country) {
@@ -59,9 +62,9 @@ class PhoneParser {
     if (phone.startsWith('+')) {
       return undefined;
     }
-    
+
     const cleanPhone = phone.replace(/\D/g, '');
-    
+
     if (cleanPhone.startsWith('55')) {
       try {
         const phoneNumber = parsePhoneNumberWithError(phone);
@@ -70,20 +73,20 @@ class PhoneParser {
         return 'BR';
       }
     }
-    
+
     return 'BR';
   }
 
-  static #formatPhoneNumber(phoneNumber, { addCountryCode, addPlusPrefix, numbersOnly }) {
-    if (numbersOnly) {
-      if (addCountryCode) {
+  static #formatPhoneNumber(phoneNumber, options) {
+    if (options.numbersOnly) {
+      if (options.addCountryCode) {
         return phoneNumber.number.replace('+', '');
       }
       return phoneNumber.nationalNumber;
     }
-    
-    if (addCountryCode) {
-      if (addPlusPrefix) {
+
+    if (options.addCountryCode) {
+      if (options.addPlusPrefix) {
         return phoneNumber.format('INTERNATIONAL');
       }
       const countryCode = phoneNumber.countryCallingCode;
@@ -94,13 +97,16 @@ class PhoneParser {
   }
 }
 
-export default function phone(phone, {
-  addCountryCode = true,
-  addPlusPrefix = false,
-  addAreaCode = true,
-  numbersOnly = true,
-  throwError = true,
-} = {}) {
+export default function phone(
+  phone,
+  {
+    addCountryCode = true,
+    addPlusPrefix = false,
+    addAreaCode = true,
+    numbersOnly = true,
+    throwError = true,
+  } = {}
+) {
   return PhoneParser.parse(phone, {
     addCountryCode,
     addPlusPrefix,
