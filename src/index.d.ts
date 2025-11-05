@@ -85,7 +85,8 @@ export interface FwfField {
 }
 
 export const parse: {
-  /** @param value - The value to parse
+  /** Parse a string value
+   *  @param value - The value to parse
    *  @param options - Options object
    *  @param options.allowEmpty - Default: false
    *  @param options.cast - Default: false
@@ -93,7 +94,7 @@ export const parse: {
    *  @param options.capitalize - Default: false
    *  @param options.varName - Default: undefined
    *  @param options.throwError - Default: true */
-  string: (
+  string(
     value: any,
     options?: {
       /** @default false */
@@ -109,8 +110,9 @@ export const parse: {
       /** @default true */
       throwError?: boolean;
     }
-  ) => string | null;
-  /** @param value - The value to parse
+  ): string | null;
+  /** Parse a number value
+   *  @param value - The value to parse
    *  @param options - Options object
    *  @param options.allowEmptyString - Default: false
    *  @param options.allowNull - Default: false
@@ -118,7 +120,7 @@ export const parse: {
    *  @param options.allowZero - Default: false
    *  @param options.varName - Default: undefined
    *  @param options.throwError - Default: true */
-  number: (
+  number(
     value: any,
     options?: {
       /** @default false */
@@ -134,8 +136,9 @@ export const parse: {
       /** @default true */
       throwError?: boolean;
     }
-  ) => number | null;
-  /** @param value - The value to parse
+  ): number | null;
+  /** Parse an integer value
+   *  @param value - The value to parse
    *  @param options - Options object
    *  @param options.allowEmptyString - Default: false
    *  @param options.allowNull - Default: false
@@ -143,7 +146,7 @@ export const parse: {
    *  @param options.allowZero - Default: false
    *  @param options.varName - Default: undefined
    *  @param options.throwError - Default: true */
-  integer: (
+  integer(
     value: any,
     options?: {
       /** @default false */
@@ -159,14 +162,15 @@ export const parse: {
       /** @default true */
       throwError?: boolean;
     }
-  ) => number | null;
-  /** @param path - The CSV file path
+  ): number | null;
+  /** Parse a CSV file
+   *  @param path - The CSV file path
    *  @param options - Options object
    *  @param options.delimiter - Default: ','
    *  @param options.quoteChar - Default: '"'
    *  @param options.escapeChar - Default: '\\'
    *  @param options.throwError - Default: true */
-  csv: (
+  csv(
     path: string,
     options?: {
       /** @default ',' */
@@ -178,20 +182,21 @@ export const parse: {
       /** @default true */
       throwError?: boolean;
     }
-  ) => Array<Record<string, string | number | boolean>> | null;
-  /** @param path - The fixed-width file path
+  ): Array<Record<string, string | number | boolean>> | null;
+  /** Parse a fixed-width file
+   *  @param path - The fixed-width file path
    *  @param fields - Array describing field slices
-   *  Each field contains a key, start index, and end index (exclusive)
-   */
-  fwf: (path: string, fields: FwfField[]) => Array<Record<string, string | number | boolean>>;
-  /** @param phone - The phone number to parse
+   *  Each field contains a key, start index, and end index (exclusive) */
+  fwf(path: string, fields: FwfField[]): Array<Record<string, string | number | boolean>>;
+  /** Parse a phone number
+   *  @param phone - The phone number to parse
    *  @param options - Options object
    *  @param options.addCountryCode - Default: true
    *  @param options.addPlusPrefix - Default: false
    *  @param options.addAreaCode - Default: true
    *  @param options.numbersOnly - Default: true
    *  @param options.throwError - Default: true */
-  phone: (
+  phone(
     phone: string,
     options?: {
       /** @default true */
@@ -205,13 +210,14 @@ export const parse: {
       /** @default true */
       throwError?: boolean;
     }
-  ) => string | null;
-  /** @param value - The date value to parse
+  ): string | null;
+  /** Parse a date value
+   *  @param value - The date value to parse
    *  @param options - Options object
    *  @param options.inputFormat - Default: 'iso'
    *  @param options.outputFormat - Default: 'iso'
    *  @param options.throwError - Default: true */
-  date: (
+  date(
     value: any,
     options?: {
       /** @default 'iso' */
@@ -221,8 +227,9 @@ export const parse: {
       /** @default true */
       throwError?: boolean;
     }
-  ) => any;
-  /** @param value - The email to parse
+  ): any;
+  /** Parse an email address
+   *  @param value - The email to parse
    *  @param options - Options object
    *  @param options.allowAlias - Default: false
    *  @param options.allowDisposable - Default: false
@@ -232,7 +239,7 @@ export const parse: {
    *  @param options.validateMX - Default: true
    *  @param options.validateSMTP - Default: true
    *  @param options.throwError - Default: true */
-  email: (
+  email(
     value: any,
     options?: {
       /** @default false */
@@ -252,22 +259,24 @@ export const parse: {
       /** @default true */
       throwError?: boolean;
     }
-  ) => Promise<string | null>;
-  /** @param doc - The document to parse (CPF or CNPJ)
+  ): Promise<string | null>;
+  /** Parse a document (CPF or CNPJ)
+   *  @param doc - The document to parse (CPF or CNPJ)
    *  @param options - Options object
-   *  @param options.numbersOnly - Default: true
-   *  @param options.type - Document type: 'cpf' or 'cnpj'
-   *  @param options.throwError - Default: true */
-  doc: (
+   *  @param options.numbersOnly - Return only numbers (no formatting). Default: true
+   *  @param options.type - Document type: 'cpf' or 'cnpj'. If undefined, will infer from length. Default: undefined
+   *  @param options.throwError - Throw error if invalid, otherwise return null. Default: true */
+  doc(
     doc: string | number,
     options?: {
-      /** @default true */
+      /** Return only numbers (no formatting). @default true */
       numbersOnly?: boolean;
+      /** Document type: 'cpf' or 'cnpj'. If undefined, will infer from length. @default undefined */
       type?: 'cpf' | 'cnpj';
-      /** @default true */
+      /** Throw error if invalid, otherwise return null. @default true */
       throwError?: boolean;
     }
-  ) => string | null;
+  ): string | null;
 };
 
 export const log: {
