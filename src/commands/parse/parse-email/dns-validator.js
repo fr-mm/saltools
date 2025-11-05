@@ -1,50 +1,41 @@
 import dns from 'dns';
 import net from 'net';
 import SaltoolsError from 'src/errors/saltools-error.js';
-import Email from './email.js';
-
 
 export default class DNSValidator {
-  async verify(email, {
-    validateSPF,
-    validateDMARC,
-    validateDKIM,
-    validateMX,
-    validateSMTP,
-  } = {}) {
-    this.#validateType(email);
-
+  static async verify(email, options = {}) {
     await Promise.all([
-      this.#validateSPF(email, validateSPF),
-      this.#validateDMARC(email, validateDMARC),
-      this.#validateDKIM(email, validateDKIM),
-      this.#validateMX(email, validateMX),
-      this.#validateSMTP(email, validateSMTP),
+      DNSValidator.#validateSPF(email, options.validateSPF),
+      DNSValidator.#validateDMARC(email, options.validateDMARC),
+      DNSValidator.#validateDKIM(email, options.validateDKIM),
+      DNSValidator.#validateMX(email, options.validateMX),
+      DNSValidator.#validateSMTP(email, options.validateSMTP),
     ]);
   }
 
-  #validateType(email) {
-    if (!(email instanceof Email)) {
-      throw new SaltoolsError(`Email ${email.value} não é uma instância de Email`);
+  static async #validateSPF(email, validateSPF) {
+    if (validateSPF) {
+      await DNSValidator.#dnsResolveText({ email, type: 'SPF', text: email.domain });
     }
   }
 
-  async #validateSPF(email, validateSPF) {
-    if (!validateSPF) return;
-    await this.#dnsResolveText({email, type: 'SPF', text: email.domain});
+  static async #validateDMARC(email, validateDMARC) {
+    if (validateDMARC) {
+      await DNSValidator.#dnsResolveText({ email, type: 'DMARC', text: `_dmarc.${email.domain}` });
+    }
   }
 
-  async #validateDMARC(email, validateDMARC) {
-    if (!validateDMARC) return;
-    await this.#dnsResolveText({email, type: 'DMARC', text: `_dmarc.${email.domain}`});
+  static async #validateDKIM(email, validateDKIM) {
+    if (validateDKIM) {
+      await DNSValidator.#dnsResolveText({
+        email,
+        type: 'DKIM',
+        text: `default._domainkey.${email.domain}`,
+      });
+    }
   }
 
-  async #validateDKIM(email, validateDKIM) {
-    if (!validateDKIM) return;
-    await this.#dnsResolveText({email, type: 'DKIM', text: `default._domainkey.${email.domain}`});
-  }
-
-  async #validateMX(email, validateMX) {
+  static async #validateMX(email, validateMX) {
     if (!validateMX) return;
     try {
       const mxRecords = await dns.promises.resolveMx(email.domain);
@@ -56,7 +47,7 @@ export default class DNSValidator {
     }
   }
 
-  async #validateSMTP(email, validateSMTP) {
+  static async #validateSMTP(email, validateSMTP) {
     if (!validateSMTP) return;
     try {
       const domain = email.domain;
@@ -107,7 +98,7 @@ export default class DNSValidator {
     }
   }
 
-  async #dnsResolveText({email, type, text}) {
+  static async #dnsResolveText({ email, type, text }) {
     try {
       const txt = await dns.promises.resolveTxt(text);
       if (txt.flat().length === 0) {
