@@ -104,8 +104,8 @@ Valida e converte valores para número.
 saltools.parse.number(value, {
   allowEmptyString: false, // Permite string vazia (padrão: false)
   allowNull: false, // Permite null (padrão: false)
-  allowNegative: false, // Permite números negativos (padrão: false)
-  allowZero: false, // Permite zero (padrão: false)
+  allowNegative: true, // Permite números negativos (padrão: true)
+  allowZero: true, // Permite zero (padrão: true)
   varName: undefined, // Nome da variável para mensagens de erro (padrão: undefined)
   throwError: true, // Lança erro se inválido, senão retorna null (padrão: true)
 });
@@ -117,8 +117,11 @@ saltools.parse.number(value, {
 saltools.parse.number('123.45');
 // Retorna: 123.45
 
-saltools.parse.number('-10', { allowNegative: true });
+saltools.parse.number('-10');
 // Retorna: -10
+
+saltools.parse.number('0');
+// Retorna: 0
 ```
 
 ### saltools.parse.integer()
@@ -129,8 +132,8 @@ Valida e converte valores para número inteiro.
 saltools.parse.integer(value, {
   allowEmptyString: false, // Permite string vazia (padrão: false)
   allowNull: false, // Permite null (padrão: false)
-  allowNegative: false, // Permite números negativos (padrão: false)
-  allowZero: false, // Permite zero (padrão: false)
+  allowNegative: true, // Permite números negativos (padrão: true)
+  allowZero: true, // Permite zero (padrão: true)
   varName: undefined, // Nome da variável para mensagens de erro (padrão: undefined)
   throwError: true, // Lança erro se inválido, senão retorna null (padrão: true)
 });

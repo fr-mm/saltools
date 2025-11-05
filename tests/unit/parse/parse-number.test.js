@@ -68,10 +68,30 @@ describe('parse-number', () => {
       }).toThrow(SaltoolsError);
     });
 
-    test('test_number_WHEN_negativeZeroWithAllowNegativeFalse_THEN_throwsError', () => {
+    test('test_number_WHEN_negativeZeroWithAllowNegativeFalseAndAllowZeroFalse_THEN_throwsError', () => {
       expect(() => {
-        number(-0, { allowNegative: false });
+        number(-0, { allowNegative: false, allowZero: false });
       }).toThrow(SaltoolsError);
+    });
+
+    test('test_number_WHEN_zeroWithDefaultOptions_THEN_returnsZero', () => {
+      const result = number(0);
+      expect(result).toBe(0);
+    });
+
+    test('test_number_WHEN_zeroStringWithDefaultOptions_THEN_returnsZero', () => {
+      const result = number('0');
+      expect(result).toBe(0);
+    });
+
+    test('test_number_WHEN_negativeNumberWithDefaultOptions_THEN_returnsNegativeNumber', () => {
+      const result = number(-123);
+      expect(result).toBe(-123);
+    });
+
+    test('test_number_WHEN_negativeStringWithDefaultOptions_THEN_returnsNegativeNumber', () => {
+      const result = number('-123');
+      expect(result).toBe(-123);
     });
 
     test('test_number_WHEN_emptyStringWithAllowEmptyTrue_THEN_returnsZero', () => {
@@ -281,6 +301,26 @@ describe('parse-number', () => {
       expect(() => {
         integer(-123, { allowNegative: false, varName: 'price' });
       }).toThrow(SaltoolsError);
+    });
+
+    test('test_integer_WHEN_zeroWithDefaultOptions_THEN_returnsZero', () => {
+      const result = integer(0);
+      expect(result).toBe(0);
+    });
+
+    test('test_integer_WHEN_zeroStringWithDefaultOptions_THEN_returnsZero', () => {
+      const result = integer('0');
+      expect(result).toBe(0);
+    });
+
+    test('test_integer_WHEN_negativeIntegerWithDefaultOptions_THEN_returnsNegativeInteger', () => {
+      const result = integer(-123);
+      expect(result).toBe(-123);
+    });
+
+    test('test_integer_WHEN_negativeIntegerStringWithDefaultOptions_THEN_returnsNegativeInteger', () => {
+      const result = integer('-123');
+      expect(result).toBe(-123);
     });
   });
 

@@ -116,8 +116,8 @@ export const parse: {
    *  @param options - Options object
    *  @param options.allowEmptyString - Default: false
    *  @param options.allowNull - Default: false
-   *  @param options.allowNegative - Default: false
-   *  @param options.allowZero - Default: false
+   *  @param options.allowNegative - Default: true
+   *  @param options.allowZero - Default: true
    *  @param options.varName - Default: undefined
    *  @param options.throwError - Default: true */
   number(
@@ -127,9 +127,9 @@ export const parse: {
       allowEmptyString?: boolean;
       /** @default false */
       allowNull?: boolean;
-      /** @default false */
+      /** @default true */
       allowNegative?: boolean;
-      /** @default false */
+      /** @default true */
       allowZero?: boolean;
       /** @default undefined */
       varName?: string;
@@ -142,8 +142,8 @@ export const parse: {
    *  @param options - Options object
    *  @param options.allowEmptyString - Default: false
    *  @param options.allowNull - Default: false
-   *  @param options.allowNegative - Default: false
-   *  @param options.allowZero - Default: false
+   *  @param options.allowNegative - Default: true
+   *  @param options.allowZero - Default: true
    *  @param options.varName - Default: undefined
    *  @param options.throwError - Default: true */
   integer(
@@ -153,9 +153,9 @@ export const parse: {
       allowEmptyString?: boolean;
       /** @default false */
       allowNull?: boolean;
-      /** @default false */
+      /** @default true */
       allowNegative?: boolean;
-      /** @default false */
+      /** @default true */
       allowZero?: boolean;
       /** @default undefined */
       varName?: string;

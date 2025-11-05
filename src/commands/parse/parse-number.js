@@ -6,8 +6,8 @@ class NumberParser {
   static DEFAULT_OPTIONS = {
     allowEmptyString: false,
     allowNull: false,
-    allowNegative: false,
-    allowZero: false,
+    allowNegative: true,
+    allowZero: true,
     integer: false,
     varName: undefined,
     throwError: true,
@@ -50,7 +50,7 @@ class NumberParser {
   static #validateType(value, allowNull, originalValue, varName) {
     if (value === null) {
       if (!allowNull) {
-        this.#throwError('null não é permitido quando {allowNull: false}', varName);
+        this.#throwError('null não é permitido quando {allowNull: false}', varName, value);
       }
       return;
     }
@@ -58,14 +58,19 @@ class NumberParser {
     if (typeof value !== 'string' && typeof value !== 'number') {
       this.#throwError(
         `Não é possível converter ${typeof originalValue} ${originalValue} para número.`,
-        varName
+        varName,
+        originalValue
       );
     }
   }
 
   static #validateEmptyString(value, allowEmptyString, varName) {
     if (!allowEmptyString && value === '') {
-      this.#throwError('String não pode ser vazia quando {allowEmptyString: false}', varName);
+      this.#throwError(
+        'String não pode ser vazia quando {allowEmptyString: false}',
+        varName,
+        value
+      );
     }
   }
 
@@ -74,7 +79,8 @@ class NumberParser {
     if (isNaN(numValue)) {
       this.#throwError(
         `Não é possível converter ${typeof originalValue} ${originalValue} para número.`,
-        varName
+        varName,
+        originalValue
       );
     }
     return numValue;
@@ -82,24 +88,28 @@ class NumberParser {
 
   static #validateInteger(value, integer, varName) {
     if (integer && !Number.isInteger(value)) {
-      this.#throwError(`${value} não é um inteiro.`, varName);
+      this.#throwError(`${value} não é um inteiro.`, varName, value);
     }
   }
 
   static #validateNegative(value, allowNegative, varName) {
     if (!allowNegative && value < 0) {
-      this.#throwError('Número não pode ser negativo quando {allowNegative: false}', varName);
+      this.#throwError(
+        'Número não pode ser negativo quando {allowNegative: false}',
+        varName,
+        value
+      );
     }
   }
 
   static #validateZero(value, allowZero, varName) {
     if (!allowZero && value === 0) {
-      this.#throwError('Número não pode ser zero quando {allowZero: false}', varName);
+      this.#throwError('Número não pode ser zero quando {allowZero: false}', varName, value);
     }
   }
 
-  static #throwError(message, varName) {
-    message = varName ? `${message} varName: ${varName}` : message;
+  static #throwError(message, varName, value) {
+    message = `${message} chave ${varName}, valor ${value}, tipo ${typeof value}`;
     throw new SaltoolsError(message);
   }
 }
