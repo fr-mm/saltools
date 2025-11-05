@@ -3,8 +3,15 @@ import CSVFileReader from './csv-file-reader.js';
 import CSVLineSplitter from './csv-line-splitter.js';
 import CSVRowParser from './csv-row-parser.js';
 import CSVValueConverter from './csv-value-converter.js';
+import { param } from 'src/helper/index.js';
 
 export default class CSVParser {
+  static DEFAULT_OPTIONS = {
+    delimiter: ',',
+    quoteChar: '"',
+    escapeChar: '\\',
+    throwError: true,
+  };
   #fileReader;
   #lineSplitter;
   #rowParser;
@@ -12,6 +19,8 @@ export default class CSVParser {
   #shouldThrowError;
 
   constructor(path, options = {}) {
+    options = { ...CSVParser.DEFAULT_OPTIONS, ...options };
+    this.#validateOptions(path, options);
     this.#fileReader = new CSVFileReader(path);
     this.#lineSplitter = new CSVLineSplitter({
       quoteChar: options.quoteChar,
@@ -36,6 +45,14 @@ export default class CSVParser {
       }
       throw error;
     }
+  }
+
+  #validateOptions(path, options) {
+    param.string({ value: path, name: 'path', required: true });
+    param.string({ value: options.delimiter, name: 'delimiter', required: true });
+    param.string({ value: options.quoteChar, name: 'quoteChar', required: true });
+    param.string({ value: options.escapeChar, name: 'escapeChar', required: true });
+    param.bool({ value: options.throwError, name: 'throwError' });
   }
 
   #parseFileContent(content) {

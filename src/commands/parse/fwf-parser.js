@@ -2,13 +2,13 @@ import fs from 'fs';
 import SaltoolsError from 'src/errors/saltools-error.js';
 
 export default class FwfParser {
-  parse(path, fields) {
-    this.#validateFields(fields);
-    const content = this.#readFile(path);
-    return this.#parseContent(content, fields);
+  static parse(path, fields) {
+    FwfParser.#validateFields(fields);
+    const content = FwfParser.#readFile(path);
+    return FwfParser.#parseContent(content, fields);
   }
 
-  #parseContent(content, fields) {
+  static #parseContent(content, fields) {
     if (!content.trim()) return [];
 
     const lines = content.split(/\r?\n/);
@@ -16,13 +16,13 @@ export default class FwfParser {
 
     for (const line of lines) {
       if (line === '') continue;
-      const item = this.#parseLine(line, fields);
+      const item = FwfParser.#parseLine(line, fields);
       parsedItems.push(item);
     }
     return parsedItems;
   }
 
-  #parseLine(line, fields) {
+  static #parseLine(line, fields) {
     const result = {};
     for (const field of fields) {
       const end = Math.min(field.end, line.length);
@@ -31,7 +31,7 @@ export default class FwfParser {
     return result;
   }
 
-  #readFile(path) {
+  static #readFile(path) {
     try {
       return fs.readFileSync(path, 'utf8');
     } catch (error) {
@@ -39,7 +39,7 @@ export default class FwfParser {
     }
   }
 
-  #validateFields(fields) {
+  static #validateFields(fields) {
     if (!Array.isArray(fields)) {
       throw new SaltoolsError('Fields must be an array');
     }
@@ -47,11 +47,11 @@ export default class FwfParser {
       throw new SaltoolsError('Fields array cannot be empty');
     }
     for (const field of fields) {
-      this.#validateField(field);
+      FwfParser.#validateField(field);
     }
   }
 
-  #validateField(field) {
+  static #validateField(field) {
     if (
       typeof field !== 'object' ||
       field === null ||

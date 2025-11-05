@@ -5,11 +5,9 @@ import FwfParser from 'src/commands/parse/fwf-parser.js';
 import SaltoolsError from 'src/errors/saltools-error.js';
 
 describe('FwfParser', () => {
-  let parser;
   const testDir = path.join(process.cwd(), 'tests', 'temp');
 
   beforeEach(() => {
-    parser = new FwfParser();
     if (!fs.existsSync(testDir)) {
       fs.mkdirSync(testDir, { recursive: true });
     }
@@ -37,7 +35,7 @@ describe('FwfParser', () => {
         { key: 'city', start: 12, end: 20 },
       ];
 
-      const result = parser.parse(filePath, fields);
+      const result = FwfParser.parse(filePath, fields);
 
       expect(result).toEqual([
         { name: 'John Doe', age: '30', city: 'New York' },
@@ -51,7 +49,7 @@ describe('FwfParser', () => {
 
       const fields = [{ key: 'name', start: 0, end: 10 }];
 
-      const result = parser.parse(filePath, fields);
+      const result = FwfParser.parse(filePath, fields);
 
       expect(result).toEqual([]);
     });
@@ -62,7 +60,7 @@ describe('FwfParser', () => {
 
       const fields = [{ key: 'name', start: 0, end: 10 }];
 
-      const result = parser.parse(filePath, fields);
+      const result = FwfParser.parse(filePath, fields);
 
       expect(result).toEqual([]);
     });
@@ -76,7 +74,7 @@ describe('FwfParser', () => {
         { key: 'age', start: 10, end: 12 },
       ];
 
-      const result = parser.parse(filePath, fields);
+      const result = FwfParser.parse(filePath, fields);
 
       expect(result).toEqual([
         { name: 'John Doe', age: '30' },
@@ -93,7 +91,7 @@ describe('FwfParser', () => {
         { key: 'age', start: 10, end: 12 },
       ];
 
-      const result = parser.parse(filePath, fields);
+      const result = FwfParser.parse(filePath, fields);
 
       expect(result).toEqual([
         { name: 'John Doe', age: '30' },
@@ -110,7 +108,7 @@ describe('FwfParser', () => {
         { key: 'full', start: 0, end: 15 },
       ];
 
-      const result = parser.parse(filePath, fields);
+      const result = FwfParser.parse(filePath, fields);
 
       expect(result).toEqual([{ name: 'John Doe', full: 'John Doe  30' }]);
     });
@@ -124,7 +122,7 @@ describe('FwfParser', () => {
         { key: 'age', start: 10, end: 12 },
       ];
 
-      const result = parser.parse(filePath, fields);
+      const result = FwfParser.parse(filePath, fields);
 
       expect(result).toEqual([
         { name: 'John', age: '' },
@@ -138,7 +136,7 @@ describe('FwfParser', () => {
 
       const fields = [{ key: 'name', start: 0, end: 10 }];
 
-      const result = parser.parse(filePath, fields);
+      const result = FwfParser.parse(filePath, fields);
 
       expect(result).toEqual([]);
     });
@@ -150,11 +148,11 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'content');
 
       expect(() => {
-        parser.parse(filePath, null);
+        FwfParser.parse(filePath, null);
       }).toThrow(SaltoolsError);
 
       expect(() => {
-        parser.parse(filePath, null);
+        FwfParser.parse(filePath, null);
       }).toThrow('Fields must be an array');
     });
 
@@ -163,7 +161,7 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'content');
 
       expect(() => {
-        parser.parse(filePath, [null]);
+        FwfParser.parse(filePath, [null]);
       }).toThrow(SaltoolsError);
     });
 
@@ -172,7 +170,7 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'content');
 
       expect(() => {
-        parser.parse(filePath, ['string']);
+        FwfParser.parse(filePath, ['string']);
       }).toThrow(SaltoolsError);
     });
 
@@ -181,7 +179,7 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'content');
 
       expect(() => {
-        parser.parse(filePath, [{ start: 0, end: 10 }]);
+        FwfParser.parse(filePath, [{ start: 0, end: 10 }]);
       }).toThrow(SaltoolsError);
     });
 
@@ -190,7 +188,7 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'content');
 
       expect(() => {
-        parser.parse(filePath, [{ key: 'name', end: 10 }]);
+        FwfParser.parse(filePath, [{ key: 'name', end: 10 }]);
       }).toThrow(SaltoolsError);
     });
 
@@ -199,7 +197,7 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'content');
 
       expect(() => {
-        parser.parse(filePath, [{ key: 'name', start: 0 }]);
+        FwfParser.parse(filePath, [{ key: 'name', start: 0 }]);
       }).toThrow(SaltoolsError);
     });
 
@@ -210,7 +208,7 @@ describe('FwfParser', () => {
       const field = Object.create({ key: 'inherited', start: 0, end: 10 });
 
       expect(() => {
-        parser.parse(filePath, [field]);
+        FwfParser.parse(filePath, [field]);
       }).toThrow(SaltoolsError);
     });
 
@@ -224,7 +222,7 @@ describe('FwfParser', () => {
       ];
 
       expect(() => {
-        parser.parse(filePath, fields);
+        FwfParser.parse(filePath, fields);
       }).not.toThrow();
     });
   });
@@ -235,11 +233,11 @@ describe('FwfParser', () => {
       const fields = [{ key: 'name', start: 0, end: 10 }];
 
       expect(() => {
-        parser.parse(filePath, fields);
+        FwfParser.parse(filePath, fields);
       }).toThrow(SaltoolsError);
 
       expect(() => {
-        parser.parse(filePath, fields);
+        FwfParser.parse(filePath, fields);
       }).toThrow('Error reading file');
     });
 
@@ -248,7 +246,7 @@ describe('FwfParser', () => {
       const fields = [{ key: 'name', start: 0, end: 10 }];
 
       expect(() => {
-        parser.parse(filePath, fields);
+        FwfParser.parse(filePath, fields);
       }).toThrow(SaltoolsError);
     });
   });
@@ -264,11 +262,11 @@ describe('FwfParser', () => {
       ];
 
       expect(() => {
-        parser.parse(filePath, fields);
+        FwfParser.parse(filePath, fields);
       }).toThrow(SaltoolsError);
 
       expect(() => {
-        parser.parse(filePath, fields);
+        FwfParser.parse(filePath, fields);
       }).toThrow("Field 'name' must have end > start");
     });
 
@@ -279,11 +277,11 @@ describe('FwfParser', () => {
       const fields = [{ key: 'name', start: 10, end: 5 }];
 
       expect(() => {
-        parser.parse(filePath, fields);
+        FwfParser.parse(filePath, fields);
       }).toThrow(SaltoolsError);
 
       expect(() => {
-        parser.parse(filePath, fields);
+        FwfParser.parse(filePath, fields);
       }).toThrow("Field 'name' must have end > start");
     });
 
@@ -293,7 +291,7 @@ describe('FwfParser', () => {
 
       const fields = [{ key: 'name', start: 0, end: 20 }];
 
-      const result = parser.parse(filePath, fields);
+      const result = FwfParser.parse(filePath, fields);
 
       expect(result).toEqual([{ name: 'John' }]);
     });
@@ -303,11 +301,11 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'John Doe\nJane Smith');
 
       expect(() => {
-        parser.parse(filePath, []);
+        FwfParser.parse(filePath, []);
       }).toThrow(SaltoolsError);
 
       expect(() => {
-        parser.parse(filePath, []);
+        FwfParser.parse(filePath, []);
       }).toThrow('Fields array cannot be empty');
     });
 
@@ -320,7 +318,7 @@ describe('FwfParser', () => {
         { key: 'age', start: 10, end: 12 },
       ];
 
-      const result = parser.parse(filePath, fields);
+      const result = FwfParser.parse(filePath, fields);
 
       expect(result).toEqual([{ name: 'John Doe', age: '30' }]);
     });
