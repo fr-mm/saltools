@@ -26,9 +26,26 @@ export default class FwfParser {
     const result = {};
     for (const field of fields) {
       const end = Math.min(field.end, line.length);
-      result[field.key] = line.slice(field.start, end).trim();
+      const value = line.slice(field.start, end).trim();
+      result[field.key] = FwfParser.#cast(value, field.type);
     }
     return result;
+  }
+
+  static #cast(value, type) {
+    if (!type) return value;
+    if (type === 'number') {
+      return Number(value);
+    }
+    if (type === 'bool') {
+      return this.#toBoolean(value);
+    }
+  }
+
+  static #toBoolean(value) {
+    if (['true', '1'].includes(value.toLowerCase())) return true;
+    if (['false', '0'].includes(value.toLowerCase())) return false;
+    throw new SaltoolsError(`Invalid boolean value: ${value}`);
   }
 
   static #readFile(path) {

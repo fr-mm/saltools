@@ -322,5 +322,50 @@ describe('FwfParser', () => {
 
       expect(result).toEqual([{ name: 'John Doe', age: '30' }]);
     });
+
+    test('test_parse_WHEN_numberType_THEN_castsToNumber', () => {
+      const filePath = path.join(testDir, 'numbers.txt');
+      fs.writeFileSync(filePath, 'John Doe  30\n');
+
+      const fields = [
+        { key: 'name', start: 0, end: 10 },
+        { key: 'age', start: 10, end: 12, type: 'number' },
+      ];
+
+      const result = FwfParser.parse(filePath, fields);
+
+      expect(result).toEqual([{ name: 'John Doe', age: 30 }]);
+    });
+
+    test('test_parse_WHEN_boolType_THEN_castsToBoolean', () => {
+      const filePath = path.join(testDir, 'bools.txt');
+      fs.writeFileSync(filePath, 'John Doe  1 \nJane Smith0 ');
+
+      const fields = [
+        { key: 'name', start: 0, end: 10 },
+        { key: 'active', start: 10, end: 13, type: 'bool' },
+      ];
+
+      const result = FwfParser.parse(filePath, fields);
+
+      expect(result).toEqual([
+        { name: 'John Doe', active: true },
+        { name: 'Jane Smith', active: false },
+      ]);
+    });
+
+    test('test_parse_WHEN_boolTypeInvalid_THEN_throwsSaltoolsError', () => {
+      const filePath = path.join(testDir, 'invalid-bool.txt');
+      fs.writeFileSync(filePath, 'John Doe  xx');
+
+      const fields = [
+        { key: 'name', start: 0, end: 10 },
+        { key: 'active', start: 12, end: 14, type: 'bool' },
+      ];
+
+      expect(() => {
+        FwfParser.parse(filePath, fields);
+      }).toThrow(SaltoolsError);
+    });
   });
 });

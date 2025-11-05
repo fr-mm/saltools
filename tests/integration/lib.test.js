@@ -1,5 +1,7 @@
-import { describe, test, expect, jest } from '@jest/globals';
+import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { helloWorld, parse, errors } from 'src/index.js';
+import fs from 'fs';
+import path from 'path';
 
 const saltools = { helloWorld, parse, errors };
 
@@ -26,6 +28,8 @@ describe('saltools - integration tests', () => {
       expect(typeof saltools.parse.date).toBe('function');
       expect(saltools.parse.csv).toBeDefined();
       expect(typeof saltools.parse.csv).toBe('function');
+      expect(saltools.parse.fwf).toBeDefined();
+      expect(typeof saltools.parse.fwf).toBe('function');
       expect(saltools.parse.email).toBeDefined();
       expect(typeof saltools.parse.email).toBe('function');
       expect(saltools.parse.doc).toBeDefined();
@@ -99,23 +103,23 @@ describe('saltools - integration tests', () => {
 
   describe('parse.phone', () => {
     test('test_parsePhone_WHEN_validPhone_THEN_returnsFormattedPhone', () => {
-      const result = saltools.parse.phone('11987654321', { 
-        numbersOnly: false, 
-        addCountryCode: false 
+      const result = saltools.parse.phone('11987654321', {
+        numbersOnly: false,
+        addCountryCode: false,
       });
       expect(result).toBe('(11) 98765-4321');
     });
 
     test('test_parsePhone_WHEN_withCountryCode_THEN_includesCountryCode', () => {
-      const result = saltools.parse.phone('11987654321', { 
-        numbersOnly: false 
+      const result = saltools.parse.phone('11987654321', {
+        numbersOnly: false,
       });
       expect(result).toBe('55 (11) 98765-4321');
     });
 
     test('test_parsePhone_WHEN_withPlusPrefix_THEN_includesPlusPrefix', () => {
-      const result = saltools.parse.phone('11987654321', { 
-        addPlusPrefix: true 
+      const result = saltools.parse.phone('11987654321', {
+        addPlusPrefix: true,
       });
       expect(result).toBe('+5511987654321');
     });
@@ -131,7 +135,7 @@ describe('saltools - integration tests', () => {
     test('test_parseDate_WHEN_isoToFormatted_THEN_convertsFormat', () => {
       const result = saltools.parse.date('2024-03-15T10:30:00Z', {
         inputFormat: 'iso',
-        outputFormat: 'dd/mm/yyyy'
+        outputFormat: 'dd/mm/yyyy',
       });
       expect(result).toBe('15/03/2024');
     });
@@ -139,7 +143,7 @@ describe('saltools - integration tests', () => {
     test('test_parseDate_WHEN_ddmmToMMDD_THEN_convertsFormat', () => {
       const result = saltools.parse.date('15/03/2024', {
         inputFormat: 'dd/mm/yyyy',
-        outputFormat: 'mm/dd/yyyy'
+        outputFormat: 'mm/dd/yyyy',
       });
       expect(result).toBe('03/15/2024');
     });
@@ -147,7 +151,7 @@ describe('saltools - integration tests', () => {
     test('test_parseDate_WHEN_noSeparators_THEN_parsesCorrectly', () => {
       const result = saltools.parse.date('15032024', {
         inputFormat: 'ddmmyyyy',
-        outputFormat: 'dd/mm/yyyy'
+        outputFormat: 'dd/mm/yyyy',
       });
       expect(result).toBe('15/03/2024');
     });
@@ -155,7 +159,7 @@ describe('saltools - integration tests', () => {
     test('test_parseDate_WHEN_withTwoDigitYear_THEN_returnsTwoDigitYear', () => {
       const result = saltools.parse.date('15/03/2024', {
         inputFormat: 'dd/mm/yyyy',
-        outputFormat: 'dd/mm/yy'
+        outputFormat: 'dd/mm/yy',
       });
       expect(result).toBe('15/03/24');
     });
@@ -164,7 +168,7 @@ describe('saltools - integration tests', () => {
       expect(() => {
         saltools.parse.date('invalid-date', {
           inputFormat: 'dd/mm/yyyy',
-          outputFormat: 'dd/mm/yyyy'
+          outputFormat: 'dd/mm/yyyy',
         });
       }).toThrow();
     });
@@ -177,7 +181,7 @@ describe('saltools - integration tests', () => {
         validateDMARC: false,
         validateDKIM: false,
         validateMX: false,
-        validateSMTP: false
+        validateSMTP: false,
       });
       expect(result).toBe('test@example.com');
     });
@@ -189,7 +193,7 @@ describe('saltools - integration tests', () => {
           validateDMARC: false,
           validateDKIM: false,
           validateMX: false,
-          validateSMTP: false
+          validateSMTP: false,
         })
       ).rejects.toThrow();
     });
@@ -254,6 +258,44 @@ describe('saltools - integration tests', () => {
     });
   });
 
+  describe('parse.fwf', () => {
+    const testDir = path.join(process.cwd(), 'tests', 'temp_integration');
+
+    beforeEach(() => {
+      if (!fs.existsSync(testDir)) {
+        fs.mkdirSync(testDir, { recursive: true });
+      }
+    });
+
+    afterEach(() => {
+      try {
+        if (fs.existsSync(testDir)) {
+          fs.rmSync(testDir, { recursive: true, force: true });
+        }
+      } catch (_) {
+        /* ignore */
+      }
+    });
+
+    test('test_parseFwf_WHEN_validFile_THEN_parsesFixedWidth', () => {
+      const filePath = path.join(testDir, 'fwf.txt');
+      fs.writeFileSync(filePath, 'John Doe  30New York\nJane Smith25London  ');
+
+      const fields = [
+        { key: 'name', start: 0, end: 10 },
+        { key: 'age', start: 10, end: 12 },
+        { key: 'city', start: 12, end: 20 },
+      ];
+
+      const result = saltools.parse.fwf(filePath, fields);
+
+      expect(result).toEqual([
+        { name: 'John Doe', age: '30', city: 'New York' },
+        { name: 'Jane Smith', age: '25', city: 'London' },
+      ]);
+    });
+  });
+
   describe('error handling', () => {
     test('test_errorsExport_WHEN_accessed_THEN_exportsErrorClass', () => {
       expect(saltools.errors.SaltoolsError).toBeDefined();
@@ -272,16 +314,16 @@ describe('saltools - integration tests', () => {
       const userData = {
         name: '  joão silva  ',
         phone: '11987654321',
-        age: '25'
+        age: '25',
       };
 
       const parsed = {
         name: saltools.parse.string(userData.name, { capitalize: true }),
-        phone: saltools.parse.phone(userData.phone, { 
-          numbersOnly: false, 
-          addCountryCode: false 
+        phone: saltools.parse.phone(userData.phone, {
+          numbersOnly: false,
+          addCountryCode: false,
         }),
-        age: saltools.parse.integer(userData.age, { allowZero: true })
+        age: saltools.parse.integer(userData.age, { allowZero: true }),
       };
 
       expect(parsed.name).toBe('João Silva');
@@ -292,19 +334,19 @@ describe('saltools - integration tests', () => {
     test('test_parseDateConversion_WHEN_convertingMultipleDates_THEN_maintainsConsistency', () => {
       const dates = [
         { input: '15/03/2024', format: 'dd/mm/yyyy' },
-        { input: '2024-03-15T10:30:00Z', format: 'iso' }
+        { input: '2024-03-15T10:30:00Z', format: 'iso' },
       ];
 
-      const results = dates.map(date => {
+      const results = dates.map((date) => {
         if (date.format === 'iso') {
           return saltools.parse.date(date.input, {
             inputFormat: 'iso',
-            outputFormat: 'dd/mm/yyyy'
+            outputFormat: 'dd/mm/yyyy',
           });
         }
         return saltools.parse.date(date.input, {
           inputFormat: 'dd/mm/yyyy',
-          outputFormat: 'dd/mm/yyyy'
+          outputFormat: 'dd/mm/yyyy',
         });
       });
 
@@ -330,18 +372,18 @@ describe('saltools - integration tests', () => {
         phone: '11987654321',
         age: '25',
         cpf: '123.456.789-00',
-        cnpj: '12.345.678/0001-90'
+        cnpj: '12.345.678/0001-90',
       };
 
       const parsed = {
         name: saltools.parse.string(userData.name, { capitalize: true }),
-        phone: saltools.parse.phone(userData.phone, { 
-          numbersOnly: false, 
-          addCountryCode: false 
+        phone: saltools.parse.phone(userData.phone, {
+          numbersOnly: false,
+          addCountryCode: false,
         }),
         age: saltools.parse.integer(userData.age, { allowZero: true }),
         cpf: saltools.parse.doc(userData.cpf),
-        cnpj: saltools.parse.doc(userData.cnpj, { numbersOnly: false })
+        cnpj: saltools.parse.doc(userData.cnpj, { numbersOnly: false }),
       };
 
       expect(parsed.name).toBe('João Silva');
@@ -361,4 +403,3 @@ describe('saltools - integration tests', () => {
     });
   });
 });
-
