@@ -6,21 +6,33 @@ import { param } from 'src/helper/index.js';
 
 export default class EmailParser {
   static #DEFAULT_OPTIONS = {
-    allowAlias: false,
+    allowAlias: true,
     allowDisposable: false,
     validateSPF: true,
     validateDMARC: true,
     validateDKIM: true,
     validateMX: true,
     validateSMTP: true,
+    throwError: true,
   };
   static #DISPOSABLE_DOMAINS = ['mailinator.com', 'tempmail.com', 'dispostable.com'];
   static #ALIAS_DOMAINS = ['gmail.com'];
   static #cachedOptions = new CachedOptions();
 
   static async parse(email, options = {}) {
+    const mergedOptions = { ...EmailParser.#DEFAULT_OPTIONS, ...options };
+    try {
+      return await this.#parse(email, mergedOptions);
+    } catch (error) {
+      if (!mergedOptions.throwError && error instanceof SaltoolsError) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  static async #parse(email, options) {
     param.string({ value: email, name: 'email', required: true });
-    options = { ...EmailParser.#DEFAULT_OPTIONS, ...options };
     EmailParser.#validateOptions(options);
 
     email = EmailParser.#parseEmail(email);
@@ -43,6 +55,7 @@ export default class EmailParser {
     param.bool({ value: options.validateDKIM, name: 'validateDKIM' });
     param.bool({ value: options.validateMX, name: 'validateMX' });
     param.bool({ value: options.validateSMTP, name: 'validateSMTP' });
+    param.bool({ value: options.throwError, name: 'throwError' });
 
     EmailParser.#cachedOptions.cache(options);
   }

@@ -119,13 +119,14 @@ describe('EmailParser', () => {
       expect(dnsValidatorSpy).toHaveBeenCalledWith(
         expect.objectContaining({ value: 'test@example.com', domain: 'example.com', local: 'test' }),
         {
-          allowAlias: false,
+          allowAlias: true,
           allowDisposable: false,
           validateSPF: false,
           validateDMARC: false,
           validateDKIM: false,
           validateMX: false,
           validateSMTP: false,
+          throwError: true,
         }
       );
     });
@@ -135,13 +136,14 @@ describe('EmailParser', () => {
       expect(dnsValidatorSpy).toHaveBeenCalledWith(
         expect.objectContaining({ value: 'test@example.com', domain: 'example.com', local: 'test' }),
         {
-          allowAlias: false,
+          allowAlias: true,
           allowDisposable: false,
           validateSPF: true,
           validateDMARC: true,
           validateDKIM: true,
           validateMX: true,
           validateSMTP: true,
+          throwError: true,
         }
       );
     });
@@ -158,6 +160,57 @@ describe('EmailParser', () => {
       const error = new SaltoolsError('DNS validation failed');
       dnsValidatorSpy.mockRejectedValue(error);
       await expect(EmailParser.parse('test@example.com')).rejects.toThrow(error);
+    });
+
+    test('test_parse_WHEN_throwErrorTrueAndInvalidEmail_THEN_throwsSaltoolsError', async () => {
+      await expect(EmailParser.parse('invalid-email', { throwError: true })).rejects.toThrow(SaltoolsError);
+    });
+
+    test('test_parse_WHEN_throwErrorFalseAndInvalidEmail_THEN_returnsNull', async () => {
+      const result = await EmailParser.parse('invalid-email', { throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_parse_WHEN_throwErrorFalseAndInvalidSyntax_THEN_returnsNull', async () => {
+      const result = await EmailParser.parse('not-an-email', { throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_parse_WHEN_throwErrorFalseAndIsAlias_THEN_returnsNull', async () => {
+      const result = await EmailParser.parse('test+alias@gmail.com', {
+        allowAlias: false,
+        throwError: false,
+      });
+      expect(result).toBeNull();
+    });
+
+    test('test_parse_WHEN_throwErrorFalseAndIsDisposable_THEN_returnsNull', async () => {
+      const result = await EmailParser.parse('test@mailinator.com', {
+        allowDisposable: false,
+        throwError: false,
+      });
+      expect(result).toBeNull();
+    });
+
+    test('test_parse_WHEN_throwErrorFalseAndDnsValidatorThrowsError_THEN_returnsNull', async () => {
+      const error = new SaltoolsError('DNS validation failed');
+      dnsValidatorSpy.mockRejectedValue(error);
+      const result = await EmailParser.parse('test@example.com', { throwError: false });
+      expect(result).toBeNull();
+    });
+
+    test('test_parse_WHEN_throwErrorFalseAndNonSaltoolsError_THEN_propagatesError', async () => {
+      const error = new Error('Non-SaltoolsError');
+      dnsValidatorSpy.mockRejectedValue(error);
+      await expect(EmailParser.parse('test@example.com', { throwError: false })).rejects.toThrow(error);
+    });
+
+    test('test_parse_WHEN_throwErrorDefaultTrueAndInvalidEmail_THEN_throwsSaltoolsError', async () => {
+      await expect(EmailParser.parse('invalid-email')).rejects.toThrow(SaltoolsError);
+    });
+
+    test('test_parse_WHEN_throwErrorIsNotBoolean_THEN_throwsSaltoolsError', async () => {
+      await expect(EmailParser.parse('test@example.com', { throwError: 'true' })).rejects.toThrow(SaltoolsError);
     });
   });
 });

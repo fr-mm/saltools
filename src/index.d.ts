@@ -231,7 +231,7 @@ export const parse: {
   /** Parse an email address
    *  @param value - The email to parse
    *  @param options - Options object
-   *  @param options.allowAlias - Default: false
+   *  @param options.allowAlias - Default: true
    *  @param options.allowDisposable - Default: false
    *  @param options.validateSPF - Default: true
    *  @param options.validateDMARC - Default: true
@@ -242,7 +242,7 @@ export const parse: {
   email(
     value: any,
     options?: {
-      /** @default false */
+      /** @default true */
       allowAlias?: boolean;
       /** @default false */
       allowDisposable?: boolean;
