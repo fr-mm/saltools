@@ -78,9 +78,9 @@ export default class FwfParser {
         "Each field must be an object with 'key', 'start', and 'end' properties."
       );
     }
-    if (field.end <= field.start) {
+    if (field.end < field.start) {
       throw new SaltoolsError(
-        `Field '${field.key}' must have end > start. Got start: ${field.start}, end: ${field.end}`
+        `Field '${field.key}' must have end >= start. Got start: ${field.start}, end: ${field.end}`
       );
     }
   }

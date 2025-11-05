@@ -252,22 +252,19 @@ describe('FwfParser', () => {
   });
 
   describe('edge cases', () => {
-    test('test_parse_WHEN_fieldsWithZeroLength_THEN_throwsError', () => {
+    test('test_parse_WHEN_fieldsWithStartEqualsEnd_THEN_extractsSingleCharacter', () => {
       const filePath = path.join(testDir, 'test.txt');
       fs.writeFileSync(filePath, 'John Doe');
 
       const fields = [
-        { key: 'name', start: 0, end: 0 },
-        { key: 'empty', start: 5, end: 5 },
+        { key: 'firstChar', start: 0, end: 0 },
+        { key: 'fifthChar', start: 4, end: 4 },
+        { key: 'sixthChar', start: 5, end: 5 },
       ];
 
-      expect(() => {
-        FwfParser.parse(filePath, fields);
-      }).toThrow(SaltoolsError);
+      const result = FwfParser.parse(filePath, fields);
 
-      expect(() => {
-        FwfParser.parse(filePath, fields);
-      }).toThrow("Field 'name' must have end > start");
+      expect(result).toEqual([{ firstChar: 'J', fifthChar: '', sixthChar: 'D' }]);
     });
 
     test('test_parse_WHEN_fieldsWithStartGreaterThanEnd_THEN_throwsError', () => {
@@ -282,7 +279,7 @@ describe('FwfParser', () => {
 
       expect(() => {
         FwfParser.parse(filePath, fields);
-      }).toThrow("Field 'name' must have end > start");
+      }).toThrow("Field 'name' must have end >= start");
     });
 
     test('test_parse_WHEN_lineShorterThanFieldEnd_THEN_usesLineLength', () => {
