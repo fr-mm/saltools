@@ -3,6 +3,15 @@ import { param } from 'src/helper/index.js';
 import CachedOptions from 'src/helper/cachedOptions.js';
 
 class NumberParser {
+  static DEFAULT_OPTIONS = {
+    allowEmptyString: false,
+    allowNull: false,
+    allowNegative: false,
+    allowZero: false,
+    integer: false,
+    varName: undefined,
+    throwError: true,
+  };
   static #cachedOptions = new CachedOptions();
 
   static parse(value, options) {
@@ -95,46 +104,12 @@ class NumberParser {
   }
 }
 
-export function number(
-  value,
-  {
-    allowEmptyString = false,
-    allowNull = false,
-    allowNegative = false,
-    allowZero = false,
-    varName = undefined,
-    throwError = true,
-  } = {}
-) {
-  return NumberParser.parse(value, {
-    allowEmptyString,
-    allowNull,
-    allowNegative,
-    allowZero,
-    varName,
-    throwError,
-    integer: false,
-  });
+export function number(value, options = {}) {
+  const mergedOptions = { ...NumberParser.DEFAULT_OPTIONS, ...options, integer: false };
+  return NumberParser.parse(value, mergedOptions);
 }
 
-export function integer(
-  value,
-  {
-    allowEmptyString = false,
-    allowNull = false,
-    allowNegative = false,
-    allowZero = false,
-    varName = undefined,
-    throwError = true,
-  } = {}
-) {
-  return NumberParser.parse(value, {
-    allowEmptyString,
-    allowNull,
-    allowNegative,
-    allowZero,
-    varName,
-    throwError,
-    integer: true,
-  });
+export function integer(value, options = {}) {
+  const mergedOptions = { ...NumberParser.DEFAULT_OPTIONS, ...options, integer: true };
+  return NumberParser.parse(value, mergedOptions);
 }

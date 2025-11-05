@@ -4,6 +4,13 @@ import { param } from 'src/helper/index.js';
 import CachedOptions from 'src/helper/cachedOptions.js';
 
 class PhoneParser {
+  static DEFAULT_OPTIONS = {
+    addCountryCode: true,
+    addPlusPrefix: false,
+    addAreaCode: true,
+    numbersOnly: true,
+    throwError: true,
+  };
   static #cachedOptions = new CachedOptions();
 
   static parse(phone, options) {
@@ -97,21 +104,7 @@ class PhoneParser {
   }
 }
 
-export default function phone(
-  phone,
-  {
-    addCountryCode = true,
-    addPlusPrefix = false,
-    addAreaCode = true,
-    numbersOnly = true,
-    throwError = true,
-  } = {}
-) {
-  return PhoneParser.parse(phone, {
-    addCountryCode,
-    addPlusPrefix,
-    addAreaCode,
-    numbersOnly,
-    throwError,
-  });
+export default function parsePhone(phone, options = {}) {
+  const mergedOptions = { ...PhoneParser.DEFAULT_OPTIONS, ...options };
+  return PhoneParser.parse(phone, mergedOptions);
 }

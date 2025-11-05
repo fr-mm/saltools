@@ -4,6 +4,14 @@ import CachedOptions from 'src/helper/cachedOptions.js';
 
 class StringParser {
   static #DO_NOT_CAPITALIZE = ['de', 'do', 'da', 'dos', 'das', 'e'];
+  static DEFAULT_OPTIONS = {
+    allowEmpty: false,
+    cast: false,
+    trim: true,
+    capitalize: false,
+    varName: undefined,
+    throwError: true,
+  };
 
   static #cachedOptions = new CachedOptions();
 
@@ -92,16 +100,7 @@ class StringParser {
   }
 }
 
-export default function string(
-  value,
-  {
-    allowEmpty = false,
-    cast = false,
-    trim = true,
-    capitalize = false,
-    varName = undefined,
-    throwError = true,
-  } = {}
-) {
-  return StringParser.parse(value, { allowEmpty, cast, trim, capitalize, varName, throwError });
+export default function string(value, options = {}) {
+  const mergedOptions = { ...StringParser.DEFAULT_OPTIONS, ...options };
+  return StringParser.parse(value, mergedOptions);
 }
