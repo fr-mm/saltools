@@ -1,6 +1,6 @@
 {
   "name": "@fr-mm/saltools",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Vanilla JS utilities for Jenkins pipelines",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -27,6 +27,7 @@
     "registry": "https://npm.pkg.github.com/"
   },
   "scripts": {
+    "prepack": "npm run build",
     "build": "rollup -c",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
