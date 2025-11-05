@@ -16,7 +16,10 @@ describe('CSVFileReader', () => {
   afterEach(() => {
     try {
       if (fs.existsSync(testDir)) {
-        fs.rmSync(testDir, { recursive: true, force: true });
+        const files = fs.readdirSync(testDir);
+        for (const file of files) {
+          fs.unlinkSync(path.join(testDir, file));
+        }
       }
     } catch (_) {
       /* ignore cleanup errors */
@@ -24,9 +27,6 @@ describe('CSVFileReader', () => {
   });
 
   test('test_read_WHEN_validCSVFile_THEN_returnsFileContent', () => {
-    if (!fs.existsSync(testDir)) {
-      fs.mkdirSync(testDir, { recursive: true });
-    }
     const filePath = path.join(testDir, 'test.csv');
     const content = 'name,age\nJohn,30\nJane,25';
     fs.writeFileSync(filePath, content);
@@ -51,9 +51,6 @@ describe('CSVFileReader', () => {
   });
 
   test('test_read_WHEN_notCSVFile_THEN_throwsError', () => {
-    if (!fs.existsSync(testDir)) {
-      fs.mkdirSync(testDir, { recursive: true });
-    }
     const filePath = path.join(testDir, 'test.txt');
     fs.writeFileSync(filePath, 'some content');
     const reader = new CSVFileReader(filePath);
@@ -62,16 +59,15 @@ describe('CSVFileReader', () => {
       reader.read();
     }).toThrow(SaltoolsError);
 
-    const reader2 = new CSVFileReader(filePath);
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, 'some content');
+    }
     expect(() => {
-      reader2.read();
+      reader.read();
     }).toThrow('não é um arquivo CSV');
   });
 
   test('test_read_WHEN_emptyCSVFile_THEN_returnsEmptyString', () => {
-    if (!fs.existsSync(testDir)) {
-      fs.mkdirSync(testDir, { recursive: true });
-    }
     const filePath = path.join(testDir, 'empty.csv');
     fs.writeFileSync(filePath, '');
     const reader = new CSVFileReader(filePath);
