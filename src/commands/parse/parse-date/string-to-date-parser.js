@@ -5,19 +5,19 @@ export default class StringToDateParser {
   static #lastFormat = null;
   static #formatCache = null;
 
-  parse(date, format) {
-    this.#validateParams(date, format);
+  static parse(date, format) {
+    StringToDateParser.#validateParams(date, format);
     date = date.trim();
     format = format.trim();
-    return format.toLowerCase() === 'iso' ? this.#parseIso(date) : this.#parseCustomFormat(date, format);
+    return format.toLowerCase() === 'iso' ? StringToDateParser.#parseIso(date) : StringToDateParser.#parseCustomFormat(date, format);
   }
 
-  #validateParams(date, format) {
+  static #validateParams(date, format) {
     param.string({ value: date, name: 'date', required: true });
     param.string({ value: format, name: 'format', required: true });
   }
 
-  #parseIso(date) {
+  static #parseIso(date) {
     const parsed = new Date(date);
     if (isNaN(parsed.getTime())) {
       throw new SaltoolsError(`Data inválida: ${date}`);
@@ -25,29 +25,29 @@ export default class StringToDateParser {
     return parsed;
   }
 
-  #parseCustomFormat(date, format) {
+  static #parseCustomFormat(date, format) {
     let separator, formatParts, indices;
 
     if (StringToDateParser.#lastFormat === format) {
       ({ separator, formatParts, indices } = StringToDateParser.#formatCache);
     } else {
-      this.#validateFormat(format);
-      const extracted = this.#extractSeparatorFromFormat(format);
+      StringToDateParser.#validateFormat(format);
+      const extracted = StringToDateParser.#extractSeparatorFromFormat(format);
       separator = extracted.separator;
       formatParts = extracted.formatParts;
-      indices = this.#findFormatIndices(formatParts);
+      indices = StringToDateParser.#findFormatIndices(formatParts);
       
       StringToDateParser.#lastFormat = format;
       StringToDateParser.#formatCache = { separator, formatParts, indices };
     }
 
-    this.#validateSeparatorMatch(separator, date);
-    const parts = this.#extractParts(date, separator, formatParts);
-    const { day, month, year } = this.#parseDateValues(parts, indices, formatParts, date);
-    return this.#createAndValidateDate(day, month, year, date);
+    StringToDateParser.#validateSeparatorMatch(separator, date);
+    const parts = StringToDateParser.#extractParts(date, separator, formatParts);
+    const { day, month, year } = StringToDateParser.#parseDateValues(parts, indices, formatParts, date);
+    return StringToDateParser.#createAndValidateDate(day, month, year, date);
   }
 
-  #extractSeparatorFromFormat(format) {
+  static #extractSeparatorFromFormat(format) {
     const formatSeparators = format.match(/[^dmy]/gi) || [];
     const uniqueFormatSeparators = [...new Set(formatSeparators)];
     
@@ -61,7 +61,7 @@ export default class StringToDateParser {
     if (separator) {
       formatParts = format.split(separator);
     } else {
-      formatParts = this.#parseFormatWithoutSeparator(format);
+      formatParts = StringToDateParser.#parseFormatWithoutSeparator(format);
     }
     
     if (formatParts.length !== 3) {
@@ -71,7 +71,7 @@ export default class StringToDateParser {
     return { separator, formatParts };
   }
 
-  #parseFormatWithoutSeparator(format) {
+  static #parseFormatWithoutSeparator(format) {
     const parts = [];
     let currentPart = '';
     let currentType = '';
@@ -98,7 +98,7 @@ export default class StringToDateParser {
     return parts;
   }
 
-  #validateSeparatorMatch(formatSeparator, date) {
+  static #validateSeparatorMatch(formatSeparator, date) {
     const dateSeparators = date.match(/[^0-9]/g) || [];
     const uniqueDateSeparators = [...new Set(dateSeparators)];
     
@@ -113,7 +113,7 @@ export default class StringToDateParser {
     }
   }
 
-  #extractParts(date, separator, formatParts) {
+  static #extractParts(date, separator, formatParts) {
     if (separator) {
       const parts = date.split(separator);
       
@@ -124,10 +124,10 @@ export default class StringToDateParser {
       return parts;
     }
 
-    return this.#extractPartsWithoutSeparator(date, formatParts);
+    return StringToDateParser.#extractPartsWithoutSeparator(date, formatParts);
   }
 
-  #extractPartsWithoutSeparator(date, formatParts) {
+  static #extractPartsWithoutSeparator(date, formatParts) {
     const parts = [];
     let index = 0;
     
@@ -150,7 +150,7 @@ export default class StringToDateParser {
     return parts;
   }
 
-  #findFormatIndices(formatParts) {
+  static #findFormatIndices(formatParts) {
     const dayIndex = formatParts.findIndex(p => p.toLowerCase().includes('d'));
     const monthIndex = formatParts.findIndex(p => p.toLowerCase().includes('m'));
     const yearIndex = formatParts.findIndex(p => p.toLowerCase().includes('y'));
@@ -162,7 +162,7 @@ export default class StringToDateParser {
     return { dayIndex, monthIndex, yearIndex };
   }
 
-  #parseDateValues(parts, indices, formatParts, originalDate) {
+  static #parseDateValues(parts, indices, formatParts, originalDate) {
     let day = parseInt(parts[indices.dayIndex], 10);
     let month = parseInt(parts[indices.monthIndex], 10);
     let year = parseInt(parts[indices.yearIndex], 10);
@@ -173,7 +173,7 @@ export default class StringToDateParser {
 
     const yearFormat = formatParts[indices.yearIndex].toLowerCase();
     if (yearFormat.length === 2) {
-      year = this.#convertTwoDigitYear(year);
+      year = StringToDateParser.#convertTwoDigitYear(year);
     }
 
     month = month - 1;
@@ -181,7 +181,7 @@ export default class StringToDateParser {
     return { day, month, year };
   }
 
-  #createAndValidateDate(day, month, year, originalDate) {
+  static #createAndValidateDate(day, month, year, originalDate) {
     const parsed = new Date(year, month, day);
     
     if (parsed.getDate() !== day || parsed.getMonth() !== month || parsed.getFullYear() !== year) {
@@ -191,7 +191,7 @@ export default class StringToDateParser {
     return parsed;
   }
 
-  #validateFormat(format) {
+  static #validateFormat(format) {
     const lowerFormat = format.toLowerCase();
     const dCount = (lowerFormat.match(/d/g) || []).length;
     const mCount = (lowerFormat.match(/m/g) || []).length;
@@ -206,7 +206,7 @@ export default class StringToDateParser {
     }
   }
 
-  #convertTwoDigitYear(year) {
+  static #convertTwoDigitYear(year) {
     const currentYear = new Date().getFullYear();
     const century = Math.floor(currentYear / 100) * 100;
     return year < 50 ? century + year : century - 100 + year;

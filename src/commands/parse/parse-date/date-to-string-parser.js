@@ -5,13 +5,15 @@ export default class DateToStringParser {
   static #lastFormat = null;
   static #formatCache = null;
 
-  parse(date, format) {
-    this.#validateParams(date, format);
+  static parse(date, format) {
+    DateToStringParser.#validateParams(date, format);
     format = format.trim();
-    return format.toLowerCase() === 'iso' ? this.#formatIso(date) : this.#formatCustomFormat(date, format);
+    return format.toLowerCase() === 'iso'
+      ? DateToStringParser.#formatIso(date)
+      : DateToStringParser.#formatCustomFormat(date, format);
   }
 
-  #validateParams(date, format) {
+  static #validateParams(date, format) {
     if (!(date instanceof Date)) {
       throw new SaltoolsError('date deve ser uma instância de Date');
     }
@@ -21,22 +23,22 @@ export default class DateToStringParser {
     param.string({ value: format, name: 'format', required: true });
   }
 
-  #formatIso(date) {
+  static #formatIso(date) {
     return date.toISOString();
   }
 
-  #formatCustomFormat(date, format) {
+  static #formatCustomFormat(date, format) {
     let separator, formatParts, indices;
 
     if (DateToStringParser.#lastFormat === format) {
       ({ separator, formatParts, indices } = DateToStringParser.#formatCache);
     } else {
-      this.#validateFormat(format);
-      const extracted = this.#extractSeparatorFromFormat(format);
+      DateToStringParser.#validateFormat(format);
+      const extracted = DateToStringParser.#extractSeparatorFromFormat(format);
       separator = extracted.separator;
       formatParts = extracted.formatParts;
-      indices = this.#findFormatIndices(formatParts);
-      
+      indices = DateToStringParser.#findFormatIndices(formatParts);
+
       DateToStringParser.#lastFormat = format;
       DateToStringParser.#formatCache = { separator, formatParts, indices };
     }
@@ -45,9 +47,9 @@ export default class DateToStringParser {
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
 
-    const dayStr = this.#formatValue(day, formatParts[indices.dayIndex]);
-    const monthStr = this.#formatValue(month, formatParts[indices.monthIndex]);
-    const yearStr = this.#formatValue(year, formatParts[indices.yearIndex], true);
+    const dayStr = DateToStringParser.#formatValue(day, formatParts[indices.dayIndex]);
+    const monthStr = DateToStringParser.#formatValue(month, formatParts[indices.monthIndex]);
+    const yearStr = DateToStringParser.#formatValue(year, formatParts[indices.yearIndex], true);
 
     const parts = [];
     parts[indices.dayIndex] = dayStr;
@@ -57,23 +59,23 @@ export default class DateToStringParser {
     return parts.join(separator);
   }
 
-  #extractSeparatorFromFormat(format) {
+  static #extractSeparatorFromFormat(format) {
     const formatSeparators = format.match(/[^dmy]/gi) || [];
     const uniqueFormatSeparators = [...new Set(formatSeparators)];
-    
+
     if (uniqueFormatSeparators.length > 1) {
       throw new SaltoolsError(`Formato contém separadores inconsistentes: ${format}`);
     }
 
     const separator = uniqueFormatSeparators[0] || '';
     let formatParts;
-    
+
     if (separator) {
       formatParts = format.split(separator);
     } else {
-      formatParts = this.#parseFormatWithoutSeparator(format);
+      formatParts = DateToStringParser.#parseFormatWithoutSeparator(format);
     }
-    
+
     if (formatParts.length !== 3) {
       throw new SaltoolsError(`Formato inválido: ${format}`);
     }
@@ -81,14 +83,14 @@ export default class DateToStringParser {
     return { separator, formatParts };
   }
 
-  #parseFormatWithoutSeparator(format) {
+  static #parseFormatWithoutSeparator(format) {
     const parts = [];
     let currentPart = '';
     let currentType = '';
-    
+
     for (const char of format) {
       const lowerChar = char.toLowerCase();
-      
+
       if (lowerChar === 'd' || lowerChar === 'm' || lowerChar === 'y') {
         if (currentType && currentType !== lowerChar) {
           parts.push(currentPart);
@@ -100,18 +102,18 @@ export default class DateToStringParser {
         }
       }
     }
-    
+
     if (currentPart) {
       parts.push(currentPart);
     }
-    
+
     return parts;
   }
 
-  #findFormatIndices(formatParts) {
-    const dayIndex = formatParts.findIndex(p => p.toLowerCase().includes('d'));
-    const monthIndex = formatParts.findIndex(p => p.toLowerCase().includes('m'));
-    const yearIndex = formatParts.findIndex(p => p.toLowerCase().includes('y'));
+  static #findFormatIndices(formatParts) {
+    const dayIndex = formatParts.findIndex((p) => p.toLowerCase().includes('d'));
+    const monthIndex = formatParts.findIndex((p) => p.toLowerCase().includes('m'));
+    const yearIndex = formatParts.findIndex((p) => p.toLowerCase().includes('y'));
 
     if (dayIndex === -1 || monthIndex === -1 || yearIndex === -1) {
       throw new SaltoolsError(`Formato inválido: formato deve conter d, m e y`);
@@ -120,7 +122,7 @@ export default class DateToStringParser {
     return { dayIndex, monthIndex, yearIndex };
   }
 
-  #formatValue(value, formatPart, isYear = false) {
+  static #formatValue(value, formatPart, isYear = false) {
     const formatLength = formatPart.length;
     let valueStr = value.toString();
 
@@ -137,7 +139,7 @@ export default class DateToStringParser {
     return valueStr;
   }
 
-  #validateFormat(format) {
+  static #validateFormat(format) {
     const lowerFormat = format.toLowerCase();
     const dCount = (lowerFormat.match(/d/g) || []).length;
     const mCount = (lowerFormat.match(/m/g) || []).length;
@@ -152,4 +154,3 @@ export default class DateToStringParser {
     }
   }
 }
-

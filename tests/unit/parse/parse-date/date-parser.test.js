@@ -1,20 +1,20 @@
-import { describe, test, expect, beforeEach, jest } from '@jest/globals';
-import { DateParser } from 'src/commands/parse/parse-date/date-parser.js';
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import DateParser from 'src/commands/parse/parse-date/date-parser.js';
+import StringToDateParser from 'src/commands/parse/parse-date/string-to-date-parser.js';
+import DateToStringParser from 'src/commands/parse/parse-date/date-to-string-parser.js';
 import SaltoolsError from 'src/errors/saltools-error.js';
 
 describe('DateParser', () => {
-  let parser;
-  let mockStringToDateParser;
-  let mockDateToStringParser;
+  let stringToDateParserSpy;
+  let dateToStringParserSpy;
 
   beforeEach(() => {
-    mockStringToDateParser = {
-      parse: jest.fn(),
-    };
-    mockDateToStringParser = {
-      parse: jest.fn(),
-    };
-    parser = new DateParser(mockStringToDateParser, mockDateToStringParser);
+    stringToDateParserSpy = jest.spyOn(StringToDateParser, 'parse');
+    dateToStringParserSpy = jest.spyOn(DateToStringParser, 'parse');
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('parse - successful conversion', () => {
@@ -25,16 +25,16 @@ describe('DateParser', () => {
       const mockDateObject = new Date('2024-03-15T10:30:00Z');
       const mockOutputString = '2024-03-15T10:30:00.000Z';
 
-      mockStringToDateParser.parse.mockReturnValue(mockDateObject);
-      mockDateToStringParser.parse.mockReturnValue(mockOutputString);
+      stringToDateParserSpy.mockReturnValue(mockDateObject);
+      dateToStringParserSpy.mockReturnValue(mockOutputString);
 
-      const result = parser.parse(inputDate, {
+      const result = DateParser.parse(inputDate, {
         inputFormat,
         outputFormat,
       });
 
-      expect(mockStringToDateParser.parse).toHaveBeenCalledWith(inputDate, inputFormat);
-      expect(mockDateToStringParser.parse).toHaveBeenCalledWith(mockDateObject, outputFormat);
+      expect(stringToDateParserSpy).toHaveBeenCalledWith(inputDate, inputFormat);
+      expect(dateToStringParserSpy).toHaveBeenCalledWith(mockDateObject, outputFormat);
       expect(result).toBe(mockOutputString);
     });
 
@@ -43,13 +43,13 @@ describe('DateParser', () => {
       const mockDateObject = new Date('2024-03-15T10:30:00Z');
       const mockOutputString = '2024-03-15T10:30:00.000Z';
 
-      mockStringToDateParser.parse.mockReturnValue(mockDateObject);
-      mockDateToStringParser.parse.mockReturnValue(mockOutputString);
+      stringToDateParserSpy.mockReturnValue(mockDateObject);
+      dateToStringParserSpy.mockReturnValue(mockOutputString);
 
-      const result = parser.parse(inputDate);
+      const result = DateParser.parse(inputDate);
 
-      expect(mockStringToDateParser.parse).toHaveBeenCalledWith(inputDate, 'iso');
-      expect(mockDateToStringParser.parse).toHaveBeenCalledWith(mockDateObject, 'iso');
+      expect(stringToDateParserSpy).toHaveBeenCalledWith(inputDate, 'iso');
+      expect(dateToStringParserSpy).toHaveBeenCalledWith(mockDateObject, 'iso');
       expect(result).toBe(mockOutputString);
     });
 
@@ -60,16 +60,16 @@ describe('DateParser', () => {
       const mockDateObject = new Date(2024, 2, 15);
       const mockOutputString = '03/15/2024';
 
-      mockStringToDateParser.parse.mockReturnValue(mockDateObject);
-      mockDateToStringParser.parse.mockReturnValue(mockOutputString);
+      stringToDateParserSpy.mockReturnValue(mockDateObject);
+      dateToStringParserSpy.mockReturnValue(mockOutputString);
 
-      const result = parser.parse(inputDate, {
+      const result = DateParser.parse(inputDate, {
         inputFormat,
         outputFormat,
       });
 
-      expect(mockStringToDateParser.parse).toHaveBeenCalledWith(inputDate, inputFormat);
-      expect(mockDateToStringParser.parse).toHaveBeenCalledWith(mockDateObject, outputFormat);
+      expect(stringToDateParserSpy).toHaveBeenCalledWith(inputDate, inputFormat);
+      expect(dateToStringParserSpy).toHaveBeenCalledWith(mockDateObject, outputFormat);
       expect(result).toBe(mockOutputString);
     });
 
@@ -79,15 +79,15 @@ describe('DateParser', () => {
       const mockDateObject = new Date(2024, 2, 15);
       const mockOutputString = '2024-03-15T00:00:00.000Z';
 
-      mockStringToDateParser.parse.mockReturnValue(mockDateObject);
-      mockDateToStringParser.parse.mockReturnValue(mockOutputString);
+      stringToDateParserSpy.mockReturnValue(mockDateObject);
+      dateToStringParserSpy.mockReturnValue(mockOutputString);
 
-      const result = parser.parse(inputDate, {
+      const result = DateParser.parse(inputDate, {
         inputFormat,
       });
 
-      expect(mockStringToDateParser.parse).toHaveBeenCalledWith(inputDate, inputFormat);
-      expect(mockDateToStringParser.parse).toHaveBeenCalledWith(mockDateObject, 'iso');
+      expect(stringToDateParserSpy).toHaveBeenCalledWith(inputDate, inputFormat);
+      expect(dateToStringParserSpy).toHaveBeenCalledWith(mockDateObject, 'iso');
       expect(result).toBe(mockOutputString);
     });
 
@@ -97,15 +97,15 @@ describe('DateParser', () => {
       const mockDateObject = new Date('2024-03-15T10:30:00Z');
       const mockOutputString = '15/03/2024';
 
-      mockStringToDateParser.parse.mockReturnValue(mockDateObject);
-      mockDateToStringParser.parse.mockReturnValue(mockOutputString);
+      stringToDateParserSpy.mockReturnValue(mockDateObject);
+      dateToStringParserSpy.mockReturnValue(mockOutputString);
 
-      const result = parser.parse(inputDate, {
+      const result = DateParser.parse(inputDate, {
         outputFormat,
       });
 
-      expect(mockStringToDateParser.parse).toHaveBeenCalledWith(inputDate, 'iso');
-      expect(mockDateToStringParser.parse).toHaveBeenCalledWith(mockDateObject, outputFormat);
+      expect(stringToDateParserSpy).toHaveBeenCalledWith(inputDate, 'iso');
+      expect(dateToStringParserSpy).toHaveBeenCalledWith(mockDateObject, outputFormat);
       expect(result).toBe(mockOutputString);
     });
   });
@@ -113,135 +113,109 @@ describe('DateParser', () => {
   describe('parse - error handling with throwError true', () => {
     test('test_parse_WHEN_stringParserThrowsSaltoolsErrorWithThrowErrorTrue_THEN_throwsError', () => {
       const error = new SaltoolsError('Invalid date');
-      mockStringToDateParser.parse.mockImplementation(() => {
+      stringToDateParserSpy.mockImplementation(() => {
         throw error;
       });
 
-      expect(() => parser.parse('invalid-date', {
+      expect(() => DateParser.parse('invalid-date', {
         inputFormat: 'iso',
         outputFormat: 'iso',
         throwError: true,
       })).toThrow(SaltoolsError);
-      expect(mockDateToStringParser.parse).not.toHaveBeenCalled();
+      expect(dateToStringParserSpy).not.toHaveBeenCalled();
     });
 
     test('test_parse_WHEN_stringParserThrowsSaltoolsErrorWithThrowErrorDefault_THEN_throwsError', () => {
       const error = new SaltoolsError('Invalid date');
-      mockStringToDateParser.parse.mockImplementation(() => {
+      stringToDateParserSpy.mockImplementation(() => {
         throw error;
       });
 
-      expect(() => parser.parse('invalid-date', {
+      expect(() => DateParser.parse('invalid-date', {
         inputFormat: 'iso',
         outputFormat: 'iso',
       })).toThrow(SaltoolsError);
-      expect(mockDateToStringParser.parse).not.toHaveBeenCalled();
+      expect(dateToStringParserSpy).not.toHaveBeenCalled();
     });
 
     test('test_parse_WHEN_dateToStringParserThrowsSaltoolsErrorWithThrowErrorTrue_THEN_throwsError', () => {
       const mockDateObject = new Date('2024-03-15T10:30:00Z');
       const error = new SaltoolsError('Invalid format');
-      mockStringToDateParser.parse.mockReturnValue(mockDateObject);
-      mockDateToStringParser.parse.mockImplementation(() => {
+      stringToDateParserSpy.mockReturnValue(mockDateObject);
+      dateToStringParserSpy.mockImplementation(() => {
         throw error;
       });
 
-      expect(() => parser.parse('2024-03-15T10:30:00Z', {
+      expect(() => DateParser.parse('2024-03-15T10:30:00Z', {
         inputFormat: 'iso',
         outputFormat: 'invalid-format',
         throwError: true,
       })).toThrow(SaltoolsError);
-      expect(mockStringToDateParser.parse).toHaveBeenCalled();
+      expect(stringToDateParserSpy).toHaveBeenCalled();
     });
 
     test('test_parse_WHEN_nonSaltoolsErrorWithThrowErrorTrue_THEN_throwsError', () => {
       const error = new Error('Unexpected error');
-      mockStringToDateParser.parse.mockImplementation(() => {
+      stringToDateParserSpy.mockImplementation(() => {
         throw error;
       });
 
-      expect(() => parser.parse('test', {
+      expect(() => DateParser.parse('test', {
         inputFormat: 'iso',
         outputFormat: 'iso',
         throwError: true,
       })).toThrow('Unexpected error');
-      expect(mockDateToStringParser.parse).not.toHaveBeenCalled();
+      expect(dateToStringParserSpy).not.toHaveBeenCalled();
     });
   });
 
   describe('parse - error handling with throwError false', () => {
     test('test_parse_WHEN_stringParserThrowsSaltoolsErrorWithThrowErrorFalse_THEN_returnsNull', () => {
       const error = new SaltoolsError('Invalid date');
-      mockStringToDateParser.parse.mockImplementation(() => {
+      stringToDateParserSpy.mockImplementation(() => {
         throw error;
       });
 
-      const result = parser.parse('invalid-date', {
+      const result = DateParser.parse('invalid-date', {
         inputFormat: 'iso',
         outputFormat: 'iso',
         throwError: false,
       });
 
       expect(result).toBeNull();
-      expect(mockDateToStringParser.parse).not.toHaveBeenCalled();
+      expect(dateToStringParserSpy).not.toHaveBeenCalled();
     });
 
     test('test_parse_WHEN_dateToStringParserThrowsSaltoolsErrorWithThrowErrorFalse_THEN_returnsNull', () => {
       const mockDateObject = new Date('2024-03-15T10:30:00Z');
       const error = new SaltoolsError('Invalid format');
-      mockStringToDateParser.parse.mockReturnValue(mockDateObject);
-      mockDateToStringParser.parse.mockImplementation(() => {
+      stringToDateParserSpy.mockReturnValue(mockDateObject);
+      dateToStringParserSpy.mockImplementation(() => {
         throw error;
       });
 
-      const result = parser.parse('2024-03-15T10:30:00Z', {
+      const result = DateParser.parse('2024-03-15T10:30:00Z', {
         inputFormat: 'iso',
         outputFormat: 'invalid-format',
         throwError: false,
       });
 
       expect(result).toBeNull();
-      expect(mockStringToDateParser.parse).toHaveBeenCalled();
+      expect(stringToDateParserSpy).toHaveBeenCalled();
     });
 
     test('test_parse_WHEN_nonSaltoolsErrorWithThrowErrorFalse_THEN_throwsError', () => {
       const error = new Error('Unexpected error');
-      mockStringToDateParser.parse.mockImplementation(() => {
+      stringToDateParserSpy.mockImplementation(() => {
         throw error;
       });
 
-      expect(() => parser.parse('test', {
+      expect(() => DateParser.parse('test', {
         inputFormat: 'iso',
         outputFormat: 'iso',
         throwError: false,
       })).toThrow('Unexpected error');
-      expect(mockDateToStringParser.parse).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('parse - constructor injection', () => {
-    test('test_parse_WHEN_customParsersProvided_THEN_usesCustomParsers', () => {
-      const customMockStringParser = {
-        parse: jest.fn().mockReturnValue(new Date('2024-03-15T10:30:00Z')),
-      };
-      const customMockDateParser = {
-        parse: jest.fn().mockReturnValue('15/03/2024'),
-      };
-      const customParser = new DateParser(customMockStringParser, customMockDateParser);
-
-      const result = customParser.parse('15/03/2024', {
-        inputFormat: 'dd/mm/yyyy',
-        outputFormat: 'dd/mm/yyyy',
-      });
-
-      expect(customMockStringParser.parse).toHaveBeenCalledWith('15/03/2024', 'dd/mm/yyyy');
-      expect(customMockDateParser.parse).toHaveBeenCalled();
-      expect(result).toBe('15/03/2024');
-    });
-
-    test('test_parse_WHEN_defaultConstructor_THEN_createsDefaultParsers', () => {
-      const defaultParser = new DateParser();
-      expect(defaultParser).toBeInstanceOf(DateParser);
+      expect(dateToStringParserSpy).not.toHaveBeenCalled();
     });
   });
 });

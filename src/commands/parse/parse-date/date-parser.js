@@ -2,29 +2,20 @@ import StringToDateParser from './string-to-date-parser.js';
 import DateToStringParser from './date-to-string-parser.js';
 import SaltoolsError from 'src/errors/saltools-error.js';
 
+export default class DateParser {
+  static #DEFAULT_OPTIONS = {
+    inputFormat: 'iso',
+    outputFormat: 'iso',
+    throwError: true,
+  };
 
-export class DateParser {
-  #stringToDateParser;
-  #dateToStringParser;
-
-  constructor(
-    stringToDateParser = new StringToDateParser(),
-    dateToStringParser = new DateToStringParser(),
-  ) {
-    this.#stringToDateParser = stringToDateParser;
-    this.#dateToStringParser = dateToStringParser;
-  }
-
-  parse(date, {
-    inputFormat = 'iso',
-    outputFormat = 'iso',
-    throwError = true,
-  } = {}) {
+  static parse(date, options = {}) {
+    options = { ...DateParser.#DEFAULT_OPTIONS, ...options };
     try {
-      const parsedDate = this.#stringToDateParser.parse(date, inputFormat);
-      return this.#dateToStringParser.parse(parsedDate, outputFormat);
+      const parsedDate = StringToDateParser.parse(date, options.inputFormat);
+      return DateToStringParser.parse(parsedDate, options.outputFormat);
     } catch (error) {
-      if (!throwError && error instanceof SaltoolsError) {
+      if (!options.throwError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
