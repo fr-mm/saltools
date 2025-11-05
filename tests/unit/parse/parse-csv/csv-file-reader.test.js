@@ -62,8 +62,9 @@ describe('CSVFileReader', () => {
       reader.read();
     }).toThrow(SaltoolsError);
 
+    const reader2 = new CSVFileReader(filePath);
     expect(() => {
-      reader.read();
+      reader2.read();
     }).toThrow('não é um arquivo CSV');
   });
 
@@ -80,4 +81,3 @@ describe('CSVFileReader', () => {
     expect(result).toBe('');
   });
 });
-
