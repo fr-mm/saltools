@@ -30,9 +30,9 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, content);
 
       const fields = [
-        { key: 'name', start: 0, end: 10 },
-        { key: 'age', start: 10, end: 12 },
-        { key: 'city', start: 12, end: 20 },
+        { key: 'name', start: 0, end: 9 },
+        { key: 'age', start: 10, end: 11 },
+        { key: 'city', start: 12, end: 19 },
       ];
 
       const result = FwfParser.parse(filePath, fields);
@@ -70,8 +70,8 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'John Doe  30\r\nJane Smith25');
 
       const fields = [
-        { key: 'name', start: 0, end: 10 },
-        { key: 'age', start: 10, end: 12 },
+        { key: 'name', start: 0, end: 9 },
+        { key: 'age', start: 10, end: 11 },
       ];
 
       const result = FwfParser.parse(filePath, fields);
@@ -87,8 +87,8 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'John Doe  30\nJane Smith25');
 
       const fields = [
-        { key: 'name', start: 0, end: 10 },
-        { key: 'age', start: 10, end: 12 },
+        { key: 'name', start: 0, end: 9 },
+        { key: 'age', start: 10, end: 11 },
       ];
 
       const result = FwfParser.parse(filePath, fields);
@@ -104,8 +104,8 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'John Doe  30   ');
 
       const fields = [
-        { key: 'name', start: 0, end: 10 },
-        { key: 'full', start: 0, end: 15 },
+        { key: 'name', start: 0, end: 9 },
+        { key: 'full', start: 0, end: 14 },
       ];
 
       const result = FwfParser.parse(filePath, fields);
@@ -217,8 +217,8 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'John Doe  30');
 
       const fields = [
-        { key: 'name', start: 0, end: 10 },
-        { key: 'age', start: 10, end: 12 },
+        { key: 'name', start: 0, end: 9 },
+        { key: 'age', start: 10, end: 11 },
       ];
 
       expect(() => {
@@ -314,8 +314,8 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'John Doe  30\n');
 
       const fields = [
-        { key: 'name', start: 0, end: 10 },
-        { key: 'age', start: 10, end: 12 },
+        { key: 'name', start: 0, end: 9 },
+        { key: 'age', start: 10, end: 11 },
       ];
 
       const result = FwfParser.parse(filePath, fields);
@@ -328,8 +328,8 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'John Doe  30\n');
 
       const fields = [
-        { key: 'name', start: 0, end: 10 },
-        { key: 'age', start: 10, end: 12, type: 'number' },
+        { key: 'name', start: 0, end: 9 },
+        { key: 'age', start: 10, end: 11, type: 'number' },
       ];
 
       const result = FwfParser.parse(filePath, fields);
@@ -342,8 +342,8 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'John Doe  1 \nJane Smith0 ');
 
       const fields = [
-        { key: 'name', start: 0, end: 10 },
-        { key: 'active', start: 10, end: 13, type: 'bool' },
+        { key: 'name', start: 0, end: 9 },
+        { key: 'active', start: 10, end: 12, type: 'bool' },
       ];
 
       const result = FwfParser.parse(filePath, fields);
@@ -359,13 +359,24 @@ describe('FwfParser', () => {
       fs.writeFileSync(filePath, 'John Doe  xx');
 
       const fields = [
-        { key: 'name', start: 0, end: 10 },
-        { key: 'active', start: 12, end: 14, type: 'bool' },
+        { key: 'name', start: 0, end: 9 },
+        { key: 'active', start: 12, end: 13, type: 'bool' },
       ];
 
       expect(() => {
         FwfParser.parse(filePath, fields);
       }).toThrow(SaltoolsError);
+    });
+
+    test('test_parse_WHEN_endIndexIsInclusive_THEN_includesCharacterAtEndIndex', () => {
+      const filePath = path.join(testDir, 'inclusive-end.txt');
+      fs.writeFileSync(filePath, 'abcd');
+
+      const fields = [{ key: 'value', start: 2, end: 3 }];
+
+      const result = FwfParser.parse(filePath, fields);
+
+      expect(result).toEqual([{ value: 'cd' }]);
     });
   });
 });

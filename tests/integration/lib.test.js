@@ -282,9 +282,9 @@ describe('saltools - integration tests', () => {
       fs.writeFileSync(filePath, 'John Doe  30New York\nJane Smith25London  ');
 
       const fields = [
-        { key: 'name', start: 0, end: 10 },
-        { key: 'age', start: 10, end: 12 },
-        { key: 'city', start: 12, end: 20 },
+        { key: 'name', start: 0, end: 9 },
+        { key: 'age', start: 10, end: 11 },
+        { key: 'city', start: 12, end: 19 },
       ];
 
       const result = saltools.parse.fwf(filePath, fields);

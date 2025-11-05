@@ -25,8 +25,8 @@ export default class FwfParser {
   static #parseLine(line, fields) {
     const result = {};
     for (const field of fields) {
-      const end = Math.min(field.end, line.length);
-      const value = line.slice(field.start, end).trim();
+      const endIndex = Math.min(field.end + 1, line.length);
+      const value = line.slice(field.start, endIndex).trim();
       result[field.key] = FwfParser.#cast(value, field.type);
     }
     return result;
