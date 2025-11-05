@@ -5,7 +5,7 @@ Vanilla JS utilities for Jenkins pipelines.
 ## Instalação
 
 ```bash
-npm install @fr-mm/saltools
+npm install git@github.com:fr-mm/saltools.git
 ```
 
 ## Como usar em um pipeline do Jenkins
@@ -79,7 +79,7 @@ saltools.parse.string(value, {
   cast: false,               // Converte valor não-string para string (padrão: false)
   trim: true,                // Remove espaços no início e fim (padrão: true)
   capitalize: false,         // Capitaliza primeira letra de cada palavra (padrão: false)
-  varName: null,             // Nome da variável para mensagens de erro (padrão: null)
+  varName: undefined,        // Nome da variável para mensagens de erro (padrão: undefined)
   throwError: true           // Lança erro se inválido, senão retorna null (padrão: true)
 })
 ```
@@ -103,7 +103,7 @@ saltools.parse.number(value, {
   allowNull: false,          // Permite null (padrão: false)
   allowNegative: false,      // Permite números negativos (padrão: false)
   allowZero: false,          // Permite zero (padrão: false)
-  varName: null,             // Nome da variável para mensagens de erro (padrão: null)
+  varName: undefined,        // Nome da variável para mensagens de erro (padrão: undefined)
   throwError: true           // Lança erro se inválido, senão retorna null (padrão: true)
 })
 ```
@@ -127,7 +127,7 @@ saltools.parse.integer(value, {
   allowNull: false,          // Permite null (padrão: false)
   allowNegative: false,      // Permite números negativos (padrão: false)
   allowZero: false,          // Permite zero (padrão: false)
-  varName: null,             // Nome da variável para mensagens de erro (padrão: null)
+  varName: undefined,        // Nome da variável para mensagens de erro (padrão: undefined)
   throwError: true           // Lança erro se inválido, senão retorna null (padrão: true)
 })
 ```
@@ -248,7 +248,7 @@ Valida e formata documentos CPF ou CNPJ.
 ```javascript
 saltools.parse.doc(doc, {
   numbersOnly: true,         // Retorna apenas números (padrão: true)
-  type: null,                // Tipo do documento: 'cpf', 'cnpj' ou null para inferir (padrão: null)
+  type: undefined,           // Tipo do documento: 'cpf', 'cnpj' ou undefined para inferir (padrão: undefined)
   throwError: true           // Lança erro se inválido, senão retorna null (padrão: true)
 })
 ```
