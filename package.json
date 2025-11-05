@@ -2,11 +2,17 @@
   "name": "@fr-mm/saltools",
   "version": "0.1.0",
   "description": "Vanilla JS utilities for Jenkins pipelines",
-  "main": "src/index.js",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "src/index.d.ts",
   "type": "module",
+  "exports": {
+    "import": "./dist/index.js",
+    "require": "./dist/index.cjs"
+  },
   "files": [
-    "src/"
+    "dist/",
+    "src/index.d.ts"
   ],
   "license": "MIT",
   "repository": {
@@ -21,6 +27,7 @@
     "registry": "https://npm.pkg.github.com/"
   },
   "scripts": {
+    "build": "rollup -c",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
@@ -34,8 +41,11 @@
     "validator": "^13.10.0"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^26.0.3",
+    "@rollup/plugin-node-resolve": "^15.3.0",
     "dotenv": "^17.2.3",
     "jest": "^30.2.0",
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "rollup": "^4.24.0"
   }
 }
