@@ -227,7 +227,7 @@ export const parse: {
       /** @default true */
       throwError?: boolean;
     }
-  ): any;
+  ): string | null;
   /** Parse an email address
    *  @param value - The email to parse
    *  @param options - Options object

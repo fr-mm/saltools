@@ -7,8 +7,11 @@
   "types": "src/index.d.ts",
   "type": "module",
   "exports": {
-    "import": "./dist/index.js",
-    "require": "./dist/index.cjs"
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./src/index.d.ts"
+    }
   },
   "files": [
     "dist/",
