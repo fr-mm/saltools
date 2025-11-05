@@ -8,32 +8,31 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default {
-	input: 'src/index.js',
-	output: [
-		{
-			file: 'dist/index.js',
-			format: 'esm',
-			sourcemap: true,
-		},
-		{
-			file: 'dist/index.cjs',
-			format: 'cjs',
-			exports: 'named',
-			sourcemap: true,
-		},
-	],
-	plugins: [
-		alias({
-			entries: [
-				{ find: 'src/', replacement: resolvePath(__dirname, 'src/') }
-			]
-		}),
-		resolve(),
-		commonjs()
-	],
-	external: [
-		'axios',
-		'libphonenumber-js',
-		'validator',
-	],
+  input: 'src/index.js',
+  output: [
+    {
+      file: 'dist/index.js',
+      format: 'esm',
+      sourcemap: true,
+    },
+    {
+      file: 'dist/index.cjs',
+      format: 'cjs',
+      exports: 'named',
+      sourcemap: true,
+    },
+  ],
+  plugins: [
+    alias({
+      entries: [
+        {
+          find: /^src\/(.*)$/,
+          replacement: resolvePath(__dirname, 'src/$1'),
+        },
+      ],
+    }),
+    resolve(),
+    commonjs(),
+  ],
+  external: ['axios', 'libphonenumber-js', 'validator'],
 };

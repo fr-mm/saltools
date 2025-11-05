@@ -1,13 +1,105 @@
-import SaltoolsError$1 from 'src/errors/saltools-error.js';
-import { param } from 'src/helper/index.js';
-import CachedOptions from 'src/helper/cachedOptions.js';
 import fs from 'fs';
 import { parsePhoneNumberWithError, isValidPhoneNumber } from 'libphonenumber-js';
 import dns from 'dns';
 import net from 'net';
 import validator from 'validator';
 import path from 'path';
-import timestamp$1 from 'src/commands/timestamp.js';
+
+class SaltoolsError extends Error {
+  constructor(message, options = {}) {
+    super(`[Saltools] ${message}`, options);
+    this.name = 'SaltoolsError';
+    this.options = options;
+  }
+}
+
+function validateParam({value, type, name, required = false}) {
+    if (value === null || value === undefined) {
+        if (required) {
+            throw new SaltoolsError(`${name} é obrigatório`);
+        }
+        return value;
+    }
+    if (typeof value !== type) {
+        throw new SaltoolsError(`${name} deve ser ${type}, recebeu ${typeof value} ${value}`);
+    }
+    return value;
+}
+
+function bool({value, name, required = false}) {
+    return validateParam({value, type: 'boolean', name, required});
+}
+
+function string$1({value, name, required = false, options = null }) {
+    const validated = validateParam({value, type: 'string', name, required});
+    if (options !== null && validated !== null && validated !== undefined) {
+        if (!Array.isArray(options)) {
+            throw new SaltoolsError(`${name} deve ser um array, recebeu ${typeof options} ${options}`);
+        }
+        if (!options.includes(validated)) {
+            throw new SaltoolsError(`${name} não é uma option valida ${options.join(', ')}`)
+        }
+    }
+    return validated;
+}
+
+function number$1({value, name, required = false}) {
+    return validateParam({value, type: 'number', name, required});
+}
+
+function integer$1({value, name, required = false}) {
+    const number = validateParam({value, type: 'number', name, required});
+    if (number === null || number === undefined) {
+        return number;
+    }
+    if (!Number.isInteger(number)) {
+        throw new SaltoolsError(`${name} deve ser um inteiro, recebeu ${typeof value} ${number}`);
+    }
+    return number;
+}
+
+function object({value, name, required = false}) {
+    return validateParam({value, type: 'object', name, required});
+}
+
+function error$1({value, name, required = false}) {
+    const validated = object({value, name, required});
+    if (!required && (validated === null || validated === undefined)) return validated;
+    if (validated instanceof Error) return validated;
+    throw new SaltoolsError(`${name} deve ser um erro, recebeu ${typeof validated} ${validated}`);
+}
+
+const param = {
+    bool,
+    string: string$1,
+    number: number$1,
+    integer: integer$1,
+    object,
+    error: error$1
+};
+
+class CachedOptions {
+  #cache = new Set();
+
+  cache(options) {
+    const hash = this.#hash(options);
+    this.#cache.add(hash);
+  }
+
+  isCached(options) {
+    const hash = this.#hash(options);
+    return this.#cache.has(hash);
+  }
+
+  #hash(options) {
+    let hash = '';
+    for (const key in options) {
+      const value = options[key];
+      hash += `${key}:${typeof value}:${value}|`;
+    }
+    return hash;
+  }
+}
 
 class StringParser {
   static #DO_NOT_CAPITALIZE = ['de', 'do', 'da', 'dos', 'das', 'e'];
@@ -32,7 +124,7 @@ class StringParser {
       value = this.#parseCapitalize(value, options.capitalize);
       return value;
     } catch (error) {
-      if (!options.throwError && error instanceof SaltoolsError$1) {
+      if (!options.throwError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
@@ -103,7 +195,7 @@ class StringParser {
 
   static #throwError(message, varName) {
     message = varName ? `${message} varName: ${varName}` : message;
-    throw new SaltoolsError$1(message);
+    throw new SaltoolsError(message);
   }
 }
 
@@ -136,7 +228,7 @@ class NumberParser {
       this.#validateZero(value, options.allowZero, options.varName);
       return value;
     } catch (error) {
-      if (!options.throwError && error instanceof SaltoolsError$1) {
+      if (!options.throwError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
@@ -210,7 +302,7 @@ class NumberParser {
 
   static #throwError(message, varName) {
     message = varName ? `${message} varName: ${varName}` : message;
-    throw new SaltoolsError$1(message);
+    throw new SaltoolsError(message);
   }
 }
 
@@ -237,13 +329,13 @@ class CSVFileReader {
 
   #validatePath() {
     if (!fs.existsSync(this.path)) {
-      throw new SaltoolsError$1(`Arquivo ${this.path} não encontrado`);
+      throw new SaltoolsError(`Arquivo ${this.path} não encontrado`);
     }
   }
   
   #validateExtension() {  
     if (!this.path.toLowerCase().endsWith('.csv')) {
-      throw new SaltoolsError$1(`Arquivo ${this.path} não é um arquivo CSV`);
+      throw new SaltoolsError(`Arquivo ${this.path} não é um arquivo CSV`);
     }
   }
 }
@@ -493,7 +585,7 @@ class CSVParser {
       const content = this.#fileReader.read();
       return this.#parseFileContent(content);
     } catch (error) {
-      if (!this.#shouldThrowError && error instanceof SaltoolsError$1) {
+      if (!this.#shouldThrowError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
@@ -559,8 +651,8 @@ class PhoneParser {
       if (!options.throwError) {
         return null;
       }
-      if (!(error instanceof SaltoolsError$1)) {
-        throw new SaltoolsError$1(`Número de telefone inválido ${phone} ${error.message}`);
+      if (!(error instanceof SaltoolsError)) {
+        throw new SaltoolsError(`Número de telefone inválido ${phone} ${error.message}`);
       }
       throw error;
     }
@@ -599,7 +691,7 @@ class PhoneParser {
 
   static #validatePhoneNumber(phone, country) {
     if (!isValidPhoneNumber(phone, country)) {
-      throw new SaltoolsError$1(`Número de telefone inválido: ${phone}`);
+      throw new SaltoolsError(`Número de telefone inválido: ${phone}`);
     }
   }
 
@@ -666,7 +758,7 @@ class StringToDateParser {
   static #parseIso(date) {
     const parsed = new Date(date);
     if (isNaN(parsed.getTime())) {
-      throw new SaltoolsError$1(`Data inválida: ${date}`);
+      throw new SaltoolsError(`Data inválida: ${date}`);
     }
     return parsed;
   }
@@ -698,7 +790,7 @@ class StringToDateParser {
     const uniqueFormatSeparators = [...new Set(formatSeparators)];
     
     if (uniqueFormatSeparators.length > 1) {
-      throw new SaltoolsError$1(`Formato contém separadores inconsistentes: ${format}`);
+      throw new SaltoolsError(`Formato contém separadores inconsistentes: ${format}`);
     }
 
     const separator = uniqueFormatSeparators[0] || '';
@@ -711,7 +803,7 @@ class StringToDateParser {
     }
     
     if (formatParts.length !== 3) {
-      throw new SaltoolsError$1(`Formato inválido: ${format}`);
+      throw new SaltoolsError(`Formato inválido: ${format}`);
     }
 
     return { separator, formatParts };
@@ -749,13 +841,13 @@ class StringToDateParser {
     const uniqueDateSeparators = [...new Set(dateSeparators)];
     
     if (uniqueDateSeparators.length > 1) {
-      throw new SaltoolsError$1(`Data contém separadores inconsistentes: ${date}`);
+      throw new SaltoolsError(`Data contém separadores inconsistentes: ${date}`);
     }
 
     const dateSeparator = uniqueDateSeparators[0] || '';
     
     if (formatSeparator !== dateSeparator) {
-      throw new SaltoolsError$1(`Separador da data não corresponde ao formato: esperado "${formatSeparator || 'nenhum'}", encontrado "${dateSeparator || 'nenhum'}"`);
+      throw new SaltoolsError(`Separador da data não corresponde ao formato: esperado "${formatSeparator || 'nenhum'}", encontrado "${dateSeparator || 'nenhum'}"`);
     }
   }
 
@@ -764,7 +856,7 @@ class StringToDateParser {
       const parts = date.split(separator);
       
       if (parts.length !== 3) {
-        throw new SaltoolsError$1(`Formato de data inválido: ${date}`);
+        throw new SaltoolsError(`Formato de data inválido: ${date}`);
       }
 
       return parts;
@@ -781,7 +873,7 @@ class StringToDateParser {
       const length = formatPart.length;
       
       if (index + length > date.length) {
-        throw new SaltoolsError$1(`Formato de data inválido: ${date}`);
+        throw new SaltoolsError(`Formato de data inválido: ${date}`);
       }
       
       const part = date.substring(index, index + length);
@@ -790,7 +882,7 @@ class StringToDateParser {
     }
     
     if (index !== date.length) {
-      throw new SaltoolsError$1(`Formato de data inválido: ${date}`);
+      throw new SaltoolsError(`Formato de data inválido: ${date}`);
     }
     
     return parts;
@@ -802,7 +894,7 @@ class StringToDateParser {
     const yearIndex = formatParts.findIndex(p => p.toLowerCase().includes('y'));
 
     if (dayIndex === -1 || monthIndex === -1 || yearIndex === -1) {
-      throw new SaltoolsError$1(`Formato inválido: formato deve conter d, m e y`);
+      throw new SaltoolsError(`Formato inválido: formato deve conter d, m e y`);
     }
 
     return { dayIndex, monthIndex, yearIndex };
@@ -814,7 +906,7 @@ class StringToDateParser {
     let year = parseInt(parts[indices.yearIndex], 10);
 
     if (isNaN(day) || isNaN(month) || isNaN(year)) {
-      throw new SaltoolsError$1(`Data inválida: ${originalDate}`);
+      throw new SaltoolsError(`Data inválida: ${originalDate}`);
     }
 
     const yearFormat = formatParts[indices.yearIndex].toLowerCase();
@@ -831,7 +923,7 @@ class StringToDateParser {
     const parsed = new Date(year, month, day);
     
     if (parsed.getDate() !== day || parsed.getMonth() !== month || parsed.getFullYear() !== year) {
-      throw new SaltoolsError$1(`Data inválida: ${originalDate}`);
+      throw new SaltoolsError(`Data inválida: ${originalDate}`);
     }
 
     return parsed;
@@ -848,7 +940,7 @@ class StringToDateParser {
     const validYearCount = yCount === 2 || yCount === 4;
 
     if (!validDayCount || !validMonthCount || !validYearCount) {
-      throw new SaltoolsError$1('format deve conter 1 ou 2 "d", 1 ou 2 "m" e 2 ou 4 "y"');
+      throw new SaltoolsError('format deve conter 1 ou 2 "d", 1 ou 2 "m" e 2 ou 4 "y"');
     }
   }
 
@@ -873,10 +965,10 @@ class DateToStringParser {
 
   static #validateParams(date, format) {
     if (!(date instanceof Date)) {
-      throw new SaltoolsError$1('date deve ser uma instância de Date');
+      throw new SaltoolsError('date deve ser uma instância de Date');
     }
     if (isNaN(date.getTime())) {
-      throw new SaltoolsError$1('date deve ser uma data válida');
+      throw new SaltoolsError('date deve ser uma data válida');
     }
     param.string({ value: format, name: 'format', required: true });
   }
@@ -922,7 +1014,7 @@ class DateToStringParser {
     const uniqueFormatSeparators = [...new Set(formatSeparators)];
 
     if (uniqueFormatSeparators.length > 1) {
-      throw new SaltoolsError$1(`Formato contém separadores inconsistentes: ${format}`);
+      throw new SaltoolsError(`Formato contém separadores inconsistentes: ${format}`);
     }
 
     const separator = uniqueFormatSeparators[0] || '';
@@ -935,7 +1027,7 @@ class DateToStringParser {
     }
 
     if (formatParts.length !== 3) {
-      throw new SaltoolsError$1(`Formato inválido: ${format}`);
+      throw new SaltoolsError(`Formato inválido: ${format}`);
     }
 
     return { separator, formatParts };
@@ -974,7 +1066,7 @@ class DateToStringParser {
     const yearIndex = formatParts.findIndex((p) => p.toLowerCase().includes('y'));
 
     if (dayIndex === -1 || monthIndex === -1 || yearIndex === -1) {
-      throw new SaltoolsError$1(`Formato inválido: formato deve conter d, m e y`);
+      throw new SaltoolsError(`Formato inválido: formato deve conter d, m e y`);
     }
 
     return { dayIndex, monthIndex, yearIndex };
@@ -991,7 +1083,7 @@ class DateToStringParser {
     }
 
     if (valueStr.length > formatLength && !isYear) {
-      throw new SaltoolsError$1(`Valor ${value} não cabe no formato ${formatPart}`);
+      throw new SaltoolsError(`Valor ${value} não cabe no formato ${formatPart}`);
     }
 
     return valueStr;
@@ -1008,7 +1100,7 @@ class DateToStringParser {
     const validYearCount = yCount === 2 || yCount === 4;
 
     if (!validDayCount || !validMonthCount || !validYearCount) {
-      throw new SaltoolsError$1('format deve conter 1 ou 2 "d", 1 ou 2 "m" e 2 ou 4 "y"');
+      throw new SaltoolsError('format deve conter 1 ou 2 "d", 1 ou 2 "m" e 2 ou 4 "y"');
     }
   }
 }
@@ -1026,7 +1118,7 @@ class DateParser {
       const parsedDate = StringToDateParser.parse(date, options.inputFormat);
       return DateToStringParser.parse(parsedDate, options.outputFormat);
     } catch (error) {
-      if (!options.throwError && error instanceof SaltoolsError$1) {
+      if (!options.throwError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
@@ -1078,23 +1170,23 @@ class FwfParser {
   static #toBoolean(value) {
     if (['true', '1'].includes(value.toLowerCase())) return true;
     if (['false', '0'].includes(value.toLowerCase())) return false;
-    throw new SaltoolsError$1(`Invalid boolean value: ${value}`);
+    throw new SaltoolsError(`Invalid boolean value: ${value}`);
   }
 
   static #readFile(path) {
     try {
       return fs.readFileSync(path, 'utf8');
     } catch (error) {
-      throw new SaltoolsError$1(`Error reading file ${path}: ${error.message}`);
+      throw new SaltoolsError(`Error reading file ${path}: ${error.message}`);
     }
   }
 
   static #validateFields(fields) {
     if (!Array.isArray(fields)) {
-      throw new SaltoolsError$1('Fields must be an array');
+      throw new SaltoolsError('Fields must be an array');
     }
     if (fields.length === 0) {
-      throw new SaltoolsError$1('Fields array cannot be empty');
+      throw new SaltoolsError('Fields array cannot be empty');
     }
     for (const field of fields) {
       FwfParser.#validateField(field);
@@ -1107,12 +1199,12 @@ class FwfParser {
       field === null ||
       !['key', 'start', 'end'].every((prop) => Object.prototype.hasOwnProperty.call(field, prop))
     ) {
-      throw new SaltoolsError$1(
+      throw new SaltoolsError(
         "Each field must be an object with 'key', 'start', and 'end' properties."
       );
     }
     if (field.end <= field.start) {
-      throw new SaltoolsError$1(
+      throw new SaltoolsError(
         `Field '${field.key}' must have end > start. Got start: ${field.start}, end: ${field.end}`
       );
     }
@@ -1137,7 +1229,7 @@ class DocParser {
       this.#validateOptions(mergedOptions);
       return this.#parse(doc, mergedOptions);
     } catch (error) {
-      if (!mergedOptions.throwError && error instanceof SaltoolsError$1) {
+      if (!mergedOptions.throwError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
@@ -1164,12 +1256,12 @@ class DocParser {
   static #parseType(doc, type) {
     if (typeof doc === 'number') return this.#parseNumber(doc, type);
     if (typeof doc === 'string') return doc;
-    throw new SaltoolsError$1(`${typeof doc} ${doc} deve ser string ou number`);
+    throw new SaltoolsError(`${typeof doc} ${doc} deve ser string ou number`);
   }
 
   static #parseNumber(doc, type) {
     if (!Number.isInteger(doc)) {
-      throw new SaltoolsError$1(`Não é possível converter float ${doc} em doc`);
+      throw new SaltoolsError(`Não é possível converter float ${doc} em doc`);
     }
     if (type) {
       return this.#padToType(doc, type);
@@ -1186,13 +1278,13 @@ class DocParser {
       if (doc.endsWith('00')) {
         return doc;
       }
-      throw new SaltoolsError$1(`Não foi possível inferir o tipo de documento, ${doc}`);
+      throw new SaltoolsError(`Não foi possível inferir o tipo de documento, ${doc}`);
     }
     try {
       this.#validateLength(doc);
       return doc;
     } catch (error) {
-      if (error instanceof SaltoolsError$1) {
+      if (error instanceof SaltoolsError) {
         return this.#padInferingType(doc);
       }
       throw error;
@@ -1206,7 +1298,7 @@ class DocParser {
     if (doc.length > DocParser.#CPF_LENGTH) {
       return doc.padEnd(DocParser.#CNPJ_LENGTH, '0');
     }
-    throw new SaltoolsError$1(`Não foi possível inferir o tipo de documento, ${doc}`);
+    throw new SaltoolsError(`Não foi possível inferir o tipo de documento, ${doc}`);
   }
 
   static #padToType(doc, type) {
@@ -1228,7 +1320,7 @@ class DocParser {
 
   static #validateLength(doc) {
     if (![DocParser.#CPF_LENGTH, DocParser.#CNPJ_LENGTH].includes(doc.length)) {
-      throw new SaltoolsError$1(
+      throw new SaltoolsError(
         `Documento deve ter ${DocParser.#CPF_LENGTH} ou ${DocParser.#CNPJ_LENGTH} caracteres, ${doc} tem ${doc.length}`
       );
     }
@@ -1286,10 +1378,10 @@ class DNSValidator {
     try {
       const mxRecords = await dns.promises.resolveMx(email.domain);
       if (mxRecords.length === 0) {
-        throw new SaltoolsError$1(`MX não encontrado para o email ${email.value}`);
+        throw new SaltoolsError(`MX não encontrado para o email ${email.value}`);
       }
     } catch {
-      throw new SaltoolsError$1(`Erro ao validar MX para o email ${email.value}`);
+      throw new SaltoolsError(`Erro ao validar MX para o email ${email.value}`);
     }
   }
 
@@ -1300,7 +1392,7 @@ class DNSValidator {
       const mx = await dns.promises.resolveMx(domain);
       const mxHost = mx.sort((a, b) => a.priority - b.priority)[0]?.exchange;
       if (!mxHost) {
-        throw new SaltoolsError$1(`MX não encontrado para o email ${email.value}`);
+        throw new SaltoolsError(`MX não encontrado para o email ${email.value}`);
       }
 
       const isValid = await new Promise((resolve) => {
@@ -1334,13 +1426,13 @@ class DNSValidator {
       });
 
       if (!isValid) {
-        throw new SaltoolsError$1(`SMTP inválido para o email ${email.value}`);
+        throw new SaltoolsError(`SMTP inválido para o email ${email.value}`);
       }
     } catch (error) {
-      if (error instanceof SaltoolsError$1) {
+      if (error instanceof SaltoolsError) {
         throw error;
       }
-      throw new SaltoolsError$1(`Erro ao validar SMTP para o email ${email.value} ${error.message}`);
+      throw new SaltoolsError(`Erro ao validar SMTP para o email ${email.value} ${error.message}`);
     }
   }
 
@@ -1348,10 +1440,10 @@ class DNSValidator {
     try {
       const txt = await dns.promises.resolveTxt(text);
       if (txt.flat().length === 0) {
-        throw new SaltoolsError$1(`${type} não encontrado para o email ${email.value}`);
+        throw new SaltoolsError(`${type} não encontrado para o email ${email.value}`);
       }
     } catch {
-      throw new SaltoolsError$1(`Erro ao validar ${type} para o email ${email.value}`);
+      throw new SaltoolsError(`Erro ao validar ${type} para o email ${email.value}`);
     }
   }
 }
@@ -1406,7 +1498,7 @@ class EmailParser {
     const local = split[0];
 
     if (!domain || !local) {
-      throw new SaltoolsError$1(`Email ${email} inválido`);
+      throw new SaltoolsError(`Email ${email} inválido`);
     }
 
     return { value, domain, local };
@@ -1414,7 +1506,7 @@ class EmailParser {
 
   static #validateDisposable(email, allowDisposable) {
     if (!allowDisposable && EmailParser.#DISPOSABLE_DOMAINS.includes(email.domain)) {
-      throw new SaltoolsError$1(
+      throw new SaltoolsError(
         `Email ${email.value} é um email temporário e o parâmetro allowDisposable é false`
       );
     }
@@ -1422,7 +1514,7 @@ class EmailParser {
 
   static #validateAlias(email, allowAlias) {
     if (!allowAlias && EmailParser.#isAlias(email)) {
-      throw new SaltoolsError$1(`Email ${email.value} é um alias e o parâmetro allowAlias é false`);
+      throw new SaltoolsError(`Email ${email.value} é um alias e o parâmetro allowAlias é false`);
     }
   }
 
@@ -1435,7 +1527,7 @@ class EmailParser {
 
   static #validateSyntax(email) {
     if (!validator.isEmail(email.value)) {
-      throw new SaltoolsError$1('Email inválido');
+      throw new SaltoolsError('Email inválido');
     }
   }
 }
@@ -1457,6 +1549,21 @@ var index$1 = /*#__PURE__*/Object.freeze({
   phone: parsePhone,
   string: string
 });
+
+function timestamp() {
+  const now = new Date();
+  const pad = (value) => String(value).padStart(2, '0');
+
+  const day = pad(now.getDate());
+  const month = pad(now.getMonth() + 1);
+  const year = now.getFullYear();
+  const hours = pad(now.getHours());
+  const minutes = pad(now.getMinutes());
+  const seconds = pad(now.getSeconds());
+  const milliseconds = pad(now.getMilliseconds());
+
+  return `${day}-${month}-${year}-${hours}h-${minutes}m-${seconds}s-${milliseconds}ms`;
+}
 
 class ErrorLogger {
   run(error, {
@@ -1482,17 +1589,17 @@ class ErrorLogger {
     param.bool({ value: throwError, name: 'throwError' });
 
     if ((!directory && filename) || (directory && !filename)) {
-      throw new SaltoolsError$1('directory e filename devem ser ambos fornecidos ou ambos não fornecidos');
+      throw new SaltoolsError('directory e filename devem ser ambos fornecidos ou ambos não fornecidos');
     }
 
     if (addTimestamp && (!directory || !filename)) {
-      throw new SaltoolsError$1('directory e filename são obrigatórios quando addTimestamp é true');
+      throw new SaltoolsError('directory e filename são obrigatórios quando addTimestamp é true');
     }
   }
 
   #saveLog({ parsedError, directory, filename, addTimestamp }) {
     if (!directory || !filename) return;
-    const stamp = addTimestamp ? `-${timestamp$1()}` : '';
+    const stamp = addTimestamp ? `-${timestamp()}` : '';
     const filePath = path.join(directory, `${filename}${stamp}.log`);
     fs.writeFileSync(filePath, parsedError);
   }
@@ -1511,7 +1618,7 @@ class LogSaver {
     addTimestamp = true,
   } = {}) {
     this.#validateParameters({ content, directory, filename, addTimestamp });
-    const stamp = addTimestamp ? `-${timestamp$1()}` : '';
+    const stamp = addTimestamp ? `-${timestamp()}` : '';
     const filePath = path.join(directory, `${filename}${stamp}.log`);
     fs.writeFileSync(filePath, content);
   }
@@ -1536,31 +1643,8 @@ var index = /*#__PURE__*/Object.freeze({
   saveLog: saveLog
 });
 
-function timestamp() {
-  const now = new Date();
-  const pad = (value) => String(value).padStart(2, '0');
-
-  const day = pad(now.getDate());
-  const month = pad(now.getMonth() + 1);
-  const year = now.getFullYear();
-  const hours = pad(now.getHours());
-  const minutes = pad(now.getMinutes());
-  const seconds = pad(now.getSeconds());
-  const milliseconds = pad(now.getMilliseconds());
-
-  return `${day}-${month}-${year}-${hours}h-${minutes}m-${seconds}s-${milliseconds}ms`;
-}
-
 function helloWorld() {
   console.log("Hello, World!");
-}
-
-class SaltoolsError extends Error {
-  constructor(message, options = {}) {
-    super(`[Saltools] ${message}`, options);
-    this.name = 'SaltoolsError';
-    this.options = options;
-  }
 }
 
 const errors = { SaltoolsError };
