@@ -3,7 +3,7 @@ import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
 
 class PhoneParser {
-  parse(phone, {
+  static parse(phone, {
     addCountryCode,
     addPlusPrefix,
     addAreaCode,
@@ -36,7 +36,7 @@ class PhoneParser {
     }
   }
 
-  #validateParameters({ phone, addCountryCode, addPlusPrefix, addAreaCode, numbersOnly, throwError }) {
+  static #validateParameters({ phone, addCountryCode, addPlusPrefix, addAreaCode, numbersOnly, throwError }) {
     param.string({ value: phone, name: 'phone' });
     param.bool({ value: addCountryCode, name: 'addCountryCode' });
     param.bool({ value: addPlusPrefix, name: 'addPlusPrefix' });
@@ -45,17 +45,17 @@ class PhoneParser {
     param.bool({ value: throwError, name: 'throwError' });
   }
 
-  #parsePhoneNumber(phone, country) {
+  static #parsePhoneNumber(phone, country) {
     return parsePhoneNumberWithError(phone, country);
   }
 
-  #validatePhoneNumber(phone, country) {
+  static #validatePhoneNumber(phone, country) {
     if (!isValidPhoneNumber(phone, country)) {
       throw new SaltoolsError(`Número de telefone inválido: ${phone}`);
     }
   }
 
-  #getCountryCode(phone) {
+  static #getCountryCode(phone) {
     if (phone.startsWith('+')) {
       return undefined;
     }
@@ -74,7 +74,7 @@ class PhoneParser {
     return 'BR';
   }
 
-  #formatPhoneNumber(phoneNumber, { addCountryCode, addPlusPrefix, numbersOnly }) {
+  static #formatPhoneNumber(phoneNumber, { addCountryCode, addPlusPrefix, numbersOnly }) {
     if (numbersOnly) {
       if (addCountryCode) {
         return phoneNumber.number.replace('+', '');
@@ -101,7 +101,7 @@ export default function phone(phone, {
   numbersOnly = true,
   throwError = true,
 } = {}) {
-  return new PhoneParser().parse(phone, {
+  return PhoneParser.parse(phone, {
     addCountryCode,
     addPlusPrefix,
     addAreaCode,

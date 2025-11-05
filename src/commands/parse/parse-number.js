@@ -2,92 +2,82 @@ import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
 
 class NumberParser {
-  #value;
-  #allowEmptyString;
-  #allowNull;
-  #allowNegative;
-  #allowZero;
-  #integer;
-  #varName;
-  #shouldThrowError;
-  #originalValue;
+  static parse(value, options) {
+    const allowEmptyString = param.bool({value: options.allowEmptyString, name: 'allowEmptyString'});
+    const allowNull = param.bool({value: options.allowNull, name: 'allowNull'});
+    const allowNegative = param.bool({value: options.allowNegative, name: 'allowNegative'});
+    const allowZero = param.bool({value: options.allowZero, name: 'allowZero'});
+    const integer = param.bool({value: options.integer, name: 'integer'});
+    const varName = param.string({value: options.varName, name: 'varName'});
+    const shouldThrowError = param.bool({value: options.throwError, name: 'throwError'});
 
-  constructor(value, options) {
-    this.#value = value;
-    this.#allowEmptyString = param.bool({value: options.allowEmptyString, name: 'allowEmptyString'});
-    this.#allowNull = param.bool({value: options.allowNull, name: 'allowNull'});
-    this.#allowNegative = param.bool({value: options.allowNegative, name: 'allowNegative'});
-    this.#allowZero = param.bool({value: options.allowZero, name: 'allowZero'});
-    this.#integer = param.bool({value: options.integer, name: 'integer'});
-    this.#varName = param.string({value: options.varName, name: 'varName'});
-    this.#shouldThrowError = param.bool({value: options.throwError, name: 'throwError'});
-    this.#originalValue = value;
-  }
+    const originalValue = value;
 
-  parse() {
     try {
-      this.#validateType();
-      this.#validateEmptyString();
-      this.#parseType();
-      this.#validateInteger();
-      this.#validateNegative();
-      this.#validateZero();
-      return this.#value;
+      value = this.#validateType(value, allowNull, originalValue, varName);
+      this.#validateEmptyString(value, allowEmptyString, varName);
+      value = this.#parseType(value, originalValue, varName);
+      this.#validateInteger(value, integer, varName);
+      this.#validateNegative(value, allowNegative, varName);
+      this.#validateZero(value, allowZero, varName);
+      return value;
     }
     catch (error) {
-      if (!this.#shouldThrowError && error instanceof SaltoolsError) {
+      if (!shouldThrowError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
     }
   }
 
-  #validateType() {
-    if (this.#value === null) {
-      if (!this.#allowNull) {
-        this.#throwError('null não é permitido quando {allowNull: false}');
+  static #validateType(value, allowNull, originalValue, varName) {
+    if (value === null) {
+      if (!allowNull) {
+        this.#throwError('null não é permitido quando {allowNull: false}', varName);
       }
-      return;
+      return value;
     }
 
-    if (typeof this.#value !== 'string' && typeof this.#value !== 'number') {
-        this.#throwError(`Não é possível converter ${typeof this.#originalValue} ${this.#originalValue} para número.`);
+    if (typeof value !== 'string' && typeof value !== 'number') {
+      this.#throwError(`Não é possível converter ${typeof originalValue} ${originalValue} para número.`, varName);
+    }
+    return value;
+  }
+
+  static #validateEmptyString(value, allowEmptyString, varName) {
+    if (!allowEmptyString && value === '') {
+      this.#throwError('String não pode ser vazia quando {allowEmptyString: false}', varName);
     }
   }
 
-  #validateEmptyString() {
-    if (!this.#allowEmptyString && this.#value === '') {
-        this.#throwError('String não pode ser vazia quando {allowEmptyString: false}');
+  static #parseType(value, originalValue, varName) {
+    const numValue = Number(value);
+    if (isNaN(numValue)) {
+      this.#throwError(`Não é possível converter ${typeof originalValue} ${originalValue} para número.`, varName);
     }
+    return numValue;
   }
 
-  #parseType() {
-    this.#value = Number(this.#value);
-    if (isNaN(this.#value)) {
-        this.#throwError(`Não é possível converter ${typeof this.#originalValue} ${this.#originalValue} para número.`);
-    }
-  }
-
-  #validateInteger() {
-    if (this.#integer && !Number.isInteger(this.#value)) {
-        this.#throwError(`${this.#value} não é um inteiro.`)
+  static #validateInteger(value, integer, varName) {
+    if (integer && !Number.isInteger(value)) {
+      this.#throwError(`${value} não é um inteiro.`, varName);
     }
   }
   
-  #validateNegative() {
-    if (!this.#allowNegative && this.#value < 0) {
-      this.#throwError('Número não pode ser negativo quando {allowNegative: false}');
+  static #validateNegative(value, allowNegative, varName) {
+    if (!allowNegative && value < 0) {
+      this.#throwError('Número não pode ser negativo quando {allowNegative: false}', varName);
     }
   }
 
-  #validateZero() {
-    if (!this.#allowZero && this.#value === 0) {
-      this.#throwError('Número não pode ser zero quando {allowZero: false}');
+  static #validateZero(value, allowZero, varName) {
+    if (!allowZero && value === 0) {
+      this.#throwError('Número não pode ser zero quando {allowZero: false}', varName);
     }
   }
 
-  #throwError(message) {
-    message = this.#varName ? `${message} varName: ${this.#varName}` : message;
+  static #throwError(message, varName) {
+    message = varName ? `${message} varName: ${varName}` : message;
     throw new SaltoolsError(message);
   }
 }
@@ -100,7 +90,7 @@ export function number(value, {
   varName = undefined,
   throwError = true
 } = {}) {
-  return new NumberParser(value, { 
+  return NumberParser.parse(value, { 
     allowEmptyString, 
     allowNull, 
     allowNegative, 
@@ -108,7 +98,7 @@ export function number(value, {
     varName, 
     throwError,
     integer: false
-}).parse();
+  });
 }
 
 export function integer(value, { 
@@ -119,7 +109,7 @@ export function integer(value, {
   varName = undefined,
   throwError = true
 } = {}) {
-  return new NumberParser(value, { 
+  return NumberParser.parse(value, { 
     allowEmptyString, 
     allowNull, 
     allowNegative, 
@@ -127,5 +117,5 @@ export function integer(value, {
     varName, 
     throwError,
     integer: true
-}).parse();
+  });
 }
