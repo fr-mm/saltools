@@ -4,34 +4,33 @@ import CSVLineSplitter from './csv-line-splitter.js';
 import CSVRowParser from './csv-row-parser.js';
 import CSVValueConverter from './csv-value-converter.js';
 
-class CSVParser {
+export default class CSVParser {
   #fileReader;
   #lineSplitter;
   #rowParser;
   #valueConverter;
   #shouldThrowError;
 
-  constructor(path, options) {
+  constructor(path, options = {}) {
     this.#fileReader = new CSVFileReader(path);
     this.#lineSplitter = new CSVLineSplitter({
-      quoteChar: options.quoteChar, 
-      escapeChar: options.escapeChar
+      quoteChar: options.quoteChar,
+      escapeChar: options.escapeChar,
     });
     this.#rowParser = new CSVRowParser({
-      delimiter: options.delimiter, 
-      quoteChar: options.quoteChar, 
-      escapeChar: options.escapeChar
+      delimiter: options.delimiter,
+      quoteChar: options.quoteChar,
+      escapeChar: options.escapeChar,
     });
     this.#valueConverter = new CSVValueConverter();
-    this.#shouldThrowError = options.throwError;
+    this.#shouldThrowError = options.throwError !== undefined ? options.throwError : true;
   }
 
   parse() {
     try {
       const content = this.#fileReader.read();
       return this.#parseFileContent(content);
-    }
-    catch (error) {
+    } catch (error) {
       if (!this.#shouldThrowError && error instanceof SaltoolsError) {
         return null;
       }
@@ -67,6 +66,3 @@ class CSVParser {
     return result;
   }
 }
-
-export default CSVParser;
-

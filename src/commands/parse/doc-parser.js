@@ -1,48 +1,56 @@
 import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
+import CachedOptions from 'src/helper/cachedOptions.js';
 
 export default class DocParser {
+  static DEFAULT_OPTIONS = {
+    numbersOnly: true,
+    type: undefined,
+    throwError: true,
+  };
   static #CPF_LENGTH = 11;
   static #CNPJ_LENGTH = 14;
   static #CNPJ_INDICATOR = '000';
 
-  parse(doc, {
-    numbersOnly,
-    type,
-    throwError
-  } = {}) {
+  static #cachedOptions = new CachedOptions();
+
+  static parse(doc, options = {}) {
+    const mergedOptions = { ...DocParser.DEFAULT_OPTIONS, ...options };
     try {
-      this.#validateParameters({ numbersOnly, type, throwError });
-      return this.#parse(doc, { numbersOnly, type });
+      this.#validateOptions(mergedOptions);
+      return this.#parse(doc, mergedOptions);
     } catch (error) {
-      if (!throwError && error instanceof SaltoolsError) {
+      if (!mergedOptions.throwError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
     }
   }
 
-  #parse(doc, { numbersOnly, type }) {
-    let parsedDoc = this.#parseType(doc, type);
+  static #parse(doc, options) {
+    let parsedDoc = this.#parseType(doc, options.type);
     parsedDoc = parsedDoc.trim();
     parsedDoc = this.#removeSpecialChars(parsedDoc);
     this.#validateLength(parsedDoc);
-    return this.#putSpecialCharsBack(parsedDoc, numbersOnly);
+    return this.#putSpecialCharsBack(parsedDoc, options.numbersOnly);
   }
 
-  #validateParameters({ numbersOnly, type, throwError }) {
-    param.bool({ value: numbersOnly, name: 'numbersOnly' });
-    param.string({ value: type, name: 'type', options: ['cpf', 'cnpj'] });
-    param.bool({ value: throwError, name: 'throwError' });
+  static #validateOptions(options) {
+    if (this.#cachedOptions.isCached(options)) return;
+    param.bool({ value: options.numbersOnly, name: 'numbersOnly' });
+    param.string({ value: options.type, name: 'type', options: ['cpf', 'cnpj'] });
+    param.bool({ value: options.throwError, name: 'throwError' });
+
+    this.#cachedOptions.cache(options);
   }
 
-  #parseType(doc, type) {
+  static #parseType(doc, type) {
     if (typeof doc === 'number') return this.#parseNumber(doc, type);
     if (typeof doc === 'string') return doc;
     throw new SaltoolsError(`${typeof doc} ${doc} deve ser string ou number`);
   }
 
-  #parseNumber(doc, type) {
+  static #parseNumber(doc, type) {
     if (!Number.isInteger(doc)) {
       throw new SaltoolsError(`Não é possível converter float ${doc} em doc`);
     }
@@ -52,7 +60,7 @@ export default class DocParser {
     return this.#parseNumberInferingType(doc);
   }
 
-  #parseNumberInferingType(doc) {
+  static #parseNumberInferingType(doc) {
     doc = String(doc);
     if (doc.length === DocParser.#CPF_LENGTH) {
       if (this.#looksLikeCnpj(doc)) {
@@ -74,7 +82,7 @@ export default class DocParser {
     }
   }
 
-  #padInferingType(doc) {
+  static #padInferingType(doc) {
     if (doc.length < DocParser.#CPF_LENGTH) {
       return doc.padEnd(DocParser.#CPF_LENGTH, '0');
     }
@@ -84,7 +92,7 @@ export default class DocParser {
     throw new SaltoolsError(`Não foi possível inferir o tipo de documento, ${doc}`);
   }
 
-  #padToType(doc, type) {
+  static #padToType(doc, type) {
     const docStr = doc.toString();
     const targetLength = type === 'cpf' ? DocParser.#CPF_LENGTH : DocParser.#CNPJ_LENGTH;
     if (type === 'cnpj' && docStr.length === 12) {
@@ -93,31 +101,32 @@ export default class DocParser {
     return docStr.padStart(targetLength, '0');
   }
 
-  #looksLikeCnpj(doc) {
+  static #looksLikeCnpj(doc) {
     return doc.slice(-6).startsWith(DocParser.#CNPJ_INDICATOR);
   }
 
-  #removeSpecialChars(doc) {
+  static #removeSpecialChars(doc) {
     return doc.replace(/[^0-9]/g, '');
   }
 
-  #validateLength(doc) {
+  static #validateLength(doc) {
     if (![DocParser.#CPF_LENGTH, DocParser.#CNPJ_LENGTH].includes(doc.length)) {
-      throw new SaltoolsError(`Documento deve ter ${DocParser.#CPF_LENGTH} ou ${DocParser.#CNPJ_LENGTH} caracteres, ${doc} tem ${doc.length}`);
+      throw new SaltoolsError(
+        `Documento deve ter ${DocParser.#CPF_LENGTH} ou ${DocParser.#CNPJ_LENGTH} caracteres, ${doc} tem ${doc.length}`
+      );
     }
   }
 
-  #putSpecialCharsBack(doc, numbersOnly) {
+  static #putSpecialCharsBack(doc, numbersOnly) {
     if (numbersOnly) return doc;
     return doc.length === DocParser.#CPF_LENGTH ? this.#formatToCpf(doc) : this.#formatToCnpj(doc);
   }
 
-  #formatToCpf(doc) {
+  static #formatToCpf(doc) {
     return doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
   }
 
-  #formatToCnpj(doc) {
+  static #formatToCnpj(doc) {
     return doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
   }
 }
-
