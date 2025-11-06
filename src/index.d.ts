@@ -88,7 +88,134 @@ export interface FwfField {
   type?: 'number' | 'bool';
 }
 
+export function timestamp(): string;
+
+export function helloWorld(): void;
+
+export const log: {
+  /** @param error - The error object to log
+   *  @param options - Options object
+   *  @param options.directory - Directory to save log file. Default: undefined
+   *  @param options.filename - Filename for log file. Default: undefined
+   *  @param options.addTimestamp - Add timestamp to filename. Default: true
+   *  @param options.print - Print error to console. Default: true
+   *  @param options.throwError - Re-throw the error after logging. Default: false */
+  error: (
+    error: Error,
+    options?: {
+      /** @default undefined */
+      directory?: string;
+      /** @default undefined */
+      filename?: string;
+      /** @default true */
+      addTimestamp?: boolean;
+      /** @default true */
+      print?: boolean;
+      /** @default false */
+      throwError?: boolean;
+    }
+  ) => void;
+  /** @param content - The content to save
+   *  @param options - Options object
+   *  @param options.directory - Directory to save log file. Default: undefined
+   *  @param options.filename - Filename for log file. Default: undefined
+   *  @param options.addTimestamp - Add timestamp to filename. Default: true */
+  saveLog: (
+    content: string,
+    options?: {
+      /** @default undefined */
+      directory?: string;
+      /** @default undefined */
+      filename?: string;
+      /** @default true */
+      addTimestamp?: boolean;
+    }
+  ) => void;
+};
+
 export const parse: {
+  /** Parse a fixed-width file
+   *  @param path - The fixed-width file path
+   *  @param fields - Array describing field slices
+   *  Each field contains a key, start index, and end index (exclusive) */
+  fwf(path: string, fields: FwfField[]): Array<Record<string, string | number | boolean>>;
+  /** Parse a document (CPF or CNPJ)
+   *  @param doc - The document to parse (CPF or CNPJ)
+   *  @param options - Options object
+   *  @param options.numbersOnly - Return only numbers (no formatting). Default: true
+   *  @param options.type - Document type: 'cpf' or 'cnpj'. If undefined, will infer from length. Default: undefined
+   *  @param options.throwError - Throw error if invalid, otherwise return null. Default: true */
+  doc(
+    doc: string | number,
+    options?: {
+      /** Return only numbers (no formatting). @default true */
+      numbersOnly?: boolean;
+      /** Document type: 'cpf' or 'cnpj'. If undefined, will infer from length. @default undefined */
+      type?: 'cpf' | 'cnpj';
+      /** Throw error if invalid, otherwise return null. @default true */
+      throwError?: boolean;
+    }
+  ): string | null;
+  /** Parse a date value
+   *  @param value - The date value to parse
+   *  @param options - Options object
+   *  @param options.inputFormat - Default: 'iso'
+   *  @param options.outputFormat - Default: 'iso'
+   *  @param options.throwError - Default: true */
+  date(
+    value: any,
+    options?: {
+      /** @default 'iso' */
+      inputFormat?: string;
+      /** @default 'iso' */
+      outputFormat?: string;
+      /** @default true */
+      throwError?: boolean;
+    }
+  ): string | null;
+  /** Parse an email address
+   *  @param value - The email to parse
+   *  @param options - Options object
+   *  @param options.allowAlias - Default: true
+   *  @param options.allowDisposable - Default: false
+   *  @param options.throwError - Default: true */
+  email(
+    value: any,
+    options?: {
+      /** @default true */
+      allowAlias?: boolean;
+      /** @default false */
+      allowDisposable?: boolean;
+      /** @default true */
+      throwError?: boolean;
+    }
+  ): string | null;
+  /** Validate DNS records for a domain or email
+   *  @param domainOrEmail - The domain or email to validate
+   *  @param options - Options object
+   *  @param options.validateSPF - Default: true
+   *  @param options.validateDMARC - Default: true
+   *  @param options.validateDKIM - Default: true
+   *  @param options.validateMX - Default: true
+   *  @param options.validateSMTP - Default: true
+   *  @param options.throwError - Default: true */
+  dns(
+    domainOrEmail: string,
+    options?: {
+      /** @default true */
+      validateSPF?: boolean;
+      /** @default true */
+      validateDMARC?: boolean;
+      /** @default true */
+      validateDKIM?: boolean;
+      /** @default true */
+      validateMX?: boolean;
+      /** @default true */
+      validateSMTP?: boolean;
+      /** @default true */
+      throwError?: boolean;
+    }
+  ): Promise<string | null>;
   /** Parse a string value
    *  @param value - The value to parse
    *  @param options - Options object
@@ -167,31 +294,6 @@ export const parse: {
       throwError?: boolean;
     }
   ): number | null;
-  /** Parse a CSV file
-   *  @param path - The CSV file path
-   *  @param options - Options object
-   *  @param options.delimiter - Default: ','
-   *  @param options.quoteChar - Default: '"'
-   *  @param options.escapeChar - Default: '\\'
-   *  @param options.throwError - Default: true */
-  csv(
-    path: string,
-    options?: {
-      /** @default ',' */
-      delimiter?: string;
-      /** @default '"' */
-      quoteChar?: string;
-      /** @default '\\' */
-      escapeChar?: string;
-      /** @default true */
-      throwError?: boolean;
-    }
-  ): Array<Record<string, string | number | boolean>> | null;
-  /** Parse a fixed-width file
-   *  @param path - The fixed-width file path
-   *  @param fields - Array describing field slices
-   *  Each field contains a key, start index, and end index (exclusive) */
-  fwf(path: string, fields: FwfField[]): Array<Record<string, string | number | boolean>>;
   /** Parse a phone number
    *  @param phone - The phone number to parse
    *  @param options - Options object
@@ -215,147 +317,48 @@ export const parse: {
       throwError?: boolean;
     }
   ): string | null;
-  /** Parse a date value
-   *  @param value - The date value to parse
+  /** Parse a CSV file
+   *  @param path - The CSV file path
    *  @param options - Options object
-   *  @param options.inputFormat - Default: 'iso'
-   *  @param options.outputFormat - Default: 'iso'
+   *  @param options.delimiter - Default: ','
+   *  @param options.quoteChar - Default: '"'
+   *  @param options.escapeChar - Default: '\\'
    *  @param options.throwError - Default: true */
-  date(
-    value: any,
+  csv(
+    path: string,
     options?: {
-      /** @default 'iso' */
-      inputFormat?: string;
-      /** @default 'iso' */
-      outputFormat?: string;
+      /** @default ',' */
+      delimiter?: string;
+      /** @default '"' */
+      quoteChar?: string;
+      /** @default '\\' */
+      escapeChar?: string;
       /** @default true */
       throwError?: boolean;
     }
-  ): string | null;
-  /** Parse an email address
-   *  @param value - The email to parse
-   *  @param options - Options object
-   *  @param options.allowAlias - Default: true
-   *  @param options.allowDisposable - Default: false
-   *  @param options.throwError - Default: true */
-  email(
-    value: any,
-    options?: {
-      /** @default true */
-      allowAlias?: boolean;
-      /** @default false */
-      allowDisposable?: boolean;
-      /** @default true */
-      throwError?: boolean;
-    }
-  ): string | null;
-  /** Parse a document (CPF or CNPJ)
-   *  @param doc - The document to parse (CPF or CNPJ)
-   *  @param options - Options object
-   *  @param options.numbersOnly - Return only numbers (no formatting). Default: true
-   *  @param options.type - Document type: 'cpf' or 'cnpj'. If undefined, will infer from length. Default: undefined
-   *  @param options.throwError - Throw error if invalid, otherwise return null. Default: true */
-  doc(
-    doc: string | number,
-    options?: {
-      /** Return only numbers (no formatting). @default true */
-      numbersOnly?: boolean;
-      /** Document type: 'cpf' or 'cnpj'. If undefined, will infer from length. @default undefined */
-      type?: 'cpf' | 'cnpj';
-      /** Throw error if invalid, otherwise return null. @default true */
-      throwError?: boolean;
-    }
-  ): string | null;
-  /** Validate DNS records for a domain or email
-   *  @param domainOrEmail - The domain or email to validate
-   *  @param options - Options object
-   *  @param options.validateSPF - Default: true
-   *  @param options.validateDMARC - Default: true
-   *  @param options.validateDKIM - Default: true
-   *  @param options.validateMX - Default: true
-   *  @param options.validateSMTP - Default: true
-   *  @param options.throwError - Default: true */
-  dns(
-    domainOrEmail: string,
-    options?: {
-      /** @default true */
-      validateSPF?: boolean;
-      /** @default true */
-      validateDMARC?: boolean;
-      /** @default true */
-      validateDKIM?: boolean;
-      /** @default true */
-      validateMX?: boolean;
-      /** @default true */
-      validateSMTP?: boolean;
-      /** @default true */
-      throwError?: boolean;
-    }
-  ): Promise<string | null>;
-};
-
-export const log: {
-  /** @param error - The error object to log
-   *  @param options - Options object
-   *  @param options.directory - Directory to save log file. Default: undefined
-   *  @param options.filename - Filename for log file. Default: undefined
-   *  @param options.addTimestamp - Add timestamp to filename. Default: true
-   *  @param options.print - Print error to console. Default: true
-   *  @param options.throwError - Re-throw the error after logging. Default: false */
-  error: (
-    error: Error,
-    options?: {
-      /** @default undefined */
-      directory?: string;
-      /** @default undefined */
-      filename?: string;
-      /** @default true */
-      addTimestamp?: boolean;
-      /** @default true */
-      print?: boolean;
-      /** @default false */
-      throwError?: boolean;
-    }
-  ) => void;
-  /** @param content - The content to save
-   *  @param options - Options object
-   *  @param options.directory - Directory to save log file. Default: undefined
-   *  @param options.filename - Filename for log file. Default: undefined
-   *  @param options.addTimestamp - Add timestamp to filename. Default: true */
-  saveLog: (
-    content: string,
-    options?: {
-      /** @default undefined */
-      directory?: string;
-      /** @default undefined */
-      filename?: string;
-      /** @default true */
-      addTimestamp?: boolean;
-    }
-  ) => void;
-};
-
-export function timestamp(): string;
-
-export function helloWorld(): void;
-
-export class SaltoolsError extends Error {
-  constructor(message: string, options?: any);
-  name: string;
-  options: any;
-}
-
-export const errors: {
-  SaltoolsError: typeof SaltoolsError;
+  ): Array<Record<string, string | number | boolean>> | null;
 };
 
 export const config: {
-  /** Set the throwError configuration value
-   *  @param value - The boolean value to set */
-  throwError(value: boolean): void;
   /** Get the current configuration object
    *  @returns The configuration object */
   get(): Record<string, any>;
   /** Reset the configuration to an empty object */
   reset(): void;
+  /** Set the throwError configuration value
+   *  @param value - The boolean value to set */
+  throwError(value: boolean): void;
+};
+
+/** SaltoolsError class */
+export type SaltoolsError = new (
+  message: string,
+  options?: any
+) => Error & {
+  name: string;
+  options: any;
+};
+
+export const errors: {
+  SaltoolsError: SaltoolsError;
 };
