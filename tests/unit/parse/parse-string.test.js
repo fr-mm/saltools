@@ -1,6 +1,8 @@
 import { describe, test, expect } from '@jest/globals';
-import { string } from 'src/commands/parse/index.js';
+import { parse } from 'src/commands/parse/index.js';
 import SaltoolsError from 'src/errors/saltools-error.js';
+
+const { string } = parse;
 
 describe('parse-string', () => {
   test('test_string_WHEN_validString_THEN_returnsTrimmedString', () => {

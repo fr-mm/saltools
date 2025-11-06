@@ -1,8 +1,10 @@
 import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
-import { csv } from 'src/commands/parse/index.js';
+import { parse } from 'src/commands/parse/index.js';
 import SaltoolsError from 'src/errors/saltools-error.js';
+
+const { csv } = parse;
 
 describe('parse-csv', () => {
   const testDir = path.join(process.cwd(), 'tests', 'temp');

@@ -1,4 +1,4 @@
-import CachedOptions from 'src/helper/cachedOptions.js';
+import CachedOptions from 'src/helper/cached-options.js';
 import validator from 'validator';
 import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';

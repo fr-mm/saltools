@@ -1,9 +1,9 @@
 import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import { helloWorld, parse, errors } from 'src/index.js';
+import { helloWorld, parse, errors, timestamp, log, config } from 'src/index.js';
 import fs from 'fs';
 import path from 'path';
 
-const saltools = { helloWorld, parse, errors };
+const saltools = { helloWorld, parse, errors, timestamp, log, config };
 
 describe('saltools - integration tests', () => {
   describe('exports', () => {
@@ -13,6 +13,13 @@ describe('saltools - integration tests', () => {
       expect(saltools.parse).toBeDefined();
       expect(typeof saltools.parse).toBe('object');
       expect(saltools.errors).toBeDefined();
+      expect(typeof saltools.errors).toBe('object');
+      expect(saltools.timestamp).toBeDefined();
+      expect(typeof saltools.timestamp).toBe('function');
+      expect(saltools.log).toBeDefined();
+      expect(typeof saltools.log).toBe('object');
+      expect(saltools.config).toBeDefined();
+      expect(typeof saltools.config).toBe('object');
     });
 
     test('test_parseExport_WHEN_accessed_THEN_exportsAllParseFunctions', () => {
@@ -34,6 +41,59 @@ describe('saltools - integration tests', () => {
       expect(typeof saltools.parse.email).toBe('function');
       expect(saltools.parse.doc).toBeDefined();
       expect(typeof saltools.parse.doc).toBe('function');
+      expect(saltools.parse.dns).toBeDefined();
+      expect(typeof saltools.parse.dns).toBe('function');
+    });
+
+    test('test_logExport_WHEN_accessed_THEN_exportsAllLogFunctions', () => {
+      expect(saltools.log.error).toBeDefined();
+      expect(typeof saltools.log.error).toBe('function');
+      expect(saltools.log.saveLog).toBeDefined();
+      expect(typeof saltools.log.saveLog).toBe('function');
+    });
+
+    test('test_errorsExport_WHEN_accessed_THEN_exportsErrorClass', () => {
+      expect(saltools.errors.SaltoolsError).toBeDefined();
+      expect(typeof saltools.errors.SaltoolsError).toBe('function');
+    });
+
+    test('test_configExport_WHEN_accessed_THEN_exportsConfigMethods', () => {
+      expect(saltools.config.get).toBeDefined();
+      expect(typeof saltools.config.get).toBe('function');
+      expect(saltools.config.reset).toBeDefined();
+      expect(typeof saltools.config.reset).toBe('function');
+      expect(saltools.config.throwError).toBeDefined();
+      expect(typeof saltools.config.throwError).toBe('function');
+    });
+  });
+
+  describe('config', () => {
+    beforeEach(() => {
+      saltools.config.reset();
+    });
+
+    test('test_configGet_WHEN_noConfigSet_THEN_returnsEmptyObject', () => {
+      const result = saltools.config.get();
+      expect(result).toEqual({});
+    });
+
+    test('test_configThrowError_WHEN_setToTrue_THEN_setsConfigValue', () => {
+      saltools.config.throwError(true);
+      const result = saltools.config.get();
+      expect(result).toEqual({ throwError: true });
+    });
+
+    test('test_configThrowError_WHEN_setToFalse_THEN_setsConfigValue', () => {
+      saltools.config.throwError(false);
+      const result = saltools.config.get();
+      expect(result).toEqual({ throwError: false });
+    });
+
+    test('test_configReset_WHEN_called_THEN_clearsConfig', () => {
+      saltools.config.throwError(true);
+      saltools.config.reset();
+      const result = saltools.config.get();
+      expect(result).toEqual({});
     });
   });
 
@@ -297,11 +357,6 @@ describe('saltools - integration tests', () => {
   });
 
   describe('error handling', () => {
-    test('test_errorsExport_WHEN_accessed_THEN_exportsErrorClass', () => {
-      expect(saltools.errors.SaltoolsError).toBeDefined();
-      expect(typeof saltools.errors.SaltoolsError).toBe('function');
-    });
-
     test('test_parseFunctions_WHEN_invalidInput_THEN_throwsSaltoolsError', () => {
       expect(() => {
         saltools.parse.string(null);

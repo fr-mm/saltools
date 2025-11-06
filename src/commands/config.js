@@ -14,7 +14,7 @@ export default class Config {
   static #setBool(key, value) {
     if (typeof value !== 'boolean') {
       throw new SaltoolsError(
-        `Invalid value for ${key}. Type ${typeof value} is not boolean. Value: ${value}`
+        `Valor inválido para ${key}. Tipo ${typeof value} não é boolean. Valor: ${value}`
       );
     }
     this.#config[key] = value;

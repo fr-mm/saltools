@@ -8,16 +8,15 @@ import NumberParser from './parse-number.js';
 import PhoneParser from './parse-phone.js';
 import CSVParser from './parse-csv/csv-parser.js';
 
-export const fwf = FwfParser.parse.bind(FwfParser);
-export const doc = DocParser.parse.bind(DocParser);
-export const date = DateParser.parse.bind(DateParser);
-export const email = EmailParser.parse.bind(EmailParser);
-export const dns = DNSParser.parse.bind(DNSParser);
-export const string = StringParser.parse.bind(StringParser);
-export const number = NumberParser.parseNumber.bind(NumberParser);
-export const integer = NumberParser.parseInteger.bind(NumberParser);
-export const phone = PhoneParser.parse.bind(PhoneParser);
-export const csv = (path, options = {}) => {
-  const parser = new CSVParser(path, options);
-  return parser.parse();
+export const parse = {
+  fwf: FwfParser.parse.bind(FwfParser),
+  doc: DocParser.parse.bind(DocParser),
+  date: DateParser.parse.bind(DateParser),
+  email: EmailParser.parse.bind(EmailParser),
+  dns: DNSParser.parse.bind(DNSParser),
+  string: StringParser.parse.bind(StringParser),
+  number: NumberParser.parseNumber.bind(NumberParser),
+  integer: NumberParser.parseInteger.bind(NumberParser),
+  phone: PhoneParser.parse.bind(PhoneParser),
+  csv: CSVParser.parse.bind(CSVParser),
 };

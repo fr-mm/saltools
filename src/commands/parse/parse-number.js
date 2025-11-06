@@ -1,6 +1,6 @@
 import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
-import CachedOptions from 'src/helper/cachedOptions.js';
+import CachedOptions from 'src/helper/cached-options.js';
 import OptionsService from 'src/helper/options-service.js';
 
 export default class NumberParser {

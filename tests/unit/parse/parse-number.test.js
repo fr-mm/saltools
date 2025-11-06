@@ -1,6 +1,8 @@
 import { describe, test, expect } from '@jest/globals';
-import { number, integer } from 'src/commands/parse/index.js';
+import { parse } from 'src/commands/parse/index.js';
 import SaltoolsError from 'src/errors/saltools-error.js';
+
+const { number, integer } = parse;
 
 describe('parse-number', () => {
   describe('number function', () => {

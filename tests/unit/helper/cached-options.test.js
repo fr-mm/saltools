@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import CachedOptions from 'src/helper/cachedOptions.js';
+import CachedOptions from 'src/helper/cached-options.js';
 
 describe('CachedOptions', () => {
   test('test_isCached_WHEN_noOptionsCached_THEN_returnsFalse', () => {

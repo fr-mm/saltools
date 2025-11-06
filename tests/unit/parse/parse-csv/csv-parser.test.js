@@ -9,8 +9,7 @@ describe('CSVParser', () => {
   test('test_parse_WHEN_validCSVFile_THEN_returnsArrayOfObjects', () => {
     const filePath = path.join(testDir, 'test.csv');
 
-    const parser = new CSVParser(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
-    const result = parser.parse();
+    const result = CSVParser.parse(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
 
     expect(result).toEqual([
       { name: 'John', age: 30, city: 'New York' },
@@ -21,8 +20,7 @@ describe('CSVParser', () => {
   test('test_parse_WHEN_emptyCSVFile_THEN_returnsEmptyArray', () => {
     const filePath = path.join(testDir, 'empty.csv');
 
-    const parser = new CSVParser(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
-    const result = parser.parse();
+    const result = CSVParser.parse(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
 
     expect(result).toEqual([]);
   });
@@ -30,8 +28,7 @@ describe('CSVParser', () => {
   test('test_parse_WHEN_onlyHeaders_THEN_returnsEmptyArray', () => {
     const filePath = path.join(testDir, 'headers-only.csv');
 
-    const parser = new CSVParser(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
-    const result = parser.parse();
+    const result = CSVParser.parse(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
 
     expect(result).toEqual([]);
   });
@@ -39,8 +36,7 @@ describe('CSVParser', () => {
   test('test_parse_WHEN_booleanAndNumericValues_THEN_convertsToTypes', () => {
     const filePath = path.join(testDir, 'types.csv');
 
-    const parser = new CSVParser(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
-    const result = parser.parse();
+    const result = CSVParser.parse(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
 
     expect(result).toEqual([
       { name: 'John', age: 30, active: true },
@@ -53,8 +49,7 @@ describe('CSVParser', () => {
   test('test_parse_WHEN_customDelimiter_THEN_parsesCorrectly', () => {
     const filePath = path.join(testDir, 'custom-delimiter.csv');
 
-    const parser = new CSVParser(filePath, { delimiter: '|', quoteChar: '"', escapeChar: '\\' });
-    const result = parser.parse();
+    const result = CSVParser.parse(filePath, { delimiter: '|', quoteChar: '"', escapeChar: '\\' });
 
     expect(result).toEqual([
       { name: 'John', age: 30, city: 'New York' },
@@ -65,8 +60,7 @@ describe('CSVParser', () => {
   test('test_parse_WHEN_quotedFieldsWithNewlines_THEN_preservesNewlines', () => {
     const filePath = path.join(testDir, 'quoted-newline.csv');
 
-    const parser = new CSVParser(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
-    const result = parser.parse();
+    const result = CSVParser.parse(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
 
     expect(result).toEqual([
       { name: 'John', note: 'First line\nSecond line' },
@@ -77,8 +71,7 @@ describe('CSVParser', () => {
   test('test_parse_WHEN_blankLines_THEN_skipsBlankLines', () => {
     const filePath = path.join(testDir, 'blank-lines.csv');
 
-    const parser = new CSVParser(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
-    const result = parser.parse();
+    const result = CSVParser.parse(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
 
     expect(result).toEqual([
       { name: 'John', age: 30 },
@@ -90,8 +83,7 @@ describe('CSVParser', () => {
   test('test_parse_WHEN_rowHasMoreColumnsThanHeaders_THEN_ignoresExtraColumns', () => {
     const filePath = path.join(testDir, 'extra-columns.csv');
 
-    const parser = new CSVParser(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
-    const result = parser.parse();
+    const result = CSVParser.parse(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
 
     expect(result).toEqual([
       { name: 'John', age: 30 },
@@ -102,8 +94,7 @@ describe('CSVParser', () => {
   test('test_parse_WHEN_rowHasFewerColumnsThanHeaders_THEN_fillsWithEmptyStrings', () => {
     const filePath = path.join(testDir, 'fewer-columns.csv');
 
-    const parser = new CSVParser(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
-    const result = parser.parse();
+    const result = CSVParser.parse(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
 
     expect(result).toEqual([
       { name: 'John', age: 30, city: '', country: '' },
@@ -114,8 +105,7 @@ describe('CSVParser', () => {
   test('test_parse_WHEN_duplicateHeaders_THEN_lastHeaderWins', () => {
     const filePath = path.join(testDir, 'duplicate-headers.csv');
 
-    const parser = new CSVParser(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
-    const result = parser.parse();
+    const result = CSVParser.parse(filePath, { delimiter: ',', quoteChar: '"', escapeChar: '\\' });
 
     expect(result).toEqual([
       { name: 'Doe', age: 30 },
