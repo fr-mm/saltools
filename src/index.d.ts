@@ -93,13 +93,13 @@ export function timestamp(): string;
 export function helloWorld(): void;
 
 export const log: {
-  /** @param error - The error object to log
-   *  @param options - Options object
-   *  @param options.directory - Directory to save log file. Default: undefined
-   *  @param options.filename - Filename for log file. Default: undefined
-   *  @param options.addTimestamp - Add timestamp to filename. Default: true
-   *  @param options.print - Print error to console. Default: true
-   *  @param options.throwError - Re-throw the error after logging. Default: false */
+  /** @param error - O objeto de erro a ser registrado
+   *  @param options - Objeto de opções
+   *  @param options.directory - Diretório para salvar o arquivo de log. Padrão: undefined
+   *  @param options.filename - Nome do arquivo de log. Padrão: undefined
+   *  @param options.addTimestamp - Adicionar timestamp ao nome do arquivo. Padrão: true
+   *  @param options.print - Imprimir erro no console. Padrão: true
+   *  @param options.throwError - Relançar o erro após o registro. Padrão: false */
   error: (
     error: Error,
     options?: {
@@ -115,11 +115,11 @@ export const log: {
       throwError?: boolean;
     }
   ) => void;
-  /** @param content - The content to save
-   *  @param options - Options object
-   *  @param options.directory - Directory to save log file. Default: undefined
-   *  @param options.filename - Filename for log file. Default: undefined
-   *  @param options.addTimestamp - Add timestamp to filename. Default: true */
+  /** @param content - O conteúdo a ser salvo
+   *  @param options - Objeto de opções
+   *  @param options.directory - Diretório para salvar o arquivo de log. Padrão: undefined
+   *  @param options.filename - Nome do arquivo de log. Padrão: undefined
+   *  @param options.addTimestamp - Adicionar timestamp ao nome do arquivo. Padrão: true */
   saveLog: (
     content: string,
     options?: {
@@ -134,34 +134,34 @@ export const log: {
 };
 
 export const parse: {
-  /** Parse a fixed-width file
-   *  @param path - The fixed-width file path
-   *  @param fields - Array describing field slices
-   *  Each field contains a key, start index, and end index (inclusive) */
+  /** Faz o parse de um arquivo de largura fixa
+   *  @param path - O caminho do arquivo de largura fixa
+   *  @param fields - Array descrevendo os cortes dos campos
+   *  Cada campo contém uma chave, índice inicial e índice final (inclusivo) */
   fwf(path: string, fields: FwfField[]): Array<Record<string, string | number | boolean>>;
-  /** Parse a document (CPF or CNPJ)
-   *  @param doc - The document to parse (CPF or CNPJ)
-   *  @param options - Options object
-   *  @param options.numbersOnly - Return only numbers (no formatting). Default: true
-   *  @param options.type - Document type: 'cpf' or 'cnpj'. If undefined, will infer from length. Default: undefined
-   *  @param options.throwError - Throw error if invalid, otherwise return null. Default: true */
+  /** Faz o parse de um documento (CPF ou CNPJ)
+   *  @param doc - O documento a ser parseado (CPF ou CNPJ)
+   *  @param options - Objeto de opções
+   *  @param options.numbersOnly - Retornar apenas números (sem formatação). Padrão: true
+   *  @param options.type - Tipo de documento: 'cpf' ou 'cnpj'. Se undefined, inferirá pelo comprimento. Padrão: undefined
+   *  @param options.throwError - Lançar erro se inválido, caso contrário retorna null. Padrão: true */
   doc(
     doc: string | number,
     options?: {
-      /** Return only numbers (no formatting). @default true */
+      /** Retornar apenas números (sem formatação). @default true */
       numbersOnly?: boolean;
-      /** Document type: 'cpf' or 'cnpj'. If undefined, will infer from length. @default undefined */
+      /** Tipo de documento: 'cpf' ou 'cnpj'. Se undefined, inferirá pelo comprimento. @default undefined */
       type?: 'cpf' | 'cnpj';
-      /** Throw error if invalid, otherwise return null. @default true */
+      /** Lançar erro se inválido, caso contrário retorna null. @default true */
       throwError?: boolean;
     }
   ): string | null;
-  /** Parse a date value
-   *  @param value - The date value to parse
-   *  @param options - Options object
-   *  @param options.inputFormat - Default: 'iso'
-   *  @param options.outputFormat - Default: 'iso'
-   *  @param options.throwError - Default: true */
+  /** Faz o parse de um valor de data
+   *  @param value - O valor de data a ser parseado
+   *  @param options - Objeto de opções
+   *  @param options.inputFormat - Padrão: 'iso'
+   *  @param options.outputFormat - Padrão: 'iso'
+   *  @param options.throwError - Padrão: true */
   date(
     value: any,
     options?: {
@@ -173,12 +173,12 @@ export const parse: {
       throwError?: boolean;
     }
   ): string | null;
-  /** Parse an email address
-   *  @param value - The email to parse
-   *  @param options - Options object
-   *  @param options.allowAlias - Default: true
-   *  @param options.allowDisposable - Default: false
-   *  @param options.throwError - Default: true */
+  /** Faz o parse de um endereço de email
+   *  @param value - O email a ser parseado
+   *  @param options - Objeto de opções
+   *  @param options.allowAlias - Padrão: true
+   *  @param options.allowDisposable - Padrão: false
+   *  @param options.throwError - Padrão: true */
   email(
     value: any,
     options?: {
@@ -190,15 +190,15 @@ export const parse: {
       throwError?: boolean;
     }
   ): string | null;
-  /** Validate DNS records for a domain or email
-   *  @param domainOrEmail - The domain or email to validate
-   *  @param options - Options object
-   *  @param options.validateSPF - Default: true
-   *  @param options.validateDMARC - Default: true
-   *  @param options.validateDKIM - Default: true
-   *  @param options.validateMX - Default: true
-   *  @param options.validateSMTP - Default: true
-   *  @param options.throwError - Default: true */
+  /** Valida registros DNS para um domínio ou email
+   *  @param domainOrEmail - O domínio ou email a ser validado
+   *  @param options - Objeto de opções
+   *  @param options.validateSPF - Padrão: true
+   *  @param options.validateDMARC - Padrão: true
+   *  @param options.validateDKIM - Padrão: true
+   *  @param options.validateMX - Padrão: true
+   *  @param options.validateSMTP - Padrão: true
+   *  @param options.throwError - Padrão: true */
   dns(
     domainOrEmail: string,
     options?: {
@@ -216,15 +216,15 @@ export const parse: {
       throwError?: boolean;
     }
   ): Promise<string | null>;
-  /** Parse a string value
-   *  @param value - The value to parse
-   *  @param options - Options object
-   *  @param options.allowEmpty - Default: false
-   *  @param options.cast - Default: false
-   *  @param options.trim - Default: true
-   *  @param options.capitalize - Default: false
-   *  @param options.varName - Default: undefined
-   *  @param options.throwError - Default: true */
+  /** Faz o parse de um valor string
+   *  @param value - O valor a ser parseado
+   *  @param options - Objeto de opções
+   *  @param options.allowEmpty - Padrão: false
+   *  @param options.cast - Padrão: false
+   *  @param options.trim - Padrão: true
+   *  @param options.capitalize - Padrão: false
+   *  @param options.varName - Padrão: undefined
+   *  @param options.throwError - Padrão: true */
   string(
     value: any,
     options?: {
@@ -242,15 +242,15 @@ export const parse: {
       throwError?: boolean;
     }
   ): string | null;
-  /** Parse a number value
-   *  @param value - The value to parse
-   *  @param options - Options object
-   *  @param options.allowEmptyString - Default: false
-   *  @param options.allowNull - Default: false
-   *  @param options.allowNegative - Default: true
-   *  @param options.allowZero - Default: true
-   *  @param options.varName - Default: undefined
-   *  @param options.throwError - Default: true */
+  /** Faz o parse de um valor numérico
+   *  @param value - O valor a ser parseado
+   *  @param options - Objeto de opções
+   *  @param options.allowEmptyString - Padrão: false
+   *  @param options.allowNull - Padrão: false
+   *  @param options.allowNegative - Padrão: true
+   *  @param options.allowZero - Padrão: true
+   *  @param options.varName - Padrão: undefined
+   *  @param options.throwError - Padrão: true */
   number(
     value: any,
     options?: {
@@ -268,15 +268,15 @@ export const parse: {
       throwError?: boolean;
     }
   ): number | null;
-  /** Parse an integer value
-   *  @param value - The value to parse
-   *  @param options - Options object
-   *  @param options.allowEmptyString - Default: false
-   *  @param options.allowNull - Default: false
-   *  @param options.allowNegative - Default: true
-   *  @param options.allowZero - Default: true
-   *  @param options.varName - Default: undefined
-   *  @param options.throwError - Default: true */
+  /** Faz o parse de um valor inteiro
+   *  @param value - O valor a ser parseado
+   *  @param options - Objeto de opções
+   *  @param options.allowEmptyString - Padrão: false
+   *  @param options.allowNull - Padrão: false
+   *  @param options.allowNegative - Padrão: true
+   *  @param options.allowZero - Padrão: true
+   *  @param options.varName - Padrão: undefined
+   *  @param options.throwError - Padrão: true */
   integer(
     value: any,
     options?: {
@@ -294,14 +294,14 @@ export const parse: {
       throwError?: boolean;
     }
   ): number | null;
-  /** Parse a phone number
-   *  @param phone - The phone number to parse
-   *  @param options - Options object
-   *  @param options.addCountryCode - Default: true
-   *  @param options.addPlusPrefix - Default: false
-   *  @param options.addAreaCode - Default: true
-   *  @param options.numbersOnly - Default: true
-   *  @param options.throwError - Default: true */
+  /** Faz o parse de um número de telefone
+   *  @param phone - O número de telefone a ser parseado
+   *  @param options - Objeto de opções
+   *  @param options.addCountryCode - Padrão: true
+   *  @param options.addPlusPrefix - Padrão: false
+   *  @param options.addAreaCode - Padrão: true
+   *  @param options.numbersOnly - Padrão: true
+   *  @param options.throwError - Padrão: true */
   phone(
     phone: string,
     options?: {
@@ -317,13 +317,13 @@ export const parse: {
       throwError?: boolean;
     }
   ): string | null;
-  /** Parse a CSV file
-   *  @param path - The CSV file path
-   *  @param options - Options object
-   *  @param options.delimiter - Default: ','
-   *  @param options.quoteChar - Default: '"'
-   *  @param options.escapeChar - Default: '\\'
-   *  @param options.throwError - Default: true */
+  /** Faz o parse de um arquivo CSV
+   *  @param path - O caminho do arquivo CSV
+   *  @param options - Objeto de opções
+   *  @param options.delimiter - Padrão: ','
+   *  @param options.quoteChar - Padrão: '"'
+   *  @param options.escapeChar - Padrão: '\\'
+   *  @param options.throwError - Padrão: true */
   csv(
     path: string,
     options?: {
@@ -340,17 +340,17 @@ export const parse: {
 };
 
 export const config: {
-  /** Get the current configuration object
-   *  @returns The configuration object */
+  /** Obtém o objeto de configuração atual
+   *  @returns O objeto de configuração */
   get(): Record<string, any>;
-  /** Reset the configuration to an empty object */
+  /** Redefine a configuração para um objeto vazio */
   reset(): void;
-  /** Set the throwError configuration value
-   *  @param value - The boolean value to set */
+  /** Define o valor de configuração throwError
+   *  @param value - O valor booleano a ser definido */
   throwError(value: boolean): void;
 };
 
-/** SaltoolsError class */
+/** Classe SaltoolsError */
 export type SaltoolsError = new (
   message: string,
   options?: any
