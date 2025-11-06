@@ -1,6 +1,7 @@
 import StringToDateParser from './string-to-date-parser.js';
 import DateToStringParser from './date-to-string-parser.js';
 import SaltoolsError from 'src/errors/saltools-error.js';
+import { DateParserOptions } from 'src/index.d.ts';
 
 export default class DateParser {
   static #DEFAULT_OPTIONS = {
@@ -10,7 +11,8 @@ export default class DateParser {
   };
 
   static parse(date, options = {}) {
-    options = { ...DateParser.#DEFAULT_OPTIONS, ...options };
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+
     try {
       const parsedDate = StringToDateParser.parse(date, options.inputFormat);
       return DateToStringParser.parse(parsedDate, options.outputFormat);
