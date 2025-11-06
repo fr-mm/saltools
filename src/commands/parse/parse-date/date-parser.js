@@ -1,7 +1,7 @@
 import StringToDateParser from './string-to-date-parser.js';
 import DateToStringParser from './date-to-string-parser.js';
 import SaltoolsError from 'src/errors/saltools-error.js';
-import { DateParserOptions } from 'src/index.d.ts';
+import OptionsService from 'src/helper/options-service.js';
 
 export default class DateParser {
   static #DEFAULT_OPTIONS = {

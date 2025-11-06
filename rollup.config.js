@@ -31,7 +31,9 @@ export default {
         },
       ],
     }),
-    resolve(),
+    resolve({
+      extensions: ['.js', '.mjs', '.json'],
+    }),
     commonjs(),
   ],
   external: ['axios', 'libphonenumber-js', 'validator'],

@@ -1,9 +1,24 @@
 import fs from 'fs';
-import validator from 'validator';
-import dns$1 from 'dns';
-import net from 'net';
-import { parsePhoneNumberWithError, isValidPhoneNumber } from 'libphonenumber-js';
 import path from 'path';
+import { parsePhoneNumberWithError, isValidPhoneNumber } from 'libphonenumber-js';
+import dns from 'dns';
+import net from 'net';
+import validator from 'validator';
+
+function timestamp() {
+  const now = new Date();
+  const pad = (value) => String(value).padStart(2, '0');
+
+  const day = pad(now.getDate());
+  const month = pad(now.getMonth() + 1);
+  const year = now.getFullYear();
+  const hours = pad(now.getHours());
+  const minutes = pad(now.getMinutes());
+  const seconds = pad(now.getSeconds());
+  const milliseconds = pad(now.getMilliseconds());
+
+  return `${day}-${month}-${year}-${hours}h-${minutes}m-${seconds}s-${milliseconds}ms`;
+}
 
 class SaltoolsError extends Error {
   constructor(message, options = {}) {
@@ -39,7 +54,7 @@ function bool({value, name, required = false}) {
     return validateParam({value, type: 'boolean', name, required});
 }
 
-function string$1({value, name, required = false, options = null }) {
+function string({value, name, required = false, options = null }) {
     const validated = validateParam({value, type: 'string', name, required});
     if (options !== null && validated !== null && validated !== undefined) {
         if (!Array.isArray(options)) {
@@ -52,11 +67,11 @@ function string$1({value, name, required = false, options = null }) {
     return validated;
 }
 
-function number$1({value, name, required = false}) {
+function number({value, name, required = false}) {
     return validateParam({value, type: 'number', name, required});
 }
 
-function integer$1({value, name, required = false}) {
+function integer({value, name, required = false}) {
     const number = validateParam({value, type: 'number', name, required});
     if (number === null || number === undefined) {
         return number;
@@ -71,7 +86,7 @@ function object({value, name, required = false}) {
     return validateParam({value, type: 'object', name, required});
 }
 
-function error$1({value, name, required = false}) {
+function error({value, name, required = false}) {
     const validated = object({value, name, required});
     if (!required && (validated === null || validated === undefined)) return validated;
     if (validated instanceof Error) return validated;
@@ -80,12 +95,286 @@ function error$1({value, name, required = false}) {
 
 const param = {
     bool,
-    string: string$1,
-    number: number$1,
-    integer: integer$1,
+    string,
+    number,
+    integer,
     object,
-    error: error$1
+    error
 };
+
+class ErrorLogger {
+  static run(
+    error,
+    {
+      directory = undefined,
+      filename = undefined,
+      addTimestamp = true,
+      print = true,
+      throwError = false,
+    } = {}
+  ) {
+    ErrorLogger.#validateParameters({
+      error,
+      directory,
+      filename,
+      print,
+      addTimestamp,
+      throwError,
+    });
+    const parsedError = ErrorLogger.#parseError(error);
+    ErrorLogger.#saveLog({ parsedError, directory, filename, addTimestamp });
+    if (print) console.error(parsedError);
+    if (throwError) throw error;
+  }
+
+  static #validateParameters({ error, directory, filename, print, addTimestamp, throwError }) {
+    param.error({ value: error, name: 'error', required: true });
+    param.string({ value: directory, name: 'directory' });
+    param.string({ value: filename, name: 'filename' });
+    param.bool({ value: print, name: 'print' });
+    param.bool({ value: addTimestamp, name: 'addTimestamp' });
+    param.bool({ value: throwError, name: 'throwError' });
+
+    if ((!directory && filename) || (directory && !filename)) {
+      throw new SaltoolsError(
+        'directory e filename devem ser ambos fornecidos ou ambos não fornecidos'
+      );
+    }
+
+    if (addTimestamp && (!directory || !filename)) {
+      throw new SaltoolsError('directory e filename são obrigatórios quando addTimestamp é true');
+    }
+  }
+
+  static #saveLog({ parsedError, directory, filename, addTimestamp }) {
+    if (!directory || !filename) return;
+    const stamp = addTimestamp ? `-${timestamp()}` : '';
+    const filePath = path.join(directory, `${filename}${stamp}.log`);
+    fs.writeFileSync(filePath, parsedError);
+  }
+
+  static #parseError(error) {
+    const code = error.code || '';
+    const stack = error.stack ? `stack: ${error.stack}` : '';
+    return `${code} ${error.message}\n${stack}`;
+  }
+}
+
+class LogSaver {
+  static run(content, {
+    directory = undefined,
+    filename = undefined,
+    addTimestamp = true,
+  } = {}) {
+    LogSaver.#validateParameters({ content, directory, filename, addTimestamp });
+    const stamp = addTimestamp ? `-${timestamp()}` : '';
+    const filePath = path.join(directory, `${filename}${stamp}.log`);
+    fs.writeFileSync(filePath, content);
+  }
+
+  static #validateParameters({ content, directory, filename, addTimestamp }) {
+    param.string({ value: content, name: 'content', required: true });
+    param.string({ value: directory, name: 'directory', required: true });
+    param.string({ value: filename, name: 'filename', required: true });
+    param.bool({ value: addTimestamp, name: 'addTimestamp' });
+  }
+}
+
+function helloWorld() {
+  console.log("Hello, World!");
+}
+
+class Config {
+  static #config = {};
+
+  static throwError(value) {
+    this.#setBool('throwError', value);
+  }
+
+  static get() {
+    return this.#config;
+  }
+
+  static #setBool(key, value) {
+    if (typeof value !== 'boolean') {
+      throw new SaltoolsError(
+        `Valor inválido para ${key}. Tipo ${typeof value} não é boolean. Valor: ${value}`
+      );
+    }
+    this.#config[key] = value;
+  }
+
+  static reset() {
+    this.#config = {};
+  }
+}
+
+class CachedOptions {
+  #cache = new Set();
+
+  cache(options) {
+    const hash = this.#hash(options);
+    this.#cache.add(hash);
+  }
+
+  isCached(options) {
+    const hash = this.#hash(options);
+    return this.#cache.has(hash);
+  }
+
+  #hash(options) {
+    let hash = '';
+    for (const key in options) {
+      const value = options[key];
+      hash += `${key}:${typeof value}:${value}|`;
+    }
+    return hash;
+  }
+}
+
+class OptionsService {
+  static update(options, defaultOptions) {
+    const mergedOptions = { ...defaultOptions, ...options };
+    const config = Config.get();
+
+    for (const [key, value] of Object.entries(config)) {
+      if (value !== undefined && options[key] === undefined) {
+        mergedOptions[key] = value;
+      }
+    }
+    return mergedOptions;
+  }
+}
+
+class DocParser {
+  static #DEFAULT_OPTIONS = {
+    numbersOnly: true,
+    type: undefined,
+    throwError: true,
+  };
+  static #CPF_LENGTH = 11;
+  static #CNPJ_LENGTH = 14;
+  static #CNPJ_INDICATOR = '000';
+
+  static #cachedOptions = new CachedOptions();
+
+  static parse(doc, options = {}) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+
+    try {
+      this.#validateOptions(options);
+      return this.#parse(doc, options);
+    } catch (error) {
+      if (!options.throwError && error instanceof SaltoolsError) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  static #parse(doc, options) {
+    let parsedDoc = this.#parseType(doc, options.type);
+    parsedDoc = parsedDoc.trim();
+    parsedDoc = this.#removeSpecialChars(parsedDoc);
+    this.#validateLength(parsedDoc);
+    return this.#putSpecialCharsBack(parsedDoc, options.numbersOnly);
+  }
+
+  static #validateOptions(options) {
+    if (this.#cachedOptions.isCached(options)) return;
+    param.bool({ value: options.numbersOnly, name: 'numbersOnly' });
+    param.string({ value: options.type, name: 'type', options: ['cpf', 'cnpj'] });
+    param.bool({ value: options.throwError, name: 'throwError' });
+
+    this.#cachedOptions.cache(options);
+  }
+
+  static #parseType(doc, type) {
+    if (typeof doc === 'number') return this.#parseNumber(doc, type);
+    if (typeof doc === 'string') return doc;
+    throw new SaltoolsError(`${typeof doc} ${doc} deve ser string ou number`);
+  }
+
+  static #parseNumber(doc, type) {
+    if (!Number.isInteger(doc)) {
+      throw new SaltoolsError(`Não é possível converter float ${doc} em doc`);
+    }
+    if (type) {
+      return this.#padToType(doc, type);
+    }
+    return this.#parseNumberInferingType(doc);
+  }
+
+  static #parseNumberInferingType(doc) {
+    doc = String(doc);
+    if (doc.length === DocParser.#CPF_LENGTH) {
+      if (this.#looksLikeCnpj(doc)) {
+        return doc.slice(0, 8) + '0' + doc.slice(8) + '00';
+      }
+      if (doc.endsWith('00')) {
+        return doc;
+      }
+      throw new SaltoolsError(`Não foi possível inferir o tipo de documento, ${doc}`);
+    }
+    try {
+      this.#validateLength(doc);
+      return doc;
+    } catch (error) {
+      if (error instanceof SaltoolsError) {
+        return this.#padInferingType(doc);
+      }
+      throw error;
+    }
+  }
+
+  static #padInferingType(doc) {
+    if (doc.length < DocParser.#CPF_LENGTH) {
+      return doc.padEnd(DocParser.#CPF_LENGTH, '0');
+    }
+    if (doc.length > DocParser.#CPF_LENGTH) {
+      return doc.padEnd(DocParser.#CNPJ_LENGTH, '0');
+    }
+    throw new SaltoolsError(`Não foi possível inferir o tipo de documento, ${doc}`);
+  }
+
+  static #padToType(doc, type) {
+    const docStr = doc.toString();
+    const targetLength = type === 'cpf' ? DocParser.#CPF_LENGTH : DocParser.#CNPJ_LENGTH;
+    if (type === 'cnpj' && docStr.length === 12) {
+      return '000' + docStr.slice(0, 9) + docStr.slice(-2);
+    }
+    return docStr.padStart(targetLength, '0');
+  }
+
+  static #looksLikeCnpj(doc) {
+    return doc.slice(-6).startsWith(DocParser.#CNPJ_INDICATOR);
+  }
+
+  static #removeSpecialChars(doc) {
+    return doc.replace(/[^0-9]/g, '');
+  }
+
+  static #validateLength(doc) {
+    if (![DocParser.#CPF_LENGTH, DocParser.#CNPJ_LENGTH].includes(doc.length)) {
+      throw new SaltoolsError(
+        `Documento deve ter ${DocParser.#CPF_LENGTH} ou ${DocParser.#CNPJ_LENGTH} caracteres, ${doc} tem ${doc.length}`
+      );
+    }
+  }
+
+  static #putSpecialCharsBack(doc, numbersOnly) {
+    if (numbersOnly) return doc;
+    return doc.length === DocParser.#CPF_LENGTH ? this.#formatToCpf(doc) : this.#formatToCnpj(doc);
+  }
+
+  static #formatToCpf(doc) {
+    return doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  }
+
+  static #formatToCnpj(doc) {
+    return doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  }
+}
 
 class StringToDateParser {
   static #lastFormat = null;
@@ -461,7 +750,8 @@ class DateParser {
   };
 
   static parse(date, options = {}) {
-    options = { ...DateParser.#DEFAULT_OPTIONS, ...options };
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+
     try {
       const parsedDate = StringToDateParser.parse(date, options.inputFormat);
       return DateToStringParser.parse(parsedDate, options.outputFormat);
@@ -474,528 +764,310 @@ class DateParser {
   }
 }
 
-class FwfParser {
-  static parse(path, fields) {
-    FwfParser.#validateFields(fields);
-    const content = FwfParser.#readFile(path);
-    return FwfParser.#parseContent(content, fields);
+class CSVFileReader {
+  constructor(path) {
+    this.path = path;
   }
 
-  static #parseContent(content, fields) {
-    if (!content.trim()) return [];
-
-    const lines = content.split(/\r?\n/);
-    const parsedItems = [];
-
-    for (const line of lines) {
-      if (line === '') continue;
-      const item = FwfParser.#parseLine(line, fields);
-      parsedItems.push(item);
-    }
-    return parsedItems;
+  read() {
+    this.#validatePath();
+    this.#validateExtension();
+    return fs.readFileSync(this.path, 'utf8');
   }
 
-  static #parseLine(line, fields) {
-    const result = {};
-    for (const field of fields) {
-      const endIndex = Math.min(field.end + 1, line.length);
-      const value = line.slice(field.start, endIndex).trim();
-      result[field.key] = FwfParser.#cast(value, field.type);
+  #validatePath() {
+    if (!fs.existsSync(this.path)) {
+      throw new SaltoolsError(`Arquivo ${this.path} não encontrado`);
     }
-    return result;
+  }
+  
+  #validateExtension() {  
+    if (!this.path.toLowerCase().endsWith('.csv')) {
+      throw new SaltoolsError(`Arquivo ${this.path} não é um arquivo CSV`);
+    }
+  }
+}
+
+class CSVLineSplitter {
+  #quoteChar;
+  #escapeChar;
+
+  constructor({quoteChar, escapeChar} = {}) {
+    this.#quoteChar = quoteChar;
+    this.#escapeChar = escapeChar;
   }
 
-  static #cast(value, type) {
-    if (!type) return value;
-    if (type === 'number') {
-      return Number(value);
+  split(content) {
+    const lines = [];
+    let currentLine = '';
+    let inQuotes = false;
+    let i = 0;
+
+    while (i < content.length) {
+      const char = content[i];
+      const nextChar = this.#getNextChar(content, i);
+
+      if (this.#isEscapedQuote(char, nextChar)) {
+        currentLine = this.#addEscapedQuote(currentLine);
+        i += 2;
+        continue;
+      }
+
+      if (char === this.#quoteChar) {
+        inQuotes = !inQuotes;
+        currentLine += char;
+        i++;
+        continue;
+      }
+
+      if (this.#isCarriageReturnNewline(char, inQuotes, nextChar)) {
+        this.#finishLine(lines, currentLine);
+        currentLine = '';
+        i += 2;
+        continue;
+      }
+
+      if (this.#isNewline(char, inQuotes)) {
+        this.#finishLine(lines, currentLine);
+        currentLine = '';
+        i += 1;
+        continue;
+      }
+
+      currentLine += char;
+      i++;
     }
-    if (type === 'bool') {
+
+    this.#addRemainingLine(lines, currentLine);
+    return lines;
+  }
+
+  #getNextChar(content, index) {
+    return index + 1 < content.length ? content[index + 1] : '';
+  }
+
+  #addRemainingLine(lines, currentLine) {
+    if (currentLine.length > 0) {
+      lines.push(currentLine);
+    }
+  }
+
+  #finishLine(lines, currentLine) {
+    lines.push(currentLine);
+  }
+
+  #addEscapedQuote(currentLine) {
+    return currentLine + this.#quoteChar;
+  }
+
+  #isEscapedQuote(char, nextChar) {
+    return char === this.#escapeChar && nextChar === this.#quoteChar;
+  }
+
+  #isCarriageReturnNewline(char, inQuotes, nextChar) {
+    return char === '\r' && !inQuotes && nextChar === '\n';
+  }
+
+  #isNewline(char, inQuotes) {
+    return char === '\n' && !inQuotes;
+  }
+}
+
+class CSVRowParser {
+  #delimiter;
+  #quoteChar;
+  #escapeChar;
+
+  constructor({delimiter, quoteChar, escapeChar} = {}) {
+    this.#delimiter = delimiter;
+    this.#quoteChar = quoteChar;
+    this.#escapeChar = escapeChar;
+  }
+
+  parse(row) {
+    const fields = [];
+    let currentField = '';
+    let inQuotes = false;
+    let i = 0;
+
+    while (i < row.length) {
+      const char = row[i];
+      const nextChar = this.#getNextChar(row, i);
+
+      if (this.#isEscapedQuote(char, nextChar)) {
+        currentField += this.#quoteChar;
+        i += 2;
+        continue;
+      }
+
+      if (char === this.#quoteChar) {
+        const result = this.#handleQuote(inQuotes, nextChar);
+        if (result.addQuote) {
+          currentField += this.#quoteChar;
+          i += 2;
+          continue;
+        }
+        inQuotes = result.inQuotes;
+        i++;
+        continue;
+      }
+
+      if (this.#isDelimiter(char, inQuotes)) {
+        this.#finishField(fields, currentField);
+        currentField = '';
+        i++;
+        continue;
+      }
+
+      currentField += char;
+      i++;
+    }
+
+    this.#finishField(fields, currentField);
+    return fields;
+  }
+
+  #getNextChar(row, index) {
+    return index + 1 < row.length ? row[index + 1] : '';
+  }
+
+  #isEscapedQuote(char, nextChar) {
+    return char === this.#escapeChar && nextChar === this.#quoteChar;
+  }
+
+  #finishField(fields, currentField) {
+    fields.push(currentField.trim());
+  }
+
+  #handleQuote(inQuotes, nextChar) {
+    if (inQuotes && nextChar === this.#quoteChar) {
+      return { addQuote: true, inQuotes };
+    }
+    return { addQuote: false, inQuotes: !inQuotes };
+  }
+
+  #isDelimiter(char, inQuotes) {
+    return char === this.#delimiter && !inQuotes;
+  }
+}
+
+class CSVValueConverter {
+  convert(value) {
+    if (this.#isEmpty(value)) {
+      return '';
+    }
+
+    if (this.#isBoolean(value)) {
       return this.#toBoolean(value);
     }
-  }
 
-  static #toBoolean(value) {
-    if (['true', '1'].includes(value.toLowerCase())) return true;
-    if (['false', '0'].includes(value.toLowerCase())) return false;
-    throw new SaltoolsError(`Invalid boolean value: ${value}`);
-  }
-
-  static #readFile(path) {
-    try {
-      return fs.readFileSync(path, 'utf8');
-    } catch (error) {
-      throw new SaltoolsError(`Error reading file ${path}: ${error.message}`);
-    }
-  }
-
-  static #validateFields(fields) {
-    if (!Array.isArray(fields)) {
-      throw new SaltoolsError('Fields must be an array');
-    }
-    if (fields.length === 0) {
-      throw new SaltoolsError('Fields array cannot be empty');
-    }
-    for (const field of fields) {
-      FwfParser.#validateField(field);
-    }
-  }
-
-  static #validateField(field) {
-    if (
-      typeof field !== 'object' ||
-      field === null ||
-      !['key', 'start', 'end'].every((prop) => Object.prototype.hasOwnProperty.call(field, prop))
-    ) {
-      throw new SaltoolsError(
-        "Each field must be an object with 'key', 'start', and 'end' properties."
-      );
-    }
-    if (field.end < field.start) {
-      throw new SaltoolsError(
-        `Field '${field.key}' must have end >= start. Got start: ${field.start}, end: ${field.end}`
-      );
-    }
-  }
-}
-
-class CachedOptions {
-  #cache = new Set();
-
-  cache(options) {
-    const hash = this.#hash(options);
-    this.#cache.add(hash);
-  }
-
-  isCached(options) {
-    const hash = this.#hash(options);
-    return this.#cache.has(hash);
-  }
-
-  #hash(options) {
-    let hash = '';
-    for (const key in options) {
-      const value = options[key];
-      hash += `${key}:${typeof value}:${value}|`;
-    }
-    return hash;
-  }
-}
-
-class Config {
-  static #config = {};
-
-  static throwError(value) {
-    this.#setBool('throwError', value);
-  }
-
-  static get() {
-    return this.#config;
-  }
-
-  static #setBool(key, value) {
-    if (typeof value !== 'boolean') {
-      throw new SaltoolsError(
-        `Invalid value for ${key}. Type ${typeof value} is not boolean. Value: ${value}`
-      );
-    }
-    this.#config[key] = value;
-  }
-
-  static reset() {
-    this.#config = {};
-  }
-}
-
-class OptionsService {
-  static update(options, defaultOptions) {
-    const mergedOptions = { ...defaultOptions, ...options };
-    const config = Config.get();
-
-    for (const [key, value] of Object.entries(config)) {
-      if (value !== undefined && options[key] === undefined) {
-        mergedOptions[key] = value;
-      }
-    }
-    return mergedOptions;
-  }
-}
-
-class DocParser {
-  static #DEFAULT_OPTIONS = {
-    numbersOnly: true,
-    type: undefined,
-    throwError: true,
-  };
-  static #CPF_LENGTH = 11;
-  static #CNPJ_LENGTH = 14;
-  static #CNPJ_INDICATOR = '000';
-
-  static #cachedOptions = new CachedOptions();
-
-  static parse(doc, options = {}) {
-    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
-
-    try {
-      this.#validateOptions(options);
-      return this.#parse(doc, options);
-    } catch (error) {
-      if (!options.throwError && error instanceof SaltoolsError) {
-        return null;
-      }
-      throw error;
-    }
-  }
-
-  static #parse(doc, options) {
-    let parsedDoc = this.#parseType(doc, options.type);
-    parsedDoc = parsedDoc.trim();
-    parsedDoc = this.#removeSpecialChars(parsedDoc);
-    this.#validateLength(parsedDoc);
-    return this.#putSpecialCharsBack(parsedDoc, options.numbersOnly);
-  }
-
-  static #validateOptions(options) {
-    if (this.#cachedOptions.isCached(options)) return;
-    param.bool({ value: options.numbersOnly, name: 'numbersOnly' });
-    param.string({ value: options.type, name: 'type', options: ['cpf', 'cnpj'] });
-    param.bool({ value: options.throwError, name: 'throwError' });
-
-    this.#cachedOptions.cache(options);
-  }
-
-  static #parseType(doc, type) {
-    if (typeof doc === 'number') return this.#parseNumber(doc, type);
-    if (typeof doc === 'string') return doc;
-    throw new SaltoolsError(`${typeof doc} ${doc} deve ser string ou number`);
-  }
-
-  static #parseNumber(doc, type) {
-    if (!Number.isInteger(doc)) {
-      throw new SaltoolsError(`Não é possível converter float ${doc} em doc`);
-    }
-    if (type) {
-      return this.#padToType(doc, type);
-    }
-    return this.#parseNumberInferingType(doc);
-  }
-
-  static #parseNumberInferingType(doc) {
-    doc = String(doc);
-    if (doc.length === DocParser.#CPF_LENGTH) {
-      if (this.#looksLikeCnpj(doc)) {
-        return doc.slice(0, 8) + '0' + doc.slice(8) + '00';
-      }
-      if (doc.endsWith('00')) {
-        return doc;
-      }
-      throw new SaltoolsError(`Não foi possível inferir o tipo de documento, ${doc}`);
-    }
-    try {
-      this.#validateLength(doc);
-      return doc;
-    } catch (error) {
-      if (error instanceof SaltoolsError) {
-        return this.#padInferingType(doc);
-      }
-      throw error;
-    }
-  }
-
-  static #padInferingType(doc) {
-    if (doc.length < DocParser.#CPF_LENGTH) {
-      return doc.padEnd(DocParser.#CPF_LENGTH, '0');
-    }
-    if (doc.length > DocParser.#CPF_LENGTH) {
-      return doc.padEnd(DocParser.#CNPJ_LENGTH, '0');
-    }
-    throw new SaltoolsError(`Não foi possível inferir o tipo de documento, ${doc}`);
-  }
-
-  static #padToType(doc, type) {
-    const docStr = doc.toString();
-    const targetLength = type === 'cpf' ? DocParser.#CPF_LENGTH : DocParser.#CNPJ_LENGTH;
-    if (type === 'cnpj' && docStr.length === 12) {
-      return '000' + docStr.slice(0, 9) + docStr.slice(-2);
-    }
-    return docStr.padStart(targetLength, '0');
-  }
-
-  static #looksLikeCnpj(doc) {
-    return doc.slice(-6).startsWith(DocParser.#CNPJ_INDICATOR);
-  }
-
-  static #removeSpecialChars(doc) {
-    return doc.replace(/[^0-9]/g, '');
-  }
-
-  static #validateLength(doc) {
-    if (![DocParser.#CPF_LENGTH, DocParser.#CNPJ_LENGTH].includes(doc.length)) {
-      throw new SaltoolsError(
-        `Documento deve ter ${DocParser.#CPF_LENGTH} ou ${DocParser.#CNPJ_LENGTH} caracteres, ${doc} tem ${doc.length}`
-      );
-    }
-  }
-
-  static #putSpecialCharsBack(doc, numbersOnly) {
-    if (numbersOnly) return doc;
-    return doc.length === DocParser.#CPF_LENGTH ? this.#formatToCpf(doc) : this.#formatToCnpj(doc);
-  }
-
-  static #formatToCpf(doc) {
-    return doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-  }
-
-  static #formatToCnpj(doc) {
-    return doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-  }
-}
-
-class EmailParser {
-  static #DEFAULT_OPTIONS = {
-    allowAlias: true,
-    allowDisposable: false,
-    throwError: true,
-  };
-  static #DISPOSABLE_DOMAINS = ['mailinator.com', 'tempmail.com', 'dispostable.com'];
-  static #ALIAS_DOMAINS = ['gmail.com'];
-  static #cachedOptions = new CachedOptions();
-
-  static parse(email, options = {}) {
-    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
-    try {
-      return this.#parse(email, options);
-    } catch (error) {
-      if (!options.throwError && error instanceof SaltoolsError) {
-        return null;
-      }
-      throw error;
-    }
-  }
-
-  static #parse(email, options) {
-    param.string({ value: email, name: 'email', required: true });
-    EmailParser.#validateOptions(options);
-
-    email = EmailParser.#parseEmail(email);
-
-    EmailParser.#validateSyntax(email);
-    EmailParser.#validateAlias(email, options.allowAlias);
-    EmailParser.#validateDisposable(email, options.allowDisposable);
-
-    return email.value;
-  }
-
-  static #validateOptions(options) {
-    if (EmailParser.#cachedOptions.isCached(options)) return;
-
-    param.bool({ value: options.allowAlias, name: 'allowAlias' });
-    param.bool({ value: options.allowDisposable, name: 'allowDisposable' });
-    param.bool({ value: options.throwError, name: 'throwError' });
-
-    EmailParser.#cachedOptions.cache(options);
-  }
-
-  static #parseEmail(email) {
-    const value = email.toLowerCase().trim();
-    const split = value.split('@');
-    const domain = split[1];
-    const local = split[0];
-
-    if (!domain || !local) {
-      throw new SaltoolsError(`Email ${email} inválido`);
+    if (this.#isNumeric(value)) {
+      return this.#toNumber(value);
     }
 
-    return { value, domain, local };
+    return value;
   }
 
-  static #validateDisposable(email, allowDisposable) {
-    if (!allowDisposable && EmailParser.#DISPOSABLE_DOMAINS.includes(email.domain)) {
-      throw new SaltoolsError(
-        `Email ${email.value} é um email temporário e o parâmetro allowDisposable é false`
-      );
-    }
+  #isEmpty(value) {
+    return value === '' || value.trim() === '';
   }
 
-  static #validateAlias(email, allowAlias) {
-    if (!allowAlias && EmailParser.#isAlias(email)) {
-      throw new SaltoolsError(`Email ${email.value} é um alias e o parâmetro allowAlias é false`);
-    }
+  #isBoolean(value) {
+    const lowerValue = value.toLowerCase().trim();
+    return lowerValue === 'true' || lowerValue === 'false';
   }
 
-  static #isAlias(email) {
-    if (!EmailParser.#ALIAS_DOMAINS.includes(email.domain)) {
+  #toBoolean(value) {
+    const lowerValue = value.toLowerCase().trim();
+    return lowerValue === 'true';
+  }
+
+  #isNumeric(value) {
+    if (value.trim() === '') {
       return false;
     }
-    return ['+', '.'].some((char) => email.local.includes(char));
+    return !isNaN(value);
   }
 
-  static #validateSyntax(email) {
-    if (!validator.isEmail(email.value)) {
-      throw new SaltoolsError('Email inválido');
+  #toNumber(value) {
+    const numValue = Number(value);
+    if (!isNaN(numValue) && isFinite(numValue)) {
+      return numValue;
     }
+    return value;
   }
 }
 
-class DNSParser {
-  static #DEFAULT_OPTIONS = {
-    validateSPF: true,
-    validateDMARC: true,
-    validateDKIM: true,
-    validateMX: true,
-    validateSMTP: true,
+class CSVParser {
+  static DEFAULT_OPTIONS = {
+    delimiter: ',',
+    quoteChar: '"',
+    escapeChar: '\\',
     throwError: true,
   };
-  static #cachedOptions = new CachedOptions();
 
-  static async parse(domainOrEmail, options = {}) {
-    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+  static parse(path, options = {}) {
+    options = { ...CSVParser.DEFAULT_OPTIONS, ...options };
+    CSVParser.#validateOptions(path, options);
+
+    const fileReader = new CSVFileReader(path);
+    const lineSplitter = new CSVLineSplitter({
+      quoteChar: options.quoteChar,
+      escapeChar: options.escapeChar,
+    });
+    const rowParser = new CSVRowParser({
+      delimiter: options.delimiter,
+      quoteChar: options.quoteChar,
+      escapeChar: options.escapeChar,
+    });
+    const valueConverter = new CSVValueConverter();
+    const shouldThrowError = options.throwError !== undefined ? options.throwError : true;
+
     try {
-      return await DNSParser.#parse(domainOrEmail, options);
+      const content = fileReader.read();
+      return CSVParser.#parseFileContent(content, lineSplitter, rowParser, valueConverter);
     } catch (error) {
-      if (!options.throwError && error instanceof SaltoolsError) {
+      if (!shouldThrowError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
     }
   }
 
-  static async #parse(domainOrEmail, options) {
-    param.string({ value: domainOrEmail, name: 'domainOrEmail', required: true });
-    DNSParser.#validateOptions(options);
-
-    const domain = DNSParser.#extractDomain(domainOrEmail);
-    const email = { value: domainOrEmail, domain, local: domainOrEmail.split('@')[0] || '' };
-
-    await Promise.all([
-      DNSParser.#validateSPF(email, options.validateSPF),
-      DNSParser.#validateDMARC(email, options.validateDMARC),
-      DNSParser.#validateDKIM(email, options.validateDKIM),
-      DNSParser.#validateMX(email, options.validateMX),
-      DNSParser.#validateSMTP(email, options.validateSMTP),
-    ]);
-
-    return domain;
-  }
-
-  static #extractDomain(domainOrEmail) {
-    if (domainOrEmail.includes('@')) {
-      const parts = domainOrEmail.split('@');
-      if (parts.length !== 2 || !parts[1]) {
-        throw new SaltoolsError(`Domínio inválido: ${domainOrEmail}`);
-      }
-      return parts[1].toLowerCase().trim();
-    }
-    return domainOrEmail.toLowerCase().trim();
-  }
-
-  static #validateOptions(options) {
-    if (DNSParser.#cachedOptions.isCached(options)) return;
-
-    param.bool({ value: options.validateSPF, name: 'validateSPF' });
-    param.bool({ value: options.validateDMARC, name: 'validateDMARC' });
-    param.bool({ value: options.validateDKIM, name: 'validateDKIM' });
-    param.bool({ value: options.validateMX, name: 'validateMX' });
-    param.bool({ value: options.validateSMTP, name: 'validateSMTP' });
+  static #validateOptions(path, options) {
+    param.string({ value: path, name: 'path', required: true });
+    param.string({ value: options.delimiter, name: 'delimiter', required: true });
+    param.string({ value: options.quoteChar, name: 'quoteChar', required: true });
+    param.string({ value: options.escapeChar, name: 'escapeChar', required: true });
     param.bool({ value: options.throwError, name: 'throwError' });
-
-    DNSParser.#cachedOptions.cache(options);
   }
 
-  static async #validateSPF(email, validateSPF) {
-    if (validateSPF) {
-      await DNSParser.#dnsResolveText({ email, type: 'SPF', text: email.domain });
+  static #parseFileContent(content, lineSplitter, rowParser, valueConverter) {
+    if (!content.trim()) {
+      return [];
     }
-  }
 
-  static async #validateDMARC(email, validateDMARC) {
-    if (validateDMARC) {
-      await DNSParser.#dnsResolveText({ email, type: 'DMARC', text: `_dmarc.${email.domain}` });
+    const lines = lineSplitter.split(content);
+    if (lines.length === 0) {
+      return [];
     }
-  }
 
-  static async #validateDKIM(email, validateDKIM) {
-    if (validateDKIM) {
-      await DNSParser.#dnsResolveText({
-        email,
-        type: 'DKIM',
-        text: `default._domainkey.${email.domain}`,
-      });
-    }
-  }
+    const headers = rowParser.parse(lines[0]);
+    const result = [];
 
-  static async #validateMX(email, validateMX) {
-    if (!validateMX) return;
-    try {
-      const mxRecords = await dns$1.promises.resolveMx(email.domain);
-      if (mxRecords.length === 0) {
-        throw new SaltoolsError(`MX não encontrado para ${email.value}`);
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) {
+        continue;
       }
-    } catch {
-      throw new SaltoolsError(`Erro ao validar MX para ${email.value}`);
+      const values = rowParser.parse(lines[i]);
+      const row = {};
+      for (let j = 0; j < headers.length; j++) {
+        row[headers[j]] = valueConverter.convert(values[j] || '');
+      }
+      result.push(row);
     }
-  }
 
-  static async #validateSMTP(email, validateSMTP) {
-    if (!validateSMTP) return;
-    try {
-      const domain = email.domain;
-      const mx = await dns$1.promises.resolveMx(domain);
-      const mxHost = mx.sort((a, b) => a.priority - b.priority)[0]?.exchange;
-      if (!mxHost) {
-        throw new SaltoolsError(`MX não encontrado para ${email.value}`);
-      }
-
-      const isValid = await new Promise((resolve) => {
-        const socket = net.createConnection(25, mxHost);
-        let stage = 0;
-        socket.setEncoding('ascii');
-        socket.setTimeout(5000);
-
-        socket.on('data', (data) => {
-          if (stage === 0) {
-            socket.write(`HELO test.com\r\n`);
-            stage++;
-          } else if (stage === 1) {
-            socket.write(`MAIL FROM:<verify@test.com>\r\n`);
-            stage++;
-          } else if (stage === 2) {
-            socket.write(`RCPT TO:<${email.value}>\r\n`);
-            stage++;
-          } else if (stage === 3) {
-            socket.write(`QUIT\r\n`);
-            socket.end();
-            resolve(data.includes('250'));
-          }
-        });
-
-        socket.on('error', () => resolve(false));
-        socket.on('timeout', () => {
-          socket.destroy();
-          resolve(false);
-        });
-      });
-
-      if (!isValid) {
-        throw new SaltoolsError(`SMTP inválido para ${email.value}`);
-      }
-    } catch (error) {
-      if (error instanceof SaltoolsError) {
-        throw error;
-      }
-      throw new SaltoolsError(`Erro ao validar SMTP para ${email.value} ${error.message}`);
-    }
-  }
-
-  static async #dnsResolveText({ email, type, text }) {
-    try {
-      const txt = await dns$1.promises.resolveTxt(text);
-      if (txt.flat().length === 0) {
-        throw new SaltoolsError(`${type} não encontrado para ${email.value}`);
-      }
-    } catch {
-      throw new SaltoolsError(`Erro ao validar ${type} para ${email.value}`);
-    }
+    return result;
   }
 }
 
@@ -1324,445 +1396,366 @@ class PhoneParser {
   }
 }
 
-class CSVFileReader {
-  constructor(path) {
-    this.path = path;
-  }
-
-  read() {
-    this.#validatePath();
-    this.#validateExtension();
-    return fs.readFileSync(this.path, 'utf8');
-  }
-
-  #validatePath() {
-    if (!fs.existsSync(this.path)) {
-      throw new SaltoolsError(`Arquivo ${this.path} não encontrado`);
-    }
-  }
-  
-  #validateExtension() {  
-    if (!this.path.toLowerCase().endsWith('.csv')) {
-      throw new SaltoolsError(`Arquivo ${this.path} não é um arquivo CSV`);
-    }
-  }
-}
-
-class CSVLineSplitter {
-  #quoteChar;
-  #escapeChar;
-
-  constructor({quoteChar, escapeChar} = {}) {
-    this.#quoteChar = quoteChar;
-    this.#escapeChar = escapeChar;
-  }
-
-  split(content) {
-    const lines = [];
-    let currentLine = '';
-    let inQuotes = false;
-    let i = 0;
-
-    while (i < content.length) {
-      const char = content[i];
-      const nextChar = this.#getNextChar(content, i);
-
-      if (this.#isEscapedQuote(char, nextChar)) {
-        currentLine = this.#addEscapedQuote(currentLine);
-        i += 2;
-        continue;
-      }
-
-      if (char === this.#quoteChar) {
-        inQuotes = !inQuotes;
-        currentLine += char;
-        i++;
-        continue;
-      }
-
-      if (this.#isCarriageReturnNewline(char, inQuotes, nextChar)) {
-        this.#finishLine(lines, currentLine);
-        currentLine = '';
-        i += 2;
-        continue;
-      }
-
-      if (this.#isNewline(char, inQuotes)) {
-        this.#finishLine(lines, currentLine);
-        currentLine = '';
-        i += 1;
-        continue;
-      }
-
-      currentLine += char;
-      i++;
-    }
-
-    this.#addRemainingLine(lines, currentLine);
-    return lines;
-  }
-
-  #getNextChar(content, index) {
-    return index + 1 < content.length ? content[index + 1] : '';
-  }
-
-  #addRemainingLine(lines, currentLine) {
-    if (currentLine.length > 0) {
-      lines.push(currentLine);
-    }
-  }
-
-  #finishLine(lines, currentLine) {
-    lines.push(currentLine);
-  }
-
-  #addEscapedQuote(currentLine) {
-    return currentLine + this.#quoteChar;
-  }
-
-  #isEscapedQuote(char, nextChar) {
-    return char === this.#escapeChar && nextChar === this.#quoteChar;
-  }
-
-  #isCarriageReturnNewline(char, inQuotes, nextChar) {
-    return char === '\r' && !inQuotes && nextChar === '\n';
-  }
-
-  #isNewline(char, inQuotes) {
-    return char === '\n' && !inQuotes;
-  }
-}
-
-class CSVRowParser {
-  #delimiter;
-  #quoteChar;
-  #escapeChar;
-
-  constructor({delimiter, quoteChar, escapeChar} = {}) {
-    this.#delimiter = delimiter;
-    this.#quoteChar = quoteChar;
-    this.#escapeChar = escapeChar;
-  }
-
-  parse(row) {
-    const fields = [];
-    let currentField = '';
-    let inQuotes = false;
-    let i = 0;
-
-    while (i < row.length) {
-      const char = row[i];
-      const nextChar = this.#getNextChar(row, i);
-
-      if (this.#isEscapedQuote(char, nextChar)) {
-        currentField += this.#quoteChar;
-        i += 2;
-        continue;
-      }
-
-      if (char === this.#quoteChar) {
-        const result = this.#handleQuote(inQuotes, nextChar);
-        if (result.addQuote) {
-          currentField += this.#quoteChar;
-          i += 2;
-          continue;
-        }
-        inQuotes = result.inQuotes;
-        i++;
-        continue;
-      }
-
-      if (this.#isDelimiter(char, inQuotes)) {
-        this.#finishField(fields, currentField);
-        currentField = '';
-        i++;
-        continue;
-      }
-
-      currentField += char;
-      i++;
-    }
-
-    this.#finishField(fields, currentField);
-    return fields;
-  }
-
-  #getNextChar(row, index) {
-    return index + 1 < row.length ? row[index + 1] : '';
-  }
-
-  #isEscapedQuote(char, nextChar) {
-    return char === this.#escapeChar && nextChar === this.#quoteChar;
-  }
-
-  #finishField(fields, currentField) {
-    fields.push(currentField.trim());
-  }
-
-  #handleQuote(inQuotes, nextChar) {
-    if (inQuotes && nextChar === this.#quoteChar) {
-      return { addQuote: true, inQuotes };
-    }
-    return { addQuote: false, inQuotes: !inQuotes };
-  }
-
-  #isDelimiter(char, inQuotes) {
-    return char === this.#delimiter && !inQuotes;
-  }
-}
-
-class CSVValueConverter {
-  convert(value) {
-    if (this.#isEmpty(value)) {
-      return '';
-    }
-
-    if (this.#isBoolean(value)) {
-      return this.#toBoolean(value);
-    }
-
-    if (this.#isNumeric(value)) {
-      return this.#toNumber(value);
-    }
-
-    return value;
-  }
-
-  #isEmpty(value) {
-    return value === '' || value.trim() === '';
-  }
-
-  #isBoolean(value) {
-    const lowerValue = value.toLowerCase().trim();
-    return lowerValue === 'true' || lowerValue === 'false';
-  }
-
-  #toBoolean(value) {
-    const lowerValue = value.toLowerCase().trim();
-    return lowerValue === 'true';
-  }
-
-  #isNumeric(value) {
-    if (value.trim() === '') {
-      return false;
-    }
-    return !isNaN(value);
-  }
-
-  #toNumber(value) {
-    const numValue = Number(value);
-    if (!isNaN(numValue) && isFinite(numValue)) {
-      return numValue;
-    }
-    return value;
-  }
-}
-
-class CSVParser {
-  static DEFAULT_OPTIONS = {
-    delimiter: ',',
-    quoteChar: '"',
-    escapeChar: '\\',
+class DNSParser {
+  static #DEFAULT_OPTIONS = {
+    validateSPF: true,
+    validateDMARC: true,
+    validateDKIM: true,
+    validateMX: true,
+    validateSMTP: true,
     throwError: true,
   };
-  #fileReader;
-  #lineSplitter;
-  #rowParser;
-  #valueConverter;
-  #shouldThrowError;
+  static #cachedOptions = new CachedOptions();
 
-  constructor(path, options = {}) {
-    options = { ...CSVParser.DEFAULT_OPTIONS, ...options };
-    this.#validateOptions(path, options);
-    this.#fileReader = new CSVFileReader(path);
-    this.#lineSplitter = new CSVLineSplitter({
-      quoteChar: options.quoteChar,
-      escapeChar: options.escapeChar,
-    });
-    this.#rowParser = new CSVRowParser({
-      delimiter: options.delimiter,
-      quoteChar: options.quoteChar,
-      escapeChar: options.escapeChar,
-    });
-    this.#valueConverter = new CSVValueConverter();
-    this.#shouldThrowError = options.throwError !== undefined ? options.throwError : true;
-  }
-
-  parse() {
+  static async parse(domainOrEmail, options = {}) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
     try {
-      const content = this.#fileReader.read();
-      return this.#parseFileContent(content);
+      return await DNSParser.#parse(domainOrEmail, options);
     } catch (error) {
-      if (!this.#shouldThrowError && error instanceof SaltoolsError) {
+      if (!options.throwError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
     }
   }
 
-  #validateOptions(path, options) {
-    param.string({ value: path, name: 'path', required: true });
-    param.string({ value: options.delimiter, name: 'delimiter', required: true });
-    param.string({ value: options.quoteChar, name: 'quoteChar', required: true });
-    param.string({ value: options.escapeChar, name: 'escapeChar', required: true });
-    param.bool({ value: options.throwError, name: 'throwError' });
+  static async #parse(domainOrEmail, options) {
+    param.string({ value: domainOrEmail, name: 'domainOrEmail', required: true });
+    DNSParser.#validateOptions(options);
+
+    const domain = DNSParser.#extractDomain(domainOrEmail);
+    const email = { value: domainOrEmail, domain, local: domainOrEmail.split('@')[0] || '' };
+
+    await Promise.all([
+      DNSParser.#validateSPF(email, options.validateSPF),
+      DNSParser.#validateDMARC(email, options.validateDMARC),
+      DNSParser.#validateDKIM(email, options.validateDKIM),
+      DNSParser.#validateMX(email, options.validateMX),
+      DNSParser.#validateSMTP(email, options.validateSMTP),
+    ]);
+
+    return domain;
   }
 
-  #parseFileContent(content) {
-    if (!content.trim()) {
-      return [];
-    }
-
-    const lines = this.#lineSplitter.split(content);
-    if (lines.length === 0) {
-      return [];
-    }
-
-    const headers = this.#rowParser.parse(lines[0]);
-    const result = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) {
-        continue;
+  static #extractDomain(domainOrEmail) {
+    if (domainOrEmail.includes('@')) {
+      const parts = domainOrEmail.split('@');
+      if (parts.length !== 2 || !parts[1]) {
+        throw new SaltoolsError(`Domínio inválido: ${domainOrEmail}`);
       }
-      const values = this.#rowParser.parse(lines[i]);
-      const row = {};
-      for (let j = 0; j < headers.length; j++) {
-        row[headers[j]] = this.#valueConverter.convert(values[j] || '');
+      return parts[1].toLowerCase().trim();
+    }
+    return domainOrEmail.toLowerCase().trim();
+  }
+
+  static #validateOptions(options) {
+    if (DNSParser.#cachedOptions.isCached(options)) return;
+
+    param.bool({ value: options.validateSPF, name: 'validateSPF' });
+    param.bool({ value: options.validateDMARC, name: 'validateDMARC' });
+    param.bool({ value: options.validateDKIM, name: 'validateDKIM' });
+    param.bool({ value: options.validateMX, name: 'validateMX' });
+    param.bool({ value: options.validateSMTP, name: 'validateSMTP' });
+    param.bool({ value: options.throwError, name: 'throwError' });
+
+    DNSParser.#cachedOptions.cache(options);
+  }
+
+  static async #validateSPF(email, validateSPF) {
+    if (validateSPF) {
+      await DNSParser.#dnsResolveText({ email, type: 'SPF', text: email.domain });
+    }
+  }
+
+  static async #validateDMARC(email, validateDMARC) {
+    if (validateDMARC) {
+      await DNSParser.#dnsResolveText({ email, type: 'DMARC', text: `_dmarc.${email.domain}` });
+    }
+  }
+
+  static async #validateDKIM(email, validateDKIM) {
+    if (validateDKIM) {
+      await DNSParser.#dnsResolveText({
+        email,
+        type: 'DKIM',
+        text: `default._domainkey.${email.domain}`,
+      });
+    }
+  }
+
+  static async #validateMX(email, validateMX) {
+    if (!validateMX) return;
+    try {
+      const mxRecords = await dns.promises.resolveMx(email.domain);
+      if (mxRecords.length === 0) {
+        throw new SaltoolsError(`MX não encontrado para ${email.value}`);
       }
-      result.push(row);
+    } catch {
+      throw new SaltoolsError(`Erro ao validar MX para ${email.value}`);
+    }
+  }
+
+  static async #validateSMTP(email, validateSMTP) {
+    if (!validateSMTP) return;
+    try {
+      const domain = email.domain;
+      const mx = await dns.promises.resolveMx(domain);
+      const mxHost = mx.sort((a, b) => a.priority - b.priority)[0]?.exchange;
+      if (!mxHost) {
+        throw new SaltoolsError(`MX não encontrado para ${email.value}`);
+      }
+
+      const isValid = await new Promise((resolve) => {
+        const socket = net.createConnection(25, mxHost);
+        let stage = 0;
+        socket.setEncoding('ascii');
+        socket.setTimeout(5000);
+
+        socket.on('data', (data) => {
+          if (stage === 0) {
+            socket.write(`HELO test.com\r\n`);
+            stage++;
+          } else if (stage === 1) {
+            socket.write(`MAIL FROM:<verify@test.com>\r\n`);
+            stage++;
+          } else if (stage === 2) {
+            socket.write(`RCPT TO:<${email.value}>\r\n`);
+            stage++;
+          } else if (stage === 3) {
+            socket.write(`QUIT\r\n`);
+            socket.end();
+            resolve(data.includes('250'));
+          }
+        });
+
+        socket.on('error', () => resolve(false));
+        socket.on('timeout', () => {
+          socket.destroy();
+          resolve(false);
+        });
+      });
+
+      if (!isValid) {
+        throw new SaltoolsError(`SMTP inválido para ${email.value}`);
+      }
+    } catch (error) {
+      if (error instanceof SaltoolsError) {
+        throw error;
+      }
+      throw new SaltoolsError(`Erro ao validar SMTP para ${email.value} ${error.message}`);
+    }
+  }
+
+  static async #dnsResolveText({ email, type, text }) {
+    try {
+      const txt = await dns.promises.resolveTxt(text);
+      if (txt.flat().length === 0) {
+        throw new SaltoolsError(`${type} não encontrado para ${email.value}`);
+      }
+    } catch {
+      throw new SaltoolsError(`Erro ao validar ${type} para ${email.value}`);
+    }
+  }
+}
+
+class EmailParser {
+  static #DEFAULT_OPTIONS = {
+    allowAlias: true,
+    allowDisposable: false,
+    throwError: true,
+  };
+  static #DISPOSABLE_DOMAINS = ['mailinator.com', 'tempmail.com', 'dispostable.com'];
+  static #ALIAS_DOMAINS = ['gmail.com'];
+  static #cachedOptions = new CachedOptions();
+
+  static parse(email, options = {}) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    try {
+      return this.#parse(email, options);
+    } catch (error) {
+      if (!options.throwError && error instanceof SaltoolsError) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  static #parse(email, options) {
+    param.string({ value: email, name: 'email', required: true });
+    EmailParser.#validateOptions(options);
+
+    email = EmailParser.#parseEmail(email);
+
+    EmailParser.#validateSyntax(email);
+    EmailParser.#validateAlias(email, options.allowAlias);
+    EmailParser.#validateDisposable(email, options.allowDisposable);
+
+    return email.value;
+  }
+
+  static #validateOptions(options) {
+    if (EmailParser.#cachedOptions.isCached(options)) return;
+
+    param.bool({ value: options.allowAlias, name: 'allowAlias' });
+    param.bool({ value: options.allowDisposable, name: 'allowDisposable' });
+    param.bool({ value: options.throwError, name: 'throwError' });
+
+    EmailParser.#cachedOptions.cache(options);
+  }
+
+  static #parseEmail(email) {
+    const value = email.toLowerCase().trim();
+    const split = value.split('@');
+    const domain = split[1];
+    const local = split[0];
+
+    if (!domain || !local) {
+      throw new SaltoolsError(`Email ${email} inválido`);
     }
 
+    return { value, domain, local };
+  }
+
+  static #validateDisposable(email, allowDisposable) {
+    if (!allowDisposable && EmailParser.#DISPOSABLE_DOMAINS.includes(email.domain)) {
+      throw new SaltoolsError(
+        `Email ${email.value} é um email temporário e o parâmetro allowDisposable é false`
+      );
+    }
+  }
+
+  static #validateAlias(email, allowAlias) {
+    if (!allowAlias && EmailParser.#isAlias(email)) {
+      throw new SaltoolsError(`Email ${email.value} é um alias e o parâmetro allowAlias é false`);
+    }
+  }
+
+  static #isAlias(email) {
+    if (!EmailParser.#ALIAS_DOMAINS.includes(email.domain)) {
+      return false;
+    }
+    return ['+', '.'].some((char) => email.local.includes(char));
+  }
+
+  static #validateSyntax(email) {
+    if (!validator.isEmail(email.value)) {
+      throw new SaltoolsError('Email inválido');
+    }
+  }
+}
+
+class FwfParser {
+  static parse(path, fields) {
+    FwfParser.#validateFields(fields);
+    const content = FwfParser.#readFile(path);
+    return FwfParser.#parseContent(content, fields);
+  }
+
+  static #parseContent(content, fields) {
+    if (!content.trim()) return [];
+
+    const lines = content.split(/\r?\n/);
+    const parsedItems = [];
+
+    for (const line of lines) {
+      if (line === '') continue;
+      const item = FwfParser.#parseLine(line, fields);
+      parsedItems.push(item);
+    }
+    return parsedItems;
+  }
+
+  static #parseLine(line, fields) {
+    const result = {};
+    for (const field of fields) {
+      const endIndex = Math.min(field.end + 1, line.length);
+      const value = line.slice(field.start, endIndex).trim();
+      result[field.key] = FwfParser.#cast(value, field.type);
+    }
     return result;
   }
+
+  static #cast(value, type) {
+    if (!type) return value;
+    if (type === 'number') {
+      return Number(value);
+    }
+    if (type === 'bool') {
+      return this.#toBoolean(value);
+    }
+  }
+
+  static #toBoolean(value) {
+    if (['true', '1'].includes(value.toLowerCase())) return true;
+    if (['false', '0'].includes(value.toLowerCase())) return false;
+    throw new SaltoolsError(`Invalid boolean value: ${value}`);
+  }
+
+  static #readFile(path) {
+    try {
+      return fs.readFileSync(path, 'utf8');
+    } catch (error) {
+      throw new SaltoolsError(`Error reading file ${path}: ${error.message}`);
+    }
+  }
+
+  static #validateFields(fields) {
+    if (!Array.isArray(fields)) {
+      throw new SaltoolsError('Fields must be an array');
+    }
+    if (fields.length === 0) {
+      throw new SaltoolsError('Fields array cannot be empty');
+    }
+    for (const field of fields) {
+      FwfParser.#validateField(field);
+    }
+  }
+
+  static #validateField(field) {
+    if (
+      typeof field !== 'object' ||
+      field === null ||
+      !['key', 'start', 'end'].every((prop) => Object.prototype.hasOwnProperty.call(field, prop))
+    ) {
+      throw new SaltoolsError(
+        "Each field must be an object with 'key', 'start', and 'end' properties."
+      );
+    }
+    if (field.end < field.start) {
+      throw new SaltoolsError(
+        `Field '${field.key}' must have end >= start. Got start: ${field.start}, end: ${field.end}`
+      );
+    }
+  }
 }
 
-const fwf = FwfParser.parse.bind(FwfParser);
-const doc = DocParser.parse.bind(DocParser);
-const date = DateParser.parse.bind(DateParser);
-const email = EmailParser.parse.bind(EmailParser);
-const dns = DNSParser.parse.bind(DNSParser);
-const string = StringParser.parse.bind(StringParser);
-const number = NumberParser.parseNumber.bind(NumberParser);
-const integer = NumberParser.parseInteger.bind(NumberParser);
-const phone = PhoneParser.parse.bind(PhoneParser);
-const csv = (path, options = {}) => {
-  const parser = new CSVParser(path, options);
-  return parser.parse();
+const log = {
+  error: ErrorLogger.run.bind(ErrorLogger),
+  saveLog: LogSaver.run.bind(LogSaver),
 };
 
-var index$1 = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  csv: csv,
-  date: date,
-  dns: dns,
-  doc: doc,
-  email: email,
-  fwf: fwf,
-  integer: integer,
-  number: number,
-  phone: phone,
-  string: string
-});
+const parse = {
+  fwf: FwfParser.parse.bind(FwfParser),
+  doc: DocParser.parse.bind(DocParser),
+  date: DateParser.parse.bind(DateParser),
+  email: EmailParser.parse.bind(EmailParser),
+  dns: DNSParser.parse.bind(DNSParser),
+  string: StringParser.parse.bind(StringParser),
+  number: NumberParser.parseNumber.bind(NumberParser),
+  integer: NumberParser.parseInteger.bind(NumberParser),
+  phone: PhoneParser.parse.bind(PhoneParser),
+  csv: CSVParser.parse.bind(CSVParser),
+};
 
-function timestamp() {
-  const now = new Date();
-  const pad = (value) => String(value).padStart(2, '0');
+const config = {
+  get: Config.get.bind(Config),
+  reset: Config.reset.bind(Config),
+  throwError: Config.throwError.bind(Config),
+};
 
-  const day = pad(now.getDate());
-  const month = pad(now.getMonth() + 1);
-  const year = now.getFullYear();
-  const hours = pad(now.getHours());
-  const minutes = pad(now.getMinutes());
-  const seconds = pad(now.getSeconds());
-  const milliseconds = pad(now.getMilliseconds());
+const errors = {
+  SaltoolsError,
+};
 
-  return `${day}-${month}-${year}-${hours}h-${minutes}m-${seconds}s-${milliseconds}ms`;
-}
-
-class ErrorLogger {
-  run(error, {
-    directory = undefined,
-    filename = undefined,
-    addTimestamp = true,
-    print = true,
-    throwError = false,
-  } = {}) {
-    this.#validateParameters({ error, directory, filename, print, addTimestamp, throwError });
-    const parsedError = this.#parseError(error);
-    this.#saveLog({ parsedError, directory, filename, addTimestamp });
-    if (print) console.error(parsedError);
-    if (throwError) throw error;
-  }
-
-  #validateParameters({ error, directory, filename, print, addTimestamp, throwError }) {
-    param.error({ value: error, name: 'error', required: true });
-    param.string({ value: directory, name: 'directory' });
-    param.string({ value: filename, name: 'filename' });
-    param.bool({ value: print, name: 'print' });
-    param.bool({ value: addTimestamp, name: 'addTimestamp' });
-    param.bool({ value: throwError, name: 'throwError' });
-
-    if ((!directory && filename) || (directory && !filename)) {
-      throw new SaltoolsError('directory e filename devem ser ambos fornecidos ou ambos não fornecidos');
-    }
-
-    if (addTimestamp && (!directory || !filename)) {
-      throw new SaltoolsError('directory e filename são obrigatórios quando addTimestamp é true');
-    }
-  }
-
-  #saveLog({ parsedError, directory, filename, addTimestamp }) {
-    if (!directory || !filename) return;
-    const stamp = addTimestamp ? `-${timestamp()}` : '';
-    const filePath = path.join(directory, `${filename}${stamp}.log`);
-    fs.writeFileSync(filePath, parsedError);
-  }
-
-  #parseError(error) {
-    const code = error.code || '';
-    const stack = error.stack ? `stack: ${error.stack}` : '';
-    return `${code} ${error.message}\n${stack}`;
-  }
-}
-
-class LogSaver {
-  run(content, {
-    directory = undefined,
-    filename = undefined,
-    addTimestamp = true,
-  } = {}) {
-    this.#validateParameters({ content, directory, filename, addTimestamp });
-    const stamp = addTimestamp ? `-${timestamp()}` : '';
-    const filePath = path.join(directory, `${filename}${stamp}.log`);
-    fs.writeFileSync(filePath, content);
-  }
-
-  #validateParameters({ content, directory, filename, addTimestamp }) {
-    param.string({ value: content, name: 'content', required: true });
-    param.string({ value: directory, name: 'directory', required: true });
-    param.string({ value: filename, name: 'filename', required: true });
-    param.bool({ value: addTimestamp, name: 'addTimestamp' });
-  }
-}
-
-const errorLogger = new ErrorLogger();
-const logSaver = new LogSaver();
-
-const error = errorLogger.run.bind(errorLogger);
-const saveLog = logSaver.run.bind(logSaver);
-
-var index = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  error: error,
-  saveLog: saveLog
-});
-
-function helloWorld() {
-  console.log("Hello, World!");
-}
-
-const errors = { SaltoolsError };
-
-export { Config as config, errors, helloWorld, index as log, index$1 as parse, timestamp };
+export { config, errors, helloWorld, log, parse, timestamp };
 //# sourceMappingURL=index.js.map
