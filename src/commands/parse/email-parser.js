@@ -13,10 +13,10 @@ export default class EmailParser {
   static #ALIAS_DOMAINS = ['gmail.com'];
   static #cachedOptions = new CachedOptions();
 
-  static async parse(email, options = {}) {
+  static parse(email, options = {}) {
     const mergedOptions = { ...EmailParser.#DEFAULT_OPTIONS, ...options };
     try {
-      return await this.#parse(email, mergedOptions);
+      return this.#parse(email, mergedOptions);
     } catch (error) {
       if (!mergedOptions.throwError && error instanceof SaltoolsError) {
         return null;
@@ -25,7 +25,7 @@ export default class EmailParser {
     }
   }
 
-  static async #parse(email, options) {
+  static #parse(email, options) {
     param.string({ value: email, name: 'email', required: true });
     EmailParser.#validateOptions(options);
 
@@ -88,4 +88,3 @@ export default class EmailParser {
     }
   }
 }
-

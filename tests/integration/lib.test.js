@@ -175,8 +175,8 @@ describe('saltools - integration tests', () => {
   });
 
   describe('parse.email', () => {
-    test('test_parseEmail_WHEN_validEmail_THEN_validatesEmail', async () => {
-      const result = await saltools.parse.email('test@example.com', {
+    test('test_parseEmail_WHEN_validEmail_THEN_validatesEmail', () => {
+      const result = saltools.parse.email('test@example.com', {
         validateSPF: false,
         validateDMARC: false,
         validateDKIM: false,
@@ -186,8 +186,8 @@ describe('saltools - integration tests', () => {
       expect(result).toBe('test@example.com');
     });
 
-    test('test_parseEmail_WHEN_invalidEmail_THEN_throwsError', async () => {
-      await expect(
+    test('test_parseEmail_WHEN_invalidEmail_THEN_throwsError', () => {
+      expect(() =>
         saltools.parse.email('invalid-email', {
           validateSPF: false,
           validateDMARC: false,
@@ -195,7 +195,7 @@ describe('saltools - integration tests', () => {
           validateMX: false,
           validateSMTP: false,
         })
-      ).rejects.toThrow();
+      ).toThrow();
     });
   });
 
