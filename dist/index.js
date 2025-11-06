@@ -1,8 +1,8 @@
 import fs from 'fs';
-import { parsePhoneNumberWithError, isValidPhoneNumber } from 'libphonenumber-js';
-import dns from 'dns';
-import net from 'net';
 import validator from 'validator';
+import dns$1 from 'dns';
+import net from 'net';
+import { parsePhoneNumberWithError, isValidPhoneNumber } from 'libphonenumber-js';
 import path from 'path';
 
 class SaltoolsError extends Error {
@@ -10,6 +10,15 @@ class SaltoolsError extends Error {
     super(`[Saltools] ${message}`, options);
     this.name = 'SaltoolsError';
     this.options = options;
+    this._originalStack = this.stack;
+  }
+
+  get stack() {
+    if (!this._originalStack) return undefined;
+    const stackLines = this._originalStack.split('\n');
+    const messageLine = `${this.name}: ${this.message}`;
+    const stackTrace = stackLines.slice(1).join('\n');
+    return `${stackTrace}\n${messageLine}`;
   }
 }
 
@@ -77,667 +86,6 @@ const param = {
     object,
     error: error$1
 };
-
-class CachedOptions {
-  #cache = new Set();
-
-  cache(options) {
-    const hash = this.#hash(options);
-    this.#cache.add(hash);
-  }
-
-  isCached(options) {
-    const hash = this.#hash(options);
-    return this.#cache.has(hash);
-  }
-
-  #hash(options) {
-    let hash = '';
-    for (const key in options) {
-      const value = options[key];
-      hash += `${key}:${typeof value}:${value}|`;
-    }
-    return hash;
-  }
-}
-
-class StringParser {
-  static #DO_NOT_CAPITALIZE = ['de', 'do', 'da', 'dos', 'das', 'e'];
-  static DEFAULT_OPTIONS = {
-    allowEmpty: false,
-    cast: false,
-    trim: true,
-    capitalize: false,
-    varName: undefined,
-    throwError: true,
-  };
-
-  static #cachedOptions = new CachedOptions();
-
-  static parse(value, options) {
-    this.#validateOptions(options);
-
-    try {
-      value = this.#parseType(value, options.cast, options.varName);
-      value = this.#parseTrim(value, options.trim);
-      this.#parseEmpty(value, options.allowEmpty, options.varName);
-      value = this.#parseCapitalize(value, options.capitalize);
-      return value;
-    } catch (error) {
-      if (!options.throwError && error instanceof SaltoolsError) {
-        return null;
-      }
-      throw error;
-    }
-  }
-
-  static #validateOptions(options) {
-    if (this.#cachedOptions.isCached(options)) return;
-
-    param.bool({ value: options.allowEmpty, name: 'allowEmpty' });
-    param.bool({ value: options.cast, name: 'cast' });
-    param.bool({ value: options.trim, name: 'trim' });
-    param.bool({ value: options.capitalize, name: 'capitalize' });
-    param.string({ value: options.varName, name: 'varName' });
-    param.bool({ value: options.throwError, name: 'throwError' });
-
-    this.#cachedOptions.cache(options);
-  }
-
-  static #parseType(value, cast, varName) {
-    if (typeof value !== 'string') {
-      if (cast) {
-        return String(value);
-      } else {
-        this.#throwError(
-          `${typeof value} ${value} não é uma string. 
-          Se quiser converter para string, use o parâmetro {cast: true}.`,
-          varName
-        );
-      }
-    }
-    return value;
-  }
-
-  static #parseTrim(value, trim) {
-    if (trim) {
-      return value.trim();
-    }
-    return value;
-  }
-
-  static #parseEmpty(value, allowEmpty, varName) {
-    if (!allowEmpty && value === '') {
-      this.#throwError('String não pode ser vazia quando {allowEmpty: false}', varName);
-    }
-  }
-
-  static #parseCapitalize(value, capitalize) {
-    if (!capitalize) {
-      return value;
-    }
-    let lowerCase = value.toLocaleLowerCase().trim();
-    lowerCase = lowerCase.replace(/\s+/g, ' ');
-    const capitalizedWords = [];
-    for (const word of lowerCase.split(' ')) {
-      if (word === '') continue;
-      const formattedWord = this.#DO_NOT_CAPITALIZE.includes(word)
-        ? word
-        : this.#capitalizeWord(word);
-      capitalizedWords.push(formattedWord);
-    }
-    return capitalizedWords.join(' ');
-  }
-
-  static #capitalizeWord(word) {
-    return word.charAt(0).toLocaleUpperCase('pt-BR') + word.slice(1);
-  }
-
-  static #throwError(message, varName) {
-    message = varName ? `${message} varName: ${varName}` : message;
-    throw new SaltoolsError(message);
-  }
-}
-
-function string(value, options = {}) {
-  const mergedOptions = { ...StringParser.DEFAULT_OPTIONS, ...options };
-  return StringParser.parse(value, mergedOptions);
-}
-
-class NumberParser {
-  static DEFAULT_OPTIONS = {
-    allowEmptyString: false,
-    allowNull: false,
-    allowNegative: false,
-    allowZero: false,
-    integer: false,
-    varName: undefined,
-    throwError: true,
-  };
-  static #cachedOptions = new CachedOptions();
-
-  static parse(value, options) {
-    this.#validateOptions(options);
-
-    try {
-      this.#validateType(value, options.allowNull, value, options.varName);
-      this.#validateEmptyString(value, options.allowEmptyString, options.varName);
-      value = this.#parseType(value, value, options.varName);
-      this.#validateInteger(value, options.integer, options.varName);
-      this.#validateNegative(value, options.allowNegative, options.varName);
-      this.#validateZero(value, options.allowZero, options.varName);
-      return value;
-    } catch (error) {
-      if (!options.throwError && error instanceof SaltoolsError) {
-        return null;
-      }
-      throw error;
-    }
-  }
-
-  static #validateOptions(options) {
-    if (this.#cachedOptions.isCached(options)) return;
-
-    param.bool({ value: options.allowEmptyString, name: 'allowEmptyString' });
-    param.bool({ value: options.allowNull, name: 'allowNull' });
-    param.bool({ value: options.allowNegative, name: 'allowNegative' });
-    param.bool({ value: options.allowZero, name: 'allowZero' });
-    param.bool({ value: options.integer, name: 'integer' });
-    param.string({ value: options.varName, name: 'varName' });
-    param.bool({ value: options.throwError, name: 'throwError' });
-
-    this.#cachedOptions.cache(options);
-  }
-
-  static #validateType(value, allowNull, originalValue, varName) {
-    if (value === null) {
-      if (!allowNull) {
-        this.#throwError('null não é permitido quando {allowNull: false}', varName);
-      }
-      return;
-    }
-
-    if (typeof value !== 'string' && typeof value !== 'number') {
-      this.#throwError(
-        `Não é possível converter ${typeof originalValue} ${originalValue} para número.`,
-        varName
-      );
-    }
-  }
-
-  static #validateEmptyString(value, allowEmptyString, varName) {
-    if (!allowEmptyString && value === '') {
-      this.#throwError('String não pode ser vazia quando {allowEmptyString: false}', varName);
-    }
-  }
-
-  static #parseType(value, originalValue, varName) {
-    const numValue = Number(value);
-    if (isNaN(numValue)) {
-      this.#throwError(
-        `Não é possível converter ${typeof originalValue} ${originalValue} para número.`,
-        varName
-      );
-    }
-    return numValue;
-  }
-
-  static #validateInteger(value, integer, varName) {
-    if (integer && !Number.isInteger(value)) {
-      this.#throwError(`${value} não é um inteiro.`, varName);
-    }
-  }
-
-  static #validateNegative(value, allowNegative, varName) {
-    if (!allowNegative && value < 0) {
-      this.#throwError('Número não pode ser negativo quando {allowNegative: false}', varName);
-    }
-  }
-
-  static #validateZero(value, allowZero, varName) {
-    if (!allowZero && value === 0) {
-      this.#throwError('Número não pode ser zero quando {allowZero: false}', varName);
-    }
-  }
-
-  static #throwError(message, varName) {
-    message = varName ? `${message} varName: ${varName}` : message;
-    throw new SaltoolsError(message);
-  }
-}
-
-function number(value, options = {}) {
-  const mergedOptions = { ...NumberParser.DEFAULT_OPTIONS, ...options, integer: false };
-  return NumberParser.parse(value, mergedOptions);
-}
-
-function integer(value, options = {}) {
-  const mergedOptions = { ...NumberParser.DEFAULT_OPTIONS, ...options, integer: true };
-  return NumberParser.parse(value, mergedOptions);
-}
-
-class CSVFileReader {
-  constructor(path) {
-    this.path = path;
-  }
-
-  read() {
-    this.#validatePath();
-    this.#validateExtension();
-    return fs.readFileSync(this.path, 'utf8');
-  }
-
-  #validatePath() {
-    if (!fs.existsSync(this.path)) {
-      throw new SaltoolsError(`Arquivo ${this.path} não encontrado`);
-    }
-  }
-  
-  #validateExtension() {  
-    if (!this.path.toLowerCase().endsWith('.csv')) {
-      throw new SaltoolsError(`Arquivo ${this.path} não é um arquivo CSV`);
-    }
-  }
-}
-
-class CSVLineSplitter {
-  #quoteChar;
-  #escapeChar;
-
-  constructor({quoteChar, escapeChar} = {}) {
-    this.#quoteChar = quoteChar;
-    this.#escapeChar = escapeChar;
-  }
-
-  split(content) {
-    const lines = [];
-    let currentLine = '';
-    let inQuotes = false;
-    let i = 0;
-
-    while (i < content.length) {
-      const char = content[i];
-      const nextChar = this.#getNextChar(content, i);
-
-      if (this.#isEscapedQuote(char, nextChar)) {
-        currentLine = this.#addEscapedQuote(currentLine);
-        i += 2;
-        continue;
-      }
-
-      if (char === this.#quoteChar) {
-        inQuotes = !inQuotes;
-        currentLine += char;
-        i++;
-        continue;
-      }
-
-      if (this.#isCarriageReturnNewline(char, inQuotes, nextChar)) {
-        this.#finishLine(lines, currentLine);
-        currentLine = '';
-        i += 2;
-        continue;
-      }
-
-      if (this.#isNewline(char, inQuotes)) {
-        this.#finishLine(lines, currentLine);
-        currentLine = '';
-        i += 1;
-        continue;
-      }
-
-      currentLine += char;
-      i++;
-    }
-
-    this.#addRemainingLine(lines, currentLine);
-    return lines;
-  }
-
-  #getNextChar(content, index) {
-    return index + 1 < content.length ? content[index + 1] : '';
-  }
-
-  #addRemainingLine(lines, currentLine) {
-    if (currentLine.length > 0) {
-      lines.push(currentLine);
-    }
-  }
-
-  #finishLine(lines, currentLine) {
-    lines.push(currentLine);
-  }
-
-  #addEscapedQuote(currentLine) {
-    return currentLine + this.#quoteChar;
-  }
-
-  #isEscapedQuote(char, nextChar) {
-    return char === this.#escapeChar && nextChar === this.#quoteChar;
-  }
-
-  #isCarriageReturnNewline(char, inQuotes, nextChar) {
-    return char === '\r' && !inQuotes && nextChar === '\n';
-  }
-
-  #isNewline(char, inQuotes) {
-    return char === '\n' && !inQuotes;
-  }
-}
-
-class CSVRowParser {
-  #delimiter;
-  #quoteChar;
-  #escapeChar;
-
-  constructor({delimiter, quoteChar, escapeChar} = {}) {
-    this.#delimiter = delimiter;
-    this.#quoteChar = quoteChar;
-    this.#escapeChar = escapeChar;
-  }
-
-  parse(row) {
-    const fields = [];
-    let currentField = '';
-    let inQuotes = false;
-    let i = 0;
-
-    while (i < row.length) {
-      const char = row[i];
-      const nextChar = this.#getNextChar(row, i);
-
-      if (this.#isEscapedQuote(char, nextChar)) {
-        currentField += this.#quoteChar;
-        i += 2;
-        continue;
-      }
-
-      if (char === this.#quoteChar) {
-        const result = this.#handleQuote(inQuotes, nextChar);
-        if (result.addQuote) {
-          currentField += this.#quoteChar;
-          i += 2;
-          continue;
-        }
-        inQuotes = result.inQuotes;
-        i++;
-        continue;
-      }
-
-      if (this.#isDelimiter(char, inQuotes)) {
-        this.#finishField(fields, currentField);
-        currentField = '';
-        i++;
-        continue;
-      }
-
-      currentField += char;
-      i++;
-    }
-
-    this.#finishField(fields, currentField);
-    return fields;
-  }
-
-  #getNextChar(row, index) {
-    return index + 1 < row.length ? row[index + 1] : '';
-  }
-
-  #isEscapedQuote(char, nextChar) {
-    return char === this.#escapeChar && nextChar === this.#quoteChar;
-  }
-
-  #finishField(fields, currentField) {
-    fields.push(currentField.trim());
-  }
-
-  #handleQuote(inQuotes, nextChar) {
-    if (inQuotes && nextChar === this.#quoteChar) {
-      return { addQuote: true, inQuotes };
-    }
-    return { addQuote: false, inQuotes: !inQuotes };
-  }
-
-  #isDelimiter(char, inQuotes) {
-    return char === this.#delimiter && !inQuotes;
-  }
-}
-
-class CSVValueConverter {
-  convert(value) {
-    if (this.#isEmpty(value)) {
-      return '';
-    }
-
-    if (this.#isBoolean(value)) {
-      return this.#toBoolean(value);
-    }
-
-    if (this.#isNumeric(value)) {
-      return this.#toNumber(value);
-    }
-
-    return value;
-  }
-
-  #isEmpty(value) {
-    return value === '' || value.trim() === '';
-  }
-
-  #isBoolean(value) {
-    const lowerValue = value.toLowerCase().trim();
-    return lowerValue === 'true' || lowerValue === 'false';
-  }
-
-  #toBoolean(value) {
-    const lowerValue = value.toLowerCase().trim();
-    return lowerValue === 'true';
-  }
-
-  #isNumeric(value) {
-    if (value.trim() === '') {
-      return false;
-    }
-    return !isNaN(value);
-  }
-
-  #toNumber(value) {
-    const numValue = Number(value);
-    if (!isNaN(numValue) && isFinite(numValue)) {
-      return numValue;
-    }
-    return value;
-  }
-}
-
-class CSVParser {
-  static DEFAULT_OPTIONS = {
-    delimiter: ',',
-    quoteChar: '"',
-    escapeChar: '\\',
-    throwError: true,
-  };
-  #fileReader;
-  #lineSplitter;
-  #rowParser;
-  #valueConverter;
-  #shouldThrowError;
-
-  constructor(path, options = {}) {
-    options = { ...CSVParser.DEFAULT_OPTIONS, ...options };
-    this.#validateOptions(path, options);
-    this.#fileReader = new CSVFileReader(path);
-    this.#lineSplitter = new CSVLineSplitter({
-      quoteChar: options.quoteChar,
-      escapeChar: options.escapeChar,
-    });
-    this.#rowParser = new CSVRowParser({
-      delimiter: options.delimiter,
-      quoteChar: options.quoteChar,
-      escapeChar: options.escapeChar,
-    });
-    this.#valueConverter = new CSVValueConverter();
-    this.#shouldThrowError = options.throwError !== undefined ? options.throwError : true;
-  }
-
-  parse() {
-    try {
-      const content = this.#fileReader.read();
-      return this.#parseFileContent(content);
-    } catch (error) {
-      if (!this.#shouldThrowError && error instanceof SaltoolsError) {
-        return null;
-      }
-      throw error;
-    }
-  }
-
-  #validateOptions(path, options) {
-    param.string({ value: path, name: 'path', required: true });
-    param.string({ value: options.delimiter, name: 'delimiter', required: true });
-    param.string({ value: options.quoteChar, name: 'quoteChar', required: true });
-    param.string({ value: options.escapeChar, name: 'escapeChar', required: true });
-    param.bool({ value: options.throwError, name: 'throwError' });
-  }
-
-  #parseFileContent(content) {
-    if (!content.trim()) {
-      return [];
-    }
-
-    const lines = this.#lineSplitter.split(content);
-    if (lines.length === 0) {
-      return [];
-    }
-
-    const headers = this.#rowParser.parse(lines[0]);
-    const result = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) {
-        continue;
-      }
-      const values = this.#rowParser.parse(lines[i]);
-      const row = {};
-      for (let j = 0; j < headers.length; j++) {
-        row[headers[j]] = this.#valueConverter.convert(values[j] || '');
-      }
-      result.push(row);
-    }
-
-    return result;
-  }
-}
-
-function csv(path, options = {}) {
-  return new CSVParser(path, options).parse();
-}
-
-class PhoneParser {
-  static DEFAULT_OPTIONS = {
-    addCountryCode: true,
-    addPlusPrefix: false,
-    addAreaCode: true,
-    numbersOnly: true,
-    throwError: true,
-  };
-  static #cachedOptions = new CachedOptions();
-
-  static parse(phone, options) {
-    try {
-      this.#validateOptions(options);
-      return this.#parse(phone, options);
-    } catch (error) {
-      if (!options.throwError) {
-        return null;
-      }
-      if (!(error instanceof SaltoolsError)) {
-        throw new SaltoolsError(`Número de telefone inválido ${phone} ${error.message}`);
-      }
-      throw error;
-    }
-  }
-
-  static #parse(phone, options) {
-    const country = this.#getCountryCode(phone);
-    const phoneNumber = this.#parsePhoneNumber(phone, country);
-    this.#validatePhoneNumber(phone, country);
-    const formattedPhone = this.#formatPhoneNumber(phoneNumber, options);
-    return this.#addPlusPrefix(formattedPhone, options);
-  }
-
-  static #addPlusPrefix(result, options) {
-    if (options.addPlusPrefix && options.addCountryCode && !result.startsWith('+')) {
-      return `+${result}`;
-    }
-    return result;
-  }
-
-  static #validateOptions(options) {
-    if (this.#cachedOptions.isCached(options)) return;
-
-    param.bool({ value: options.addCountryCode, name: 'addCountryCode' });
-    param.bool({ value: options.addPlusPrefix, name: 'addPlusPrefix' });
-    param.bool({ value: options.addAreaCode, name: 'addAreaCode' });
-    param.bool({ value: options.numbersOnly, name: 'numbersOnly' });
-    param.bool({ value: options.throwError, name: 'throwError' });
-
-    this.#cachedOptions.cache(options);
-  }
-
-  static #parsePhoneNumber(phone, country) {
-    return parsePhoneNumberWithError(phone, country);
-  }
-
-  static #validatePhoneNumber(phone, country) {
-    if (!isValidPhoneNumber(phone, country)) {
-      throw new SaltoolsError(`Número de telefone inválido: ${phone}`);
-    }
-  }
-
-  static #getCountryCode(phone) {
-    if (phone.startsWith('+')) {
-      return undefined;
-    }
-
-    const cleanPhone = phone.replace(/\D/g, '');
-
-    if (cleanPhone.startsWith('55')) {
-      try {
-        const phoneNumber = parsePhoneNumberWithError(phone);
-        return phoneNumber.country;
-      } catch {
-        return 'BR';
-      }
-    }
-
-    return 'BR';
-  }
-
-  static #formatPhoneNumber(phoneNumber, options) {
-    if (options.numbersOnly) {
-      if (options.addCountryCode) {
-        return phoneNumber.number.replace('+', '');
-      }
-      return phoneNumber.nationalNumber;
-    }
-
-    if (options.addCountryCode) {
-      if (options.addPlusPrefix) {
-        return phoneNumber.format('INTERNATIONAL');
-      }
-      const countryCode = phoneNumber.countryCallingCode;
-      const nationalFormat = phoneNumber.format('NATIONAL');
-      return `${countryCode} ${nationalFormat}`;
-    }
-    return phoneNumber.format('NATIONAL');
-  }
-}
-
-function parsePhone(phone, options = {}) {
-  const mergedOptions = { ...PhoneParser.DEFAULT_OPTIONS, ...options };
-  return PhoneParser.parse(phone, mergedOptions);
-}
 
 class StringToDateParser {
   static #lastFormat = null;
@@ -1150,8 +498,8 @@ class FwfParser {
   static #parseLine(line, fields) {
     const result = {};
     for (const field of fields) {
-      const end = Math.min(field.end, line.length);
-      const value = line.slice(field.start, end).trim();
+      const endIndex = Math.min(field.end + 1, line.length);
+      const value = line.slice(field.start, endIndex).trim();
       result[field.key] = FwfParser.#cast(value, field.type);
     }
     return result;
@@ -1203,16 +551,78 @@ class FwfParser {
         "Each field must be an object with 'key', 'start', and 'end' properties."
       );
     }
-    if (field.end <= field.start) {
+    if (field.end < field.start) {
       throw new SaltoolsError(
-        `Field '${field.key}' must have end > start. Got start: ${field.start}, end: ${field.end}`
+        `Field '${field.key}' must have end >= start. Got start: ${field.start}, end: ${field.end}`
       );
     }
   }
 }
 
+class CachedOptions {
+  #cache = new Set();
+
+  cache(options) {
+    const hash = this.#hash(options);
+    this.#cache.add(hash);
+  }
+
+  isCached(options) {
+    const hash = this.#hash(options);
+    return this.#cache.has(hash);
+  }
+
+  #hash(options) {
+    let hash = '';
+    for (const key in options) {
+      const value = options[key];
+      hash += `${key}:${typeof value}:${value}|`;
+    }
+    return hash;
+  }
+}
+
+class Config {
+  static #config = {};
+
+  static throwError(value) {
+    this.#setBool('throwError', value);
+  }
+
+  static get() {
+    return this.#config;
+  }
+
+  static #setBool(key, value) {
+    if (typeof value !== 'boolean') {
+      throw new SaltoolsError(
+        `Invalid value for ${key}. Type ${typeof value} is not boolean. Value: ${value}`
+      );
+    }
+    this.#config[key] = value;
+  }
+
+  static reset() {
+    this.#config = {};
+  }
+}
+
+class OptionsService {
+  static update(options, defaultOptions) {
+    const mergedOptions = { ...defaultOptions, ...options };
+    const config = Config.get();
+
+    for (const [key, value] of Object.entries(config)) {
+      if (value !== undefined && options[key] === undefined) {
+        mergedOptions[key] = value;
+      }
+    }
+    return mergedOptions;
+  }
+}
+
 class DocParser {
-  static DEFAULT_OPTIONS = {
+  static #DEFAULT_OPTIONS = {
     numbersOnly: true,
     type: undefined,
     throwError: true,
@@ -1224,12 +634,13 @@ class DocParser {
   static #cachedOptions = new CachedOptions();
 
   static parse(doc, options = {}) {
-    const mergedOptions = { ...DocParser.DEFAULT_OPTIONS, ...options };
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+
     try {
-      this.#validateOptions(mergedOptions);
-      return this.#parse(doc, mergedOptions);
+      this.#validateOptions(options);
+      return this.#parse(doc, options);
     } catch (error) {
-      if (!mergedOptions.throwError && error instanceof SaltoolsError) {
+      if (!options.throwError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
@@ -1340,131 +751,30 @@ class DocParser {
   }
 }
 
-class DNSValidator {
-  static async verify(email, options = {}) {
-    await Promise.all([
-      DNSValidator.#validateSPF(email, options.validateSPF),
-      DNSValidator.#validateDMARC(email, options.validateDMARC),
-      DNSValidator.#validateDKIM(email, options.validateDKIM),
-      DNSValidator.#validateMX(email, options.validateMX),
-      DNSValidator.#validateSMTP(email, options.validateSMTP),
-    ]);
-  }
-
-  static async #validateSPF(email, validateSPF) {
-    if (validateSPF) {
-      await DNSValidator.#dnsResolveText({ email, type: 'SPF', text: email.domain });
-    }
-  }
-
-  static async #validateDMARC(email, validateDMARC) {
-    if (validateDMARC) {
-      await DNSValidator.#dnsResolveText({ email, type: 'DMARC', text: `_dmarc.${email.domain}` });
-    }
-  }
-
-  static async #validateDKIM(email, validateDKIM) {
-    if (validateDKIM) {
-      await DNSValidator.#dnsResolveText({
-        email,
-        type: 'DKIM',
-        text: `default._domainkey.${email.domain}`,
-      });
-    }
-  }
-
-  static async #validateMX(email, validateMX) {
-    if (!validateMX) return;
-    try {
-      const mxRecords = await dns.promises.resolveMx(email.domain);
-      if (mxRecords.length === 0) {
-        throw new SaltoolsError(`MX não encontrado para o email ${email.value}`);
-      }
-    } catch {
-      throw new SaltoolsError(`Erro ao validar MX para o email ${email.value}`);
-    }
-  }
-
-  static async #validateSMTP(email, validateSMTP) {
-    if (!validateSMTP) return;
-    try {
-      const domain = email.domain;
-      const mx = await dns.promises.resolveMx(domain);
-      const mxHost = mx.sort((a, b) => a.priority - b.priority)[0]?.exchange;
-      if (!mxHost) {
-        throw new SaltoolsError(`MX não encontrado para o email ${email.value}`);
-      }
-
-      const isValid = await new Promise((resolve) => {
-        const socket = net.createConnection(25, mxHost);
-        let stage = 0;
-        socket.setEncoding('ascii');
-        socket.setTimeout(5000);
-
-        socket.on('data', (data) => {
-          if (stage === 0) {
-            socket.write(`HELO test.com\r\n`);
-            stage++;
-          } else if (stage === 1) {
-            socket.write(`MAIL FROM:<verify@test.com>\r\n`);
-            stage++;
-          } else if (stage === 2) {
-            socket.write(`RCPT TO:<${email.value}>\r\n`);
-            stage++;
-          } else if (stage === 3) {
-            socket.write(`QUIT\r\n`);
-            socket.end();
-            resolve(data.includes('250'));
-          }
-        });
-
-        socket.on('error', () => resolve(false));
-        socket.on('timeout', () => {
-          socket.destroy();
-          resolve(false);
-        });
-      });
-
-      if (!isValid) {
-        throw new SaltoolsError(`SMTP inválido para o email ${email.value}`);
-      }
-    } catch (error) {
-      if (error instanceof SaltoolsError) {
-        throw error;
-      }
-      throw new SaltoolsError(`Erro ao validar SMTP para o email ${email.value} ${error.message}`);
-    }
-  }
-
-  static async #dnsResolveText({ email, type, text }) {
-    try {
-      const txt = await dns.promises.resolveTxt(text);
-      if (txt.flat().length === 0) {
-        throw new SaltoolsError(`${type} não encontrado para o email ${email.value}`);
-      }
-    } catch {
-      throw new SaltoolsError(`Erro ao validar ${type} para o email ${email.value}`);
-    }
-  }
-}
-
 class EmailParser {
   static #DEFAULT_OPTIONS = {
-    allowAlias: false,
+    allowAlias: true,
     allowDisposable: false,
-    validateSPF: true,
-    validateDMARC: true,
-    validateDKIM: true,
-    validateMX: true,
-    validateSMTP: true,
+    throwError: true,
   };
   static #DISPOSABLE_DOMAINS = ['mailinator.com', 'tempmail.com', 'dispostable.com'];
   static #ALIAS_DOMAINS = ['gmail.com'];
   static #cachedOptions = new CachedOptions();
 
-  static async parse(email, options = {}) {
+  static parse(email, options = {}) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    try {
+      return this.#parse(email, options);
+    } catch (error) {
+      if (!options.throwError && error instanceof SaltoolsError) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  static #parse(email, options) {
     param.string({ value: email, name: 'email', required: true });
-    options = { ...EmailParser.#DEFAULT_OPTIONS, ...options };
     EmailParser.#validateOptions(options);
 
     email = EmailParser.#parseEmail(email);
@@ -1472,7 +782,6 @@ class EmailParser {
     EmailParser.#validateSyntax(email);
     EmailParser.#validateAlias(email, options.allowAlias);
     EmailParser.#validateDisposable(email, options.allowDisposable);
-    await DNSValidator.verify(email, options);
 
     return email.value;
   }
@@ -1482,11 +791,7 @@ class EmailParser {
 
     param.bool({ value: options.allowAlias, name: 'allowAlias' });
     param.bool({ value: options.allowDisposable, name: 'allowDisposable' });
-    param.bool({ value: options.validateSPF, name: 'validateSPF' });
-    param.bool({ value: options.validateDMARC, name: 'validateDMARC' });
-    param.bool({ value: options.validateDKIM, name: 'validateDKIM' });
-    param.bool({ value: options.validateMX, name: 'validateMX' });
-    param.bool({ value: options.validateSMTP, name: 'validateSMTP' });
+    param.bool({ value: options.throwError, name: 'throwError' });
 
     EmailParser.#cachedOptions.cache(options);
   }
@@ -1532,21 +837,831 @@ class EmailParser {
   }
 }
 
+class DNSParser {
+  static #DEFAULT_OPTIONS = {
+    validateSPF: true,
+    validateDMARC: true,
+    validateDKIM: true,
+    validateMX: true,
+    validateSMTP: true,
+    throwError: true,
+  };
+  static #cachedOptions = new CachedOptions();
+
+  static async parse(domainOrEmail, options = {}) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    try {
+      return await DNSParser.#parse(domainOrEmail, options);
+    } catch (error) {
+      if (!options.throwError && error instanceof SaltoolsError) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  static async #parse(domainOrEmail, options) {
+    param.string({ value: domainOrEmail, name: 'domainOrEmail', required: true });
+    DNSParser.#validateOptions(options);
+
+    const domain = DNSParser.#extractDomain(domainOrEmail);
+    const email = { value: domainOrEmail, domain, local: domainOrEmail.split('@')[0] || '' };
+
+    await Promise.all([
+      DNSParser.#validateSPF(email, options.validateSPF),
+      DNSParser.#validateDMARC(email, options.validateDMARC),
+      DNSParser.#validateDKIM(email, options.validateDKIM),
+      DNSParser.#validateMX(email, options.validateMX),
+      DNSParser.#validateSMTP(email, options.validateSMTP),
+    ]);
+
+    return domain;
+  }
+
+  static #extractDomain(domainOrEmail) {
+    if (domainOrEmail.includes('@')) {
+      const parts = domainOrEmail.split('@');
+      if (parts.length !== 2 || !parts[1]) {
+        throw new SaltoolsError(`Domínio inválido: ${domainOrEmail}`);
+      }
+      return parts[1].toLowerCase().trim();
+    }
+    return domainOrEmail.toLowerCase().trim();
+  }
+
+  static #validateOptions(options) {
+    if (DNSParser.#cachedOptions.isCached(options)) return;
+
+    param.bool({ value: options.validateSPF, name: 'validateSPF' });
+    param.bool({ value: options.validateDMARC, name: 'validateDMARC' });
+    param.bool({ value: options.validateDKIM, name: 'validateDKIM' });
+    param.bool({ value: options.validateMX, name: 'validateMX' });
+    param.bool({ value: options.validateSMTP, name: 'validateSMTP' });
+    param.bool({ value: options.throwError, name: 'throwError' });
+
+    DNSParser.#cachedOptions.cache(options);
+  }
+
+  static async #validateSPF(email, validateSPF) {
+    if (validateSPF) {
+      await DNSParser.#dnsResolveText({ email, type: 'SPF', text: email.domain });
+    }
+  }
+
+  static async #validateDMARC(email, validateDMARC) {
+    if (validateDMARC) {
+      await DNSParser.#dnsResolveText({ email, type: 'DMARC', text: `_dmarc.${email.domain}` });
+    }
+  }
+
+  static async #validateDKIM(email, validateDKIM) {
+    if (validateDKIM) {
+      await DNSParser.#dnsResolveText({
+        email,
+        type: 'DKIM',
+        text: `default._domainkey.${email.domain}`,
+      });
+    }
+  }
+
+  static async #validateMX(email, validateMX) {
+    if (!validateMX) return;
+    try {
+      const mxRecords = await dns$1.promises.resolveMx(email.domain);
+      if (mxRecords.length === 0) {
+        throw new SaltoolsError(`MX não encontrado para ${email.value}`);
+      }
+    } catch {
+      throw new SaltoolsError(`Erro ao validar MX para ${email.value}`);
+    }
+  }
+
+  static async #validateSMTP(email, validateSMTP) {
+    if (!validateSMTP) return;
+    try {
+      const domain = email.domain;
+      const mx = await dns$1.promises.resolveMx(domain);
+      const mxHost = mx.sort((a, b) => a.priority - b.priority)[0]?.exchange;
+      if (!mxHost) {
+        throw new SaltoolsError(`MX não encontrado para ${email.value}`);
+      }
+
+      const isValid = await new Promise((resolve) => {
+        const socket = net.createConnection(25, mxHost);
+        let stage = 0;
+        socket.setEncoding('ascii');
+        socket.setTimeout(5000);
+
+        socket.on('data', (data) => {
+          if (stage === 0) {
+            socket.write(`HELO test.com\r\n`);
+            stage++;
+          } else if (stage === 1) {
+            socket.write(`MAIL FROM:<verify@test.com>\r\n`);
+            stage++;
+          } else if (stage === 2) {
+            socket.write(`RCPT TO:<${email.value}>\r\n`);
+            stage++;
+          } else if (stage === 3) {
+            socket.write(`QUIT\r\n`);
+            socket.end();
+            resolve(data.includes('250'));
+          }
+        });
+
+        socket.on('error', () => resolve(false));
+        socket.on('timeout', () => {
+          socket.destroy();
+          resolve(false);
+        });
+      });
+
+      if (!isValid) {
+        throw new SaltoolsError(`SMTP inválido para ${email.value}`);
+      }
+    } catch (error) {
+      if (error instanceof SaltoolsError) {
+        throw error;
+      }
+      throw new SaltoolsError(`Erro ao validar SMTP para ${email.value} ${error.message}`);
+    }
+  }
+
+  static async #dnsResolveText({ email, type, text }) {
+    try {
+      const txt = await dns$1.promises.resolveTxt(text);
+      if (txt.flat().length === 0) {
+        throw new SaltoolsError(`${type} não encontrado para ${email.value}`);
+      }
+    } catch {
+      throw new SaltoolsError(`Erro ao validar ${type} para ${email.value}`);
+    }
+  }
+}
+
+class StringParser {
+  static #DO_NOT_CAPITALIZE = ['de', 'do', 'da', 'dos', 'das', 'e'];
+  static #DEFAULT_OPTIONS = {
+    allowEmpty: false,
+    cast: false,
+    trim: true,
+    capitalize: false,
+    varName: undefined,
+    throwError: true,
+  };
+
+  static #cachedOptions = new CachedOptions();
+
+  static parse(value, options = {}) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    this.#validateOptions(options);
+
+    try {
+      value = this.#parseType(value, options.cast, options.varName);
+      value = this.#parseTrim(value, options.trim);
+      this.#parseEmpty(value, options.allowEmpty, options.varName);
+      value = this.#parseCapitalize(value, options.capitalize);
+      return value;
+    } catch (error) {
+      if (!options.throwError && error instanceof SaltoolsError) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  static #validateOptions(options) {
+    if (this.#cachedOptions.isCached(options)) return;
+
+    param.bool({ value: options.allowEmpty, name: 'allowEmpty' });
+    param.bool({ value: options.cast, name: 'cast' });
+    param.bool({ value: options.trim, name: 'trim' });
+    param.bool({ value: options.capitalize, name: 'capitalize' });
+    param.string({ value: options.varName, name: 'varName' });
+    param.bool({ value: options.throwError, name: 'throwError' });
+
+    this.#cachedOptions.cache(options);
+  }
+
+  static #parseType(value, cast, varName) {
+    if (typeof value !== 'string') {
+      if (cast) {
+        return String(value);
+      } else {
+        this.#throwError(
+          `${typeof value} ${value} não é uma string. 
+          Se quiser converter para string, use o parâmetro {cast: true}.`,
+          varName
+        );
+      }
+    }
+    return value;
+  }
+
+  static #parseTrim(value, trim) {
+    if (trim) {
+      return value.trim();
+    }
+    return value;
+  }
+
+  static #parseEmpty(value, allowEmpty, varName) {
+    if (!allowEmpty && value === '') {
+      this.#throwError('String não pode ser vazia quando {allowEmpty: false}', varName);
+    }
+  }
+
+  static #parseCapitalize(value, capitalize) {
+    if (!capitalize) {
+      return value;
+    }
+    let lowerCase = value.toLocaleLowerCase().trim();
+    lowerCase = lowerCase.replace(/\s+/g, ' ');
+    const capitalizedWords = [];
+    for (const word of lowerCase.split(' ')) {
+      if (word === '') continue;
+      const formattedWord = this.#DO_NOT_CAPITALIZE.includes(word)
+        ? word
+        : this.#capitalizeWord(word);
+      capitalizedWords.push(formattedWord);
+    }
+    return capitalizedWords.join(' ');
+  }
+
+  static #capitalizeWord(word) {
+    return word.charAt(0).toLocaleUpperCase('pt-BR') + word.slice(1);
+  }
+
+  static #throwError(message, varName) {
+    message = varName ? `${message} varName: ${varName}` : message;
+    throw new SaltoolsError(message);
+  }
+}
+
+class NumberParser {
+  static #DEFAULT_OPTIONS = {
+    allowEmptyString: false,
+    allowNull: false,
+    allowNegative: true,
+    allowZero: true,
+    integer: false,
+    varName: undefined,
+    throwError: true,
+  };
+  static #cachedOptions = new CachedOptions();
+
+  static parseNumber(value, options = {}) {
+    options.integer = false;
+    return this.parse(value, options);
+  }
+
+  static parseInteger(value, options = {}) {
+    options.integer = true;
+    return this.parse(value, options);
+  }
+
+  static parse(value, options) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    this.#validateOptions(options);
+
+    try {
+      this.#validateType(value, options.allowNull, value, options.varName);
+      this.#validateEmptyString(value, options.allowEmptyString, options.varName);
+      value = this.#parseType(value, value, options.varName);
+      this.#validateInteger(value, options.integer, options.varName);
+      this.#validateNegative(value, options.allowNegative, options.varName);
+      this.#validateZero(value, options.allowZero, options.varName);
+      return value;
+    } catch (error) {
+      if (!options.throwError && error instanceof SaltoolsError) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  static #validateOptions(options) {
+    if (this.#cachedOptions.isCached(options)) return;
+
+    param.bool({ value: options.allowEmptyString, name: 'allowEmptyString' });
+    param.bool({ value: options.allowNull, name: 'allowNull' });
+    param.bool({ value: options.allowNegative, name: 'allowNegative' });
+    param.bool({ value: options.allowZero, name: 'allowZero' });
+    param.bool({ value: options.integer, name: 'integer' });
+    param.string({ value: options.varName, name: 'varName' });
+    param.bool({ value: options.throwError, name: 'throwError' });
+
+    this.#cachedOptions.cache(options);
+  }
+
+  static #validateType(value, allowNull, originalValue, varName) {
+    if (value === null) {
+      if (!allowNull) {
+        this.#throwError('null não é permitido quando {allowNull: false}', varName, value);
+      }
+      return;
+    }
+
+    if (typeof value !== 'string' && typeof value !== 'number') {
+      this.#throwError(
+        `Não é possível converter ${typeof originalValue} ${originalValue} para número.`,
+        varName,
+        originalValue
+      );
+    }
+  }
+
+  static #validateEmptyString(value, allowEmptyString, varName) {
+    if (!allowEmptyString && value === '') {
+      this.#throwError(
+        'String não pode ser vazia quando {allowEmptyString: false}',
+        varName,
+        value
+      );
+    }
+  }
+
+  static #parseType(value, originalValue, varName) {
+    const numValue = Number(value);
+    if (isNaN(numValue)) {
+      this.#throwError(
+        `Não é possível converter ${typeof originalValue} ${originalValue} para número.`,
+        varName,
+        originalValue
+      );
+    }
+    return numValue;
+  }
+
+  static #validateInteger(value, integer, varName) {
+    if (integer && !Number.isInteger(value)) {
+      this.#throwError(`${value} não é um inteiro.`, varName, value);
+    }
+  }
+
+  static #validateNegative(value, allowNegative, varName) {
+    if (!allowNegative && value < 0) {
+      this.#throwError(
+        'Número não pode ser negativo quando {allowNegative: false}',
+        varName,
+        value
+      );
+    }
+  }
+
+  static #validateZero(value, allowZero, varName) {
+    if (!allowZero && value === 0) {
+      this.#throwError('Número não pode ser zero quando {allowZero: false}', varName, value);
+    }
+  }
+
+  static #throwError(message, varName, value) {
+    message = `${message} chave ${varName}, valor ${value}, tipo ${typeof value}`;
+    throw new SaltoolsError(message);
+  }
+}
+
+class PhoneParser {
+  static #DEFAULT_OPTIONS = {
+    addCountryCode: true,
+    addPlusPrefix: false,
+    addAreaCode: true,
+    numbersOnly: true,
+    throwError: true,
+  };
+  static #cachedOptions = new CachedOptions();
+
+  static parse(phone, options = {}) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+
+    try {
+      this.#validateOptions(options);
+      return this.#parse(phone, options);
+    } catch (error) {
+      if (!options.throwError) {
+        return null;
+      }
+      if (!(error instanceof SaltoolsError)) {
+        throw new SaltoolsError(`Número de telefone inválido ${phone} ${error.message}`);
+      }
+      throw error;
+    }
+  }
+
+  static #parse(phone, options) {
+    const country = this.#getCountryCode(phone);
+    const phoneNumber = this.#parsePhoneNumber(phone, country);
+    this.#validatePhoneNumber(phone, country);
+    const formattedPhone = this.#formatPhoneNumber(phoneNumber, options);
+    return this.#addPlusPrefix(formattedPhone, options);
+  }
+
+  static #addPlusPrefix(result, options) {
+    if (options.addPlusPrefix && options.addCountryCode && !result.startsWith('+')) {
+      return `+${result}`;
+    }
+    return result;
+  }
+
+  static #validateOptions(options) {
+    if (this.#cachedOptions.isCached(options)) return;
+
+    param.bool({ value: options.addCountryCode, name: 'addCountryCode' });
+    param.bool({ value: options.addPlusPrefix, name: 'addPlusPrefix' });
+    param.bool({ value: options.addAreaCode, name: 'addAreaCode' });
+    param.bool({ value: options.numbersOnly, name: 'numbersOnly' });
+    param.bool({ value: options.throwError, name: 'throwError' });
+
+    this.#cachedOptions.cache(options);
+  }
+
+  static #parsePhoneNumber(phone, country) {
+    return parsePhoneNumberWithError(phone, country);
+  }
+
+  static #validatePhoneNumber(phone, country) {
+    if (!isValidPhoneNumber(phone, country)) {
+      throw new SaltoolsError(`Número de telefone inválido: ${phone}`);
+    }
+  }
+
+  static #getCountryCode(phone) {
+    if (phone.startsWith('+')) {
+      return undefined;
+    }
+
+    const cleanPhone = phone.replace(/\D/g, '');
+
+    if (cleanPhone.startsWith('55')) {
+      try {
+        const phoneNumber = parsePhoneNumberWithError(phone);
+        return phoneNumber.country;
+      } catch {
+        return 'BR';
+      }
+    }
+
+    return 'BR';
+  }
+
+  static #formatPhoneNumber(phoneNumber, options) {
+    if (options.numbersOnly) {
+      if (options.addCountryCode) {
+        return phoneNumber.number.replace('+', '');
+      }
+      return phoneNumber.nationalNumber;
+    }
+
+    if (options.addCountryCode) {
+      if (options.addPlusPrefix) {
+        return phoneNumber.format('INTERNATIONAL');
+      }
+      const countryCode = phoneNumber.countryCallingCode;
+      const nationalFormat = phoneNumber.format('NATIONAL');
+      return `${countryCode} ${nationalFormat}`;
+    }
+    return phoneNumber.format('NATIONAL');
+  }
+}
+
+class CSVFileReader {
+  constructor(path) {
+    this.path = path;
+  }
+
+  read() {
+    this.#validatePath();
+    this.#validateExtension();
+    return fs.readFileSync(this.path, 'utf8');
+  }
+
+  #validatePath() {
+    if (!fs.existsSync(this.path)) {
+      throw new SaltoolsError(`Arquivo ${this.path} não encontrado`);
+    }
+  }
+  
+  #validateExtension() {  
+    if (!this.path.toLowerCase().endsWith('.csv')) {
+      throw new SaltoolsError(`Arquivo ${this.path} não é um arquivo CSV`);
+    }
+  }
+}
+
+class CSVLineSplitter {
+  #quoteChar;
+  #escapeChar;
+
+  constructor({quoteChar, escapeChar} = {}) {
+    this.#quoteChar = quoteChar;
+    this.#escapeChar = escapeChar;
+  }
+
+  split(content) {
+    const lines = [];
+    let currentLine = '';
+    let inQuotes = false;
+    let i = 0;
+
+    while (i < content.length) {
+      const char = content[i];
+      const nextChar = this.#getNextChar(content, i);
+
+      if (this.#isEscapedQuote(char, nextChar)) {
+        currentLine = this.#addEscapedQuote(currentLine);
+        i += 2;
+        continue;
+      }
+
+      if (char === this.#quoteChar) {
+        inQuotes = !inQuotes;
+        currentLine += char;
+        i++;
+        continue;
+      }
+
+      if (this.#isCarriageReturnNewline(char, inQuotes, nextChar)) {
+        this.#finishLine(lines, currentLine);
+        currentLine = '';
+        i += 2;
+        continue;
+      }
+
+      if (this.#isNewline(char, inQuotes)) {
+        this.#finishLine(lines, currentLine);
+        currentLine = '';
+        i += 1;
+        continue;
+      }
+
+      currentLine += char;
+      i++;
+    }
+
+    this.#addRemainingLine(lines, currentLine);
+    return lines;
+  }
+
+  #getNextChar(content, index) {
+    return index + 1 < content.length ? content[index + 1] : '';
+  }
+
+  #addRemainingLine(lines, currentLine) {
+    if (currentLine.length > 0) {
+      lines.push(currentLine);
+    }
+  }
+
+  #finishLine(lines, currentLine) {
+    lines.push(currentLine);
+  }
+
+  #addEscapedQuote(currentLine) {
+    return currentLine + this.#quoteChar;
+  }
+
+  #isEscapedQuote(char, nextChar) {
+    return char === this.#escapeChar && nextChar === this.#quoteChar;
+  }
+
+  #isCarriageReturnNewline(char, inQuotes, nextChar) {
+    return char === '\r' && !inQuotes && nextChar === '\n';
+  }
+
+  #isNewline(char, inQuotes) {
+    return char === '\n' && !inQuotes;
+  }
+}
+
+class CSVRowParser {
+  #delimiter;
+  #quoteChar;
+  #escapeChar;
+
+  constructor({delimiter, quoteChar, escapeChar} = {}) {
+    this.#delimiter = delimiter;
+    this.#quoteChar = quoteChar;
+    this.#escapeChar = escapeChar;
+  }
+
+  parse(row) {
+    const fields = [];
+    let currentField = '';
+    let inQuotes = false;
+    let i = 0;
+
+    while (i < row.length) {
+      const char = row[i];
+      const nextChar = this.#getNextChar(row, i);
+
+      if (this.#isEscapedQuote(char, nextChar)) {
+        currentField += this.#quoteChar;
+        i += 2;
+        continue;
+      }
+
+      if (char === this.#quoteChar) {
+        const result = this.#handleQuote(inQuotes, nextChar);
+        if (result.addQuote) {
+          currentField += this.#quoteChar;
+          i += 2;
+          continue;
+        }
+        inQuotes = result.inQuotes;
+        i++;
+        continue;
+      }
+
+      if (this.#isDelimiter(char, inQuotes)) {
+        this.#finishField(fields, currentField);
+        currentField = '';
+        i++;
+        continue;
+      }
+
+      currentField += char;
+      i++;
+    }
+
+    this.#finishField(fields, currentField);
+    return fields;
+  }
+
+  #getNextChar(row, index) {
+    return index + 1 < row.length ? row[index + 1] : '';
+  }
+
+  #isEscapedQuote(char, nextChar) {
+    return char === this.#escapeChar && nextChar === this.#quoteChar;
+  }
+
+  #finishField(fields, currentField) {
+    fields.push(currentField.trim());
+  }
+
+  #handleQuote(inQuotes, nextChar) {
+    if (inQuotes && nextChar === this.#quoteChar) {
+      return { addQuote: true, inQuotes };
+    }
+    return { addQuote: false, inQuotes: !inQuotes };
+  }
+
+  #isDelimiter(char, inQuotes) {
+    return char === this.#delimiter && !inQuotes;
+  }
+}
+
+class CSVValueConverter {
+  convert(value) {
+    if (this.#isEmpty(value)) {
+      return '';
+    }
+
+    if (this.#isBoolean(value)) {
+      return this.#toBoolean(value);
+    }
+
+    if (this.#isNumeric(value)) {
+      return this.#toNumber(value);
+    }
+
+    return value;
+  }
+
+  #isEmpty(value) {
+    return value === '' || value.trim() === '';
+  }
+
+  #isBoolean(value) {
+    const lowerValue = value.toLowerCase().trim();
+    return lowerValue === 'true' || lowerValue === 'false';
+  }
+
+  #toBoolean(value) {
+    const lowerValue = value.toLowerCase().trim();
+    return lowerValue === 'true';
+  }
+
+  #isNumeric(value) {
+    if (value.trim() === '') {
+      return false;
+    }
+    return !isNaN(value);
+  }
+
+  #toNumber(value) {
+    const numValue = Number(value);
+    if (!isNaN(numValue) && isFinite(numValue)) {
+      return numValue;
+    }
+    return value;
+  }
+}
+
+class CSVParser {
+  static DEFAULT_OPTIONS = {
+    delimiter: ',',
+    quoteChar: '"',
+    escapeChar: '\\',
+    throwError: true,
+  };
+  #fileReader;
+  #lineSplitter;
+  #rowParser;
+  #valueConverter;
+  #shouldThrowError;
+
+  constructor(path, options = {}) {
+    options = { ...CSVParser.DEFAULT_OPTIONS, ...options };
+    this.#validateOptions(path, options);
+    this.#fileReader = new CSVFileReader(path);
+    this.#lineSplitter = new CSVLineSplitter({
+      quoteChar: options.quoteChar,
+      escapeChar: options.escapeChar,
+    });
+    this.#rowParser = new CSVRowParser({
+      delimiter: options.delimiter,
+      quoteChar: options.quoteChar,
+      escapeChar: options.escapeChar,
+    });
+    this.#valueConverter = new CSVValueConverter();
+    this.#shouldThrowError = options.throwError !== undefined ? options.throwError : true;
+  }
+
+  parse() {
+    try {
+      const content = this.#fileReader.read();
+      return this.#parseFileContent(content);
+    } catch (error) {
+      if (!this.#shouldThrowError && error instanceof SaltoolsError) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  #validateOptions(path, options) {
+    param.string({ value: path, name: 'path', required: true });
+    param.string({ value: options.delimiter, name: 'delimiter', required: true });
+    param.string({ value: options.quoteChar, name: 'quoteChar', required: true });
+    param.string({ value: options.escapeChar, name: 'escapeChar', required: true });
+    param.bool({ value: options.throwError, name: 'throwError' });
+  }
+
+  #parseFileContent(content) {
+    if (!content.trim()) {
+      return [];
+    }
+
+    const lines = this.#lineSplitter.split(content);
+    if (lines.length === 0) {
+      return [];
+    }
+
+    const headers = this.#rowParser.parse(lines[0]);
+    const result = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) {
+        continue;
+      }
+      const values = this.#rowParser.parse(lines[i]);
+      const row = {};
+      for (let j = 0; j < headers.length; j++) {
+        row[headers[j]] = this.#valueConverter.convert(values[j] || '');
+      }
+      result.push(row);
+    }
+
+    return result;
+  }
+}
+
 const fwf = FwfParser.parse.bind(FwfParser);
 const doc = DocParser.parse.bind(DocParser);
 const date = DateParser.parse.bind(DateParser);
 const email = EmailParser.parse.bind(EmailParser);
+const dns = DNSParser.parse.bind(DNSParser);
+const string = StringParser.parse.bind(StringParser);
+const number = NumberParser.parseNumber.bind(NumberParser);
+const integer = NumberParser.parseInteger.bind(NumberParser);
+const phone = PhoneParser.parse.bind(PhoneParser);
+const csv = (path, options = {}) => {
+  const parser = new CSVParser(path, options);
+  return parser.parse();
+};
 
 var index$1 = /*#__PURE__*/Object.freeze({
   __proto__: null,
   csv: csv,
   date: date,
+  dns: dns,
   doc: doc,
   email: email,
   fwf: fwf,
   integer: integer,
   number: number,
-  phone: parsePhone,
+  phone: phone,
   string: string
 });
 
@@ -1649,5 +1764,5 @@ function helloWorld() {
 
 const errors = { SaltoolsError };
 
-export { errors, helloWorld, index as log, index$1 as parse, timestamp };
+export { Config as config, errors, helloWorld, index as log, index$1 as parse, timestamp };
 //# sourceMappingURL=index.js.map
