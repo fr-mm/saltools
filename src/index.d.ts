@@ -137,7 +137,7 @@ export const parse: {
   /** Parse a fixed-width file
    *  @param path - The fixed-width file path
    *  @param fields - Array describing field slices
-   *  Each field contains a key, start index, and end index (exclusive) */
+   *  Each field contains a key, start index, and end index (inclusive) */
   fwf(path: string, fields: FwfField[]): Array<Record<string, string | number | boolean>>;
   /** Parse a document (CPF or CNPJ)
    *  @param doc - The document to parse (CPF or CNPJ)
