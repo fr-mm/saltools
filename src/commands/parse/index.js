@@ -5,11 +5,13 @@ import phone from './parse-phone.js';
 import DateParser from './parse-date/date-parser.js';
 import FwfParser from './fwf-parser.js';
 import DocParser from './doc-parser.js';
-import EmailParser from './parse-email/email-parser.js';
+import EmailParser from './email-parser.js';
+import DNSParser from './parse-dns.js';
 
 export const fwf = FwfParser.parse.bind(FwfParser);
 export const doc = DocParser.parse.bind(DocParser);
 export const date = DateParser.parse.bind(DateParser);
 export const email = EmailParser.parse.bind(EmailParser);
+export const dns = DNSParser.parse.bind(DNSParser);
 
 export { string, number, integer, csv, phone };

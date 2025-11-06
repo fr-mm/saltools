@@ -1,4 +1,3 @@
-import DNSValidator from './dns-validator.js';
 import CachedOptions from 'src/helper/cachedOptions.js';
 import validator from 'validator';
 import SaltoolsError from 'src/errors/saltools-error.js';
@@ -8,11 +7,6 @@ export default class EmailParser {
   static #DEFAULT_OPTIONS = {
     allowAlias: true,
     allowDisposable: false,
-    validateSPF: true,
-    validateDMARC: true,
-    validateDKIM: true,
-    validateMX: true,
-    validateSMTP: true,
     throwError: true,
   };
   static #DISPOSABLE_DOMAINS = ['mailinator.com', 'tempmail.com', 'dispostable.com'];
@@ -40,7 +34,6 @@ export default class EmailParser {
     EmailParser.#validateSyntax(email);
     EmailParser.#validateAlias(email, options.allowAlias);
     EmailParser.#validateDisposable(email, options.allowDisposable);
-    await DNSValidator.verify(email, options);
 
     return email.value;
   }
@@ -50,11 +43,6 @@ export default class EmailParser {
 
     param.bool({ value: options.allowAlias, name: 'allowAlias' });
     param.bool({ value: options.allowDisposable, name: 'allowDisposable' });
-    param.bool({ value: options.validateSPF, name: 'validateSPF' });
-    param.bool({ value: options.validateDMARC, name: 'validateDMARC' });
-    param.bool({ value: options.validateDKIM, name: 'validateDKIM' });
-    param.bool({ value: options.validateMX, name: 'validateMX' });
-    param.bool({ value: options.validateSMTP, name: 'validateSMTP' });
     param.bool({ value: options.throwError, name: 'throwError' });
 
     EmailParser.#cachedOptions.cache(options);
@@ -100,3 +88,4 @@ export default class EmailParser {
     }
   }
 }
+

@@ -1,10 +1,10 @@
 import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import DNSValidator from 'src/commands/parse/parse-email/dns-validator.js';
+import DNSParser from 'src/commands/parse/parse-dns.js';
 import SaltoolsError from 'src/errors/saltools-error.js';
 import dns from 'dns';
 import net from 'net';
 
-describe('DNSValidator', () => {
+describe('DNSParser', () => {
   let dnsResolveMxSpy;
   let dnsResolveTxtSpy;
   let netCreateConnectionSpy;
@@ -21,101 +21,158 @@ describe('DNSValidator', () => {
     netCreateConnectionSpy.mockRestore();
   });
 
-  test('test_verify_WHEN_notEmailInstance_THEN_resolvesWithoutValidations', async () => {
-    await expect(DNSValidator.verify('test@example.com')).resolves.toBeUndefined();
+  test('test_parse_WHEN_emailString_THEN_extractsDomainAndValidates', async () => {
+    dnsResolveMxSpy.mockResolvedValue([{ priority: 10, exchange: 'mail.example.com' }]);
+    dnsResolveTxtSpy.mockResolvedValue([['v=spf1 include:_spf.example.com']]);
+
+    const result = await DNSParser.parse('test@example.com', {
+      validateSPF: true,
+      validateMX: true,
+      validateDMARC: false,
+      validateDKIM: false,
+      validateSMTP: false,
+    });
+
+    expect(result).toBe('example.com');
+    expect(dnsResolveMxSpy).toHaveBeenCalledWith('example.com');
+    expect(dnsResolveTxtSpy).toHaveBeenCalledWith('example.com');
   });
 
-  test('test_verify_WHEN_noValidationFlags_THEN_completesWithoutErrors', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
+  test('test_parse_WHEN_domainString_THEN_validatesDomain', async () => {
+    dnsResolveMxSpy.mockResolvedValue([{ priority: 10, exchange: 'mail.example.com' }]);
+    dnsResolveTxtSpy.mockResolvedValue([['v=spf1 include:_spf.example.com']]);
 
-    await DNSValidator.verify(email, {});
+    const result = await DNSParser.parse('example.com', {
+      validateSPF: true,
+      validateMX: true,
+      validateDMARC: false,
+      validateDKIM: false,
+      validateSMTP: false,
+    });
 
+    expect(result).toBe('example.com');
+    expect(dnsResolveMxSpy).toHaveBeenCalledWith('example.com');
+  });
+
+  test('test_parse_WHEN_noValidationFlags_THEN_completesWithoutErrors', async () => {
+    const result = await DNSParser.parse('test@example.com', {
+      validateSPF: false,
+      validateDMARC: false,
+      validateDKIM: false,
+      validateMX: false,
+      validateSMTP: false,
+    });
+
+    expect(result).toBe('example.com');
     expect(dnsResolveMxSpy).not.toHaveBeenCalled();
     expect(dnsResolveTxtSpy).not.toHaveBeenCalled();
   });
 
-  test('test_verify_WHEN_validateMXFlagTrue_THEN_validatesMX', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
+  test('test_parse_WHEN_validateMXFlagTrue_THEN_validatesMX', async () => {
     dnsResolveMxSpy.mockResolvedValue([{ priority: 10, exchange: 'mail.example.com' }]);
 
-    await DNSValidator.verify(email, { validateMX: true });
+    await DNSParser.parse('test@example.com', {
+      validateMX: true,
+      validateSPF: false,
+      validateDMARC: false,
+      validateDKIM: false,
+      validateSMTP: false,
+    });
 
     expect(dnsResolveMxSpy).toHaveBeenCalledWith('example.com');
   });
 
-  test('test_verify_WHEN_validateMXWithEmptyRecords_THEN_throwsSaltoolsError', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
+  test('test_parse_WHEN_validateMXWithEmptyRecords_THEN_throwsSaltoolsError', async () => {
     dnsResolveMxSpy.mockResolvedValue([]);
 
-    await expect(DNSValidator.verify(email, { validateMX: true })).rejects.toThrow(SaltoolsError);
-  });
-
-  test('test_verify_WHEN_validateMXWithDNSError_THEN_throwsSaltoolsError', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
-    dnsResolveMxSpy.mockRejectedValue(new Error('DNS error'));
-
-    await expect(DNSValidator.verify(email, { validateMX: true })).rejects.toThrow(SaltoolsError);
-  });
-
-  test('test_verify_WHEN_validateSPFFlagTrue_THEN_validatesSPF', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
-    dnsResolveTxtSpy.mockResolvedValue([['v=spf1 include:_spf.example.com']]);
-
-    await DNSValidator.verify(email, { validateSPF: true });
-
-    expect(dnsResolveTxtSpy).toHaveBeenCalledWith('example.com');
-  });
-
-  test('test_verify_WHEN_validateSPFWithEmptyRecords_THEN_throwsSaltoolsError', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
-    dnsResolveTxtSpy.mockResolvedValue([]);
-
-    await expect(DNSValidator.verify(email, { validateSPF: true })).rejects.toThrow(SaltoolsError);
-  });
-
-  test('test_verify_WHEN_validateSPFWithDNSError_THEN_throwsSaltoolsError', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
-    dnsResolveTxtSpy.mockRejectedValue(new Error('DNS error'));
-
-    await expect(DNSValidator.verify(email, { validateSPF: true })).rejects.toThrow(SaltoolsError);
-  });
-
-  test('test_verify_WHEN_validateDMARCFlagTrue_THEN_validatesDMARC', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
-    dnsResolveTxtSpy.mockResolvedValue([['v=DMARC1; p=none']]);
-
-    await DNSValidator.verify(email, { validateDMARC: true });
-
-    expect(dnsResolveTxtSpy).toHaveBeenCalledWith('_dmarc.example.com');
-  });
-
-  test('test_verify_WHEN_validateDMARCWithEmptyRecords_THEN_throwsSaltoolsError', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
-    dnsResolveTxtSpy.mockResolvedValue([]);
-
-    await expect(DNSValidator.verify(email, { validateDMARC: true })).rejects.toThrow(
+    await expect(DNSParser.parse('test@example.com', { validateMX: true })).rejects.toThrow(
       SaltoolsError
     );
   });
 
-  test('test_verify_WHEN_validateDKIMFlagTrue_THEN_validatesDKIM', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
+  test('test_parse_WHEN_validateMXWithDNSError_THEN_throwsSaltoolsError', async () => {
+    dnsResolveMxSpy.mockRejectedValue(new Error('DNS error'));
+
+    await expect(DNSParser.parse('test@example.com', { validateMX: true })).rejects.toThrow(
+      SaltoolsError
+    );
+  });
+
+  test('test_parse_WHEN_validateSPFFlagTrue_THEN_validatesSPF', async () => {
+    dnsResolveTxtSpy.mockResolvedValue([['v=spf1 include:_spf.example.com']]);
+
+    await DNSParser.parse('test@example.com', {
+      validateSPF: true,
+      validateDMARC: false,
+      validateDKIM: false,
+      validateMX: false,
+      validateSMTP: false,
+    });
+
+    expect(dnsResolveTxtSpy).toHaveBeenCalledWith('example.com');
+  });
+
+  test('test_parse_WHEN_validateSPFWithEmptyRecords_THEN_throwsSaltoolsError', async () => {
+    dnsResolveTxtSpy.mockResolvedValue([]);
+
+    await expect(DNSParser.parse('test@example.com', { validateSPF: true })).rejects.toThrow(
+      SaltoolsError
+    );
+  });
+
+  test('test_parse_WHEN_validateSPFWithDNSError_THEN_throwsSaltoolsError', async () => {
+    dnsResolveTxtSpy.mockRejectedValue(new Error('DNS error'));
+
+    await expect(DNSParser.parse('test@example.com', { validateSPF: true })).rejects.toThrow(
+      SaltoolsError
+    );
+  });
+
+  test('test_parse_WHEN_validateDMARCFlagTrue_THEN_validatesDMARC', async () => {
+    dnsResolveTxtSpy.mockResolvedValue([['v=DMARC1; p=none']]);
+
+    await DNSParser.parse('test@example.com', {
+      validateDMARC: true,
+      validateSPF: false,
+      validateDKIM: false,
+      validateMX: false,
+      validateSMTP: false,
+    });
+
+    expect(dnsResolveTxtSpy).toHaveBeenCalledWith('_dmarc.example.com');
+  });
+
+  test('test_parse_WHEN_validateDMARCWithEmptyRecords_THEN_throwsSaltoolsError', async () => {
+    dnsResolveTxtSpy.mockResolvedValue([]);
+
+    await expect(DNSParser.parse('test@example.com', { validateDMARC: true })).rejects.toThrow(
+      SaltoolsError
+    );
+  });
+
+  test('test_parse_WHEN_validateDKIMFlagTrue_THEN_validatesDKIM', async () => {
     dnsResolveTxtSpy.mockResolvedValue([['v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3']]);
 
-    await DNSValidator.verify(email, { validateDKIM: true });
+    await DNSParser.parse('test@example.com', {
+      validateDKIM: true,
+      validateSPF: false,
+      validateDMARC: false,
+      validateMX: false,
+      validateSMTP: false,
+    });
 
     expect(dnsResolveTxtSpy).toHaveBeenCalledWith('default._domainkey.example.com');
   });
 
-  test('test_verify_WHEN_validateDKIMWithEmptyRecords_THEN_throwsSaltoolsError', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
+  test('test_parse_WHEN_validateDKIMWithEmptyRecords_THEN_throwsSaltoolsError', async () => {
     dnsResolveTxtSpy.mockResolvedValue([]);
 
-    await expect(DNSValidator.verify(email, { validateDKIM: true })).rejects.toThrow(SaltoolsError);
+    await expect(DNSParser.parse('test@example.com', { validateDKIM: true })).rejects.toThrow(
+      SaltoolsError
+    );
   });
 
-  test('test_verify_WHEN_validateSMTPFlagTrue_THEN_validatesSMTP', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
+  test('test_parse_WHEN_validateSMTPFlagTrue_THEN_validatesSMTP', async () => {
     const mockSocket = {
       setEncoding: jest.fn(),
       setTimeout: jest.fn(),
@@ -137,28 +194,29 @@ describe('DNSValidator', () => {
     dnsResolveMxSpy.mockResolvedValue([{ priority: 10, exchange: 'mail.example.com' }]);
     netCreateConnectionSpy.mockReturnValue(mockSocket);
 
-    await DNSValidator.verify(email, { validateSMTP: true });
+    await DNSParser.parse('test@example.com', { validateSMTP: true });
 
     expect(dnsResolveMxSpy).toHaveBeenCalledWith('example.com');
     expect(netCreateConnectionSpy).toHaveBeenCalledWith(25, 'mail.example.com');
   });
 
-  test('test_verify_WHEN_validateSMTPWithNoMX_THEN_throwsSaltoolsError', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
+  test('test_parse_WHEN_validateSMTPWithNoMX_THEN_throwsSaltoolsError', async () => {
     dnsResolveMxSpy.mockResolvedValue([]);
 
-    await expect(DNSValidator.verify(email, { validateSMTP: true })).rejects.toThrow(SaltoolsError);
+    await expect(DNSParser.parse('test@example.com', { validateSMTP: true })).rejects.toThrow(
+      SaltoolsError
+    );
   });
 
-  test('test_verify_WHEN_validateSMTPWithEmptyMXHost_THEN_throwsSaltoolsError', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
+  test('test_parse_WHEN_validateSMTPWithEmptyMXHost_THEN_throwsSaltoolsError', async () => {
     dnsResolveMxSpy.mockResolvedValue([{ priority: 10, exchange: null }]);
 
-    await expect(DNSValidator.verify(email, { validateSMTP: true })).rejects.toThrow(SaltoolsError);
+    await expect(DNSParser.parse('test@example.com', { validateSMTP: true })).rejects.toThrow(
+      SaltoolsError
+    );
   });
 
-  test('test_verify_WHEN_validateSMTPWithInvalidResponse_THEN_throwsSaltoolsError', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
+  test('test_parse_WHEN_validateSMTPWithInvalidResponse_THEN_throwsSaltoolsError', async () => {
     const mockSocket = {
       setEncoding: jest.fn(),
       setTimeout: jest.fn(),
@@ -180,11 +238,12 @@ describe('DNSValidator', () => {
     dnsResolveMxSpy.mockResolvedValue([{ priority: 10, exchange: 'mail.example.com' }]);
     netCreateConnectionSpy.mockReturnValue(mockSocket);
 
-    await expect(DNSValidator.verify(email, { validateSMTP: true })).rejects.toThrow(SaltoolsError);
+    await expect(DNSParser.parse('test@example.com', { validateSMTP: true })).rejects.toThrow(
+      SaltoolsError
+    );
   });
 
-  test('test_verify_WHEN_validateSMTPWithSocketError_THEN_throwsSaltoolsError', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
+  test('test_parse_WHEN_validateSMTPWithSocketError_THEN_throwsSaltoolsError', async () => {
     const mockSocket = {
       setEncoding: jest.fn(),
       setTimeout: jest.fn(),
@@ -201,11 +260,12 @@ describe('DNSValidator', () => {
     dnsResolveMxSpy.mockResolvedValue([{ priority: 10, exchange: 'mail.example.com' }]);
     netCreateConnectionSpy.mockReturnValue(mockSocket);
 
-    await expect(DNSValidator.verify(email, { validateSMTP: true })).rejects.toThrow(SaltoolsError);
+    await expect(DNSParser.parse('test@example.com', { validateSMTP: true })).rejects.toThrow(
+      SaltoolsError
+    );
   });
 
-  test('test_verify_WHEN_validateSMTPWithTimeout_THEN_throwsSaltoolsError', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
+  test('test_parse_WHEN_validateSMTPWithTimeout_THEN_throwsSaltoolsError', async () => {
     const mockSocket = {
       setEncoding: jest.fn(),
       setTimeout: jest.fn(),
@@ -222,11 +282,12 @@ describe('DNSValidator', () => {
     dnsResolveMxSpy.mockResolvedValue([{ priority: 10, exchange: 'mail.example.com' }]);
     netCreateConnectionSpy.mockReturnValue(mockSocket);
 
-    await expect(DNSValidator.verify(email, { validateSMTP: true })).rejects.toThrow(SaltoolsError);
+    await expect(DNSParser.parse('test@example.com', { validateSMTP: true })).rejects.toThrow(
+      SaltoolsError
+    );
   });
 
-  test('test_verify_WHEN_multipleValidations_THEN_runsAllValidations', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
+  test('test_parse_WHEN_multipleValidations_THEN_runsAllValidations', async () => {
     dnsResolveMxSpy.mockResolvedValue([{ priority: 10, exchange: 'mail.example.com' }]);
     dnsResolveTxtSpy.mockResolvedValue([['v=spf1 include:_spf.example.com']]);
     const mockSocket = {
@@ -249,7 +310,7 @@ describe('DNSValidator', () => {
     };
     netCreateConnectionSpy.mockReturnValue(mockSocket);
 
-    await DNSValidator.verify(email, {
+    await DNSParser.parse('test@example.com', {
       validateSPF: true,
       validateDMARC: true,
       validateDKIM: true,
@@ -262,8 +323,7 @@ describe('DNSValidator', () => {
     expect(netCreateConnectionSpy).toHaveBeenCalled();
   });
 
-  test('test_verify_WHEN_validateSMTPWithMXPrioritySort_THEN_usesLowestPriority', async () => {
-    const email = { value: 'test@example.com', domain: 'example.com', local: 'test' };
+  test('test_parse_WHEN_validateSMTPWithMXPrioritySort_THEN_usesLowestPriority', async () => {
     const mockSocket = {
       setEncoding: jest.fn(),
       setTimeout: jest.fn(),
@@ -288,8 +348,20 @@ describe('DNSValidator', () => {
     ]);
     netCreateConnectionSpy.mockReturnValue(mockSocket);
 
-    await DNSValidator.verify(email, { validateSMTP: true });
+    await DNSParser.parse('test@example.com', { validateSMTP: true });
 
     expect(netCreateConnectionSpy).toHaveBeenCalledWith(25, 'mail1.example.com');
   });
+
+  test('test_parse_WHEN_throwErrorFalseAndError_THEN_returnsNull', async () => {
+    dnsResolveMxSpy.mockResolvedValue([]);
+
+    const result = await DNSParser.parse('test@example.com', {
+      validateMX: true,
+      throwError: false,
+    });
+
+    expect(result).toBeNull();
+  });
 });
+

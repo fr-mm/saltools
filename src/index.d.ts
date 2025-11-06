@@ -49,6 +49,10 @@ export interface DateParseOptions {
 export interface EmailParseOptions {
   allowAlias?: boolean;
   allowDisposable?: boolean;
+  throwError?: boolean;
+}
+
+export interface DNSParseOptions {
   validateSPF?: boolean;
   validateDMARC?: boolean;
   validateDKIM?: boolean;
@@ -233,11 +237,6 @@ export const parse: {
    *  @param options - Options object
    *  @param options.allowAlias - Default: true
    *  @param options.allowDisposable - Default: false
-   *  @param options.validateSPF - Default: true
-   *  @param options.validateDMARC - Default: true
-   *  @param options.validateDKIM - Default: true
-   *  @param options.validateMX - Default: true
-   *  @param options.validateSMTP - Default: true
    *  @param options.throwError - Default: true */
   email(
     value: any,
@@ -246,16 +245,6 @@ export const parse: {
       allowAlias?: boolean;
       /** @default false */
       allowDisposable?: boolean;
-      /** @default true */
-      validateSPF?: boolean;
-      /** @default true */
-      validateDMARC?: boolean;
-      /** @default true */
-      validateDKIM?: boolean;
-      /** @default true */
-      validateMX?: boolean;
-      /** @default true */
-      validateSMTP?: boolean;
       /** @default true */
       throwError?: boolean;
     }
@@ -277,6 +266,32 @@ export const parse: {
       throwError?: boolean;
     }
   ): string | null;
+  /** Validate DNS records for a domain or email
+   *  @param domainOrEmail - The domain or email to validate
+   *  @param options - Options object
+   *  @param options.validateSPF - Default: true
+   *  @param options.validateDMARC - Default: true
+   *  @param options.validateDKIM - Default: true
+   *  @param options.validateMX - Default: true
+   *  @param options.validateSMTP - Default: true
+   *  @param options.throwError - Default: true */
+  dns(
+    domainOrEmail: string,
+    options?: {
+      /** @default true */
+      validateSPF?: boolean;
+      /** @default true */
+      validateDMARC?: boolean;
+      /** @default true */
+      validateDKIM?: boolean;
+      /** @default true */
+      validateMX?: boolean;
+      /** @default true */
+      validateSMTP?: boolean;
+      /** @default true */
+      throwError?: boolean;
+    }
+  ): Promise<string | null>;
 };
 
 export const log: {
