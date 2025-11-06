@@ -5,21 +5,31 @@ import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
 
 export default class ErrorLogger {
-  run(error, {
-    directory = undefined,
-    filename = undefined,
-    addTimestamp = true,
-    print = true,
-    throwError = false,
-  } = {}) {
-    this.#validateParameters({ error, directory, filename, print, addTimestamp, throwError });
-    const parsedError = this.#parseError(error);
-    this.#saveLog({ parsedError, directory, filename, addTimestamp });
+  static run(
+    error,
+    {
+      directory = undefined,
+      filename = undefined,
+      addTimestamp = true,
+      print = true,
+      throwError = false,
+    } = {}
+  ) {
+    ErrorLogger.#validateParameters({
+      error,
+      directory,
+      filename,
+      print,
+      addTimestamp,
+      throwError,
+    });
+    const parsedError = ErrorLogger.#parseError(error);
+    ErrorLogger.#saveLog({ parsedError, directory, filename, addTimestamp });
     if (print) console.error(parsedError);
     if (throwError) throw error;
   }
 
-  #validateParameters({ error, directory, filename, print, addTimestamp, throwError }) {
+  static #validateParameters({ error, directory, filename, print, addTimestamp, throwError }) {
     param.error({ value: error, name: 'error', required: true });
     param.string({ value: directory, name: 'directory' });
     param.string({ value: filename, name: 'filename' });
@@ -28,7 +38,9 @@ export default class ErrorLogger {
     param.bool({ value: throwError, name: 'throwError' });
 
     if ((!directory && filename) || (directory && !filename)) {
-      throw new SaltoolsError('directory e filename devem ser ambos fornecidos ou ambos não fornecidos');
+      throw new SaltoolsError(
+        'directory e filename devem ser ambos fornecidos ou ambos não fornecidos'
+      );
     }
 
     if (addTimestamp && (!directory || !filename)) {
@@ -36,14 +48,14 @@ export default class ErrorLogger {
     }
   }
 
-  #saveLog({ parsedError, directory, filename, addTimestamp }) {
+  static #saveLog({ parsedError, directory, filename, addTimestamp }) {
     if (!directory || !filename) return;
     const stamp = addTimestamp ? `-${timestamp()}` : '';
     const filePath = path.join(directory, `${filename}${stamp}.log`);
     fs.writeFileSync(filePath, parsedError);
   }
 
-  #parseError(error) {
+  static #parseError(error) {
     const code = error.code || '';
     const stack = error.stack ? `stack: ${error.stack}` : '';
     return `${code} ${error.message}\n${stack}`;

@@ -5,7 +5,6 @@ import fs from 'fs';
 import path from 'path';
 
 describe('LogSaver', () => {
-  let saver;
   let fsWriteFileSyncSpy;
   const testDir = path.join(process.cwd(), 'tests', 'temp', 'logs');
 
@@ -18,7 +17,6 @@ describe('LogSaver', () => {
       /* ignore directory creation errors */
     }
 
-    saver = new LogSaver();
     fsWriteFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation();
   });
 
@@ -37,7 +35,7 @@ describe('LogSaver', () => {
     test('test_run_WHEN_validParametersWithTimestamp_THEN_savesFile', () => {
       const content = 'Test log content';
 
-      saver.run(content, { directory: testDir, filename: 'test-log' });
+      LogSaver.run(content, { directory: testDir, filename: 'test-log' });
 
       expect(fsWriteFileSyncSpy).toHaveBeenCalledTimes(1);
       const filePath = fsWriteFileSyncSpy.mock.calls[0][0];
@@ -48,7 +46,7 @@ describe('LogSaver', () => {
     test('test_run_WHEN_addTimestampFalse_THEN_savesFileWithoutTimestamp', () => {
       const content = 'Test log content';
 
-      saver.run(content, { directory: testDir, filename: 'test-log', addTimestamp: false });
+      LogSaver.run(content, { directory: testDir, filename: 'test-log', addTimestamp: false });
 
       expect(fsWriteFileSyncSpy).toHaveBeenCalledTimes(1);
       const filePath = fsWriteFileSyncSpy.mock.calls[0][0];
@@ -58,7 +56,7 @@ describe('LogSaver', () => {
     test('test_run_WHEN_addTimestampTrue_THEN_includesTimestampInFilename', () => {
       const content = 'Test log content';
 
-      saver.run(content, { directory: testDir, filename: 'test-log', addTimestamp: true });
+      LogSaver.run(content, { directory: testDir, filename: 'test-log', addTimestamp: true });
 
       expect(fsWriteFileSyncSpy).toHaveBeenCalledTimes(1);
       const filePath = fsWriteFileSyncSpy.mock.calls[0][0];
@@ -69,7 +67,7 @@ describe('LogSaver', () => {
     test('test_run_WHEN_savesFile_THEN_writesCorrectContent', () => {
       const content = 'Test log content\nLine 2';
 
-      saver.run(content, { directory: testDir, filename: 'test-log', addTimestamp: false });
+      LogSaver.run(content, { directory: testDir, filename: 'test-log', addTimestamp: false });
 
       const writtenContent = fsWriteFileSyncSpy.mock.calls[0][1];
       expect(writtenContent).toBe(content);
@@ -78,7 +76,7 @@ describe('LogSaver', () => {
     test('test_run_WHEN_emptyContent_THEN_savesEmptyFile', () => {
       const content = '';
 
-      saver.run(content, { directory: testDir, filename: 'test-log', addTimestamp: false });
+      LogSaver.run(content, { directory: testDir, filename: 'test-log', addTimestamp: false });
 
       expect(fsWriteFileSyncSpy).toHaveBeenCalledTimes(1);
       const writtenContent = fsWriteFileSyncSpy.mock.calls[0][1];
@@ -88,7 +86,7 @@ describe('LogSaver', () => {
     test('test_run_WHEN_multilineContent_THEN_preservesFormatting', () => {
       const content = 'Line 1\nLine 2\nLine 3';
 
-      saver.run(content, { directory: testDir, filename: 'test-log', addTimestamp: false });
+      LogSaver.run(content, { directory: testDir, filename: 'test-log', addTimestamp: false });
 
       const writtenContent = fsWriteFileSyncSpy.mock.calls[0][1];
       expect(writtenContent).toBe(content);
@@ -99,92 +97,92 @@ describe('LogSaver', () => {
   describe('parameter validation', () => {
     test('test_run_WHEN_contentIsNull_THEN_throwsError', () => {
       expect(() => {
-        saver.run(null, { directory: testDir, filename: 'test-log' });
+        LogSaver.run(null, { directory: testDir, filename: 'test-log' });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_contentIsUndefined_THEN_throwsError', () => {
       expect(() => {
-        saver.run(undefined, { directory: testDir, filename: 'test-log' });
+        LogSaver.run(undefined, { directory: testDir, filename: 'test-log' });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_contentIsNumber_THEN_throwsError', () => {
       expect(() => {
-        saver.run(123, { directory: testDir, filename: 'test-log' });
+        LogSaver.run(123, { directory: testDir, filename: 'test-log' });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_contentIsBoolean_THEN_throwsError', () => {
       expect(() => {
-        saver.run(true, { directory: testDir, filename: 'test-log' });
+        LogSaver.run(true, { directory: testDir, filename: 'test-log' });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_directoryIsNull_THEN_throwsError', () => {
       expect(() => {
-        saver.run('content', { directory: null, filename: 'test-log' });
+        LogSaver.run('content', { directory: null, filename: 'test-log' });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_directoryIsUndefined_THEN_throwsError', () => {
       expect(() => {
-        saver.run('content', { directory: undefined, filename: 'test-log' });
+        LogSaver.run('content', { directory: undefined, filename: 'test-log' });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_directoryIsNumber_THEN_throwsError', () => {
       expect(() => {
-        saver.run('content', { directory: 123, filename: 'test-log' });
+        LogSaver.run('content', { directory: 123, filename: 'test-log' });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_directoryIsBoolean_THEN_throwsError', () => {
       expect(() => {
-        saver.run('content', { directory: true, filename: 'test-log' });
+        LogSaver.run('content', { directory: true, filename: 'test-log' });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_filenameIsNull_THEN_throwsError', () => {
       expect(() => {
-        saver.run('content', { directory: testDir, filename: null });
+        LogSaver.run('content', { directory: testDir, filename: null });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_filenameIsUndefined_THEN_throwsError', () => {
       expect(() => {
-        saver.run('content', { directory: testDir, filename: undefined });
+        LogSaver.run('content', { directory: testDir, filename: undefined });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_filenameIsNumber_THEN_throwsError', () => {
       expect(() => {
-        saver.run('content', { directory: testDir, filename: 123 });
+        LogSaver.run('content', { directory: testDir, filename: 123 });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_filenameIsBoolean_THEN_throwsError', () => {
       expect(() => {
-        saver.run('content', { directory: testDir, filename: true });
+        LogSaver.run('content', { directory: testDir, filename: true });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_addTimestampIsString_THEN_throwsError', () => {
       expect(() => {
-        saver.run('content', { directory: testDir, filename: 'test-log', addTimestamp: 'true' });
+        LogSaver.run('content', { directory: testDir, filename: 'test-log', addTimestamp: 'true' });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_addTimestampIsNumber_THEN_throwsError', () => {
       expect(() => {
-        saver.run('content', { directory: testDir, filename: 'test-log', addTimestamp: 1 });
+        LogSaver.run('content', { directory: testDir, filename: 'test-log', addTimestamp: 1 });
       }).toThrow(SaltoolsError);
     });
 
     test('test_run_WHEN_emptyStringContent_THEN_savesFile', () => {
       const content = '';
 
-      saver.run(content, { directory: testDir, filename: 'test-log', addTimestamp: false });
+      LogSaver.run(content, { directory: testDir, filename: 'test-log', addTimestamp: false });
 
       expect(fsWriteFileSyncSpy).toHaveBeenCalled();
     });
@@ -192,7 +190,7 @@ describe('LogSaver', () => {
     test('test_run_WHEN_emptyStringDirectory_THEN_savesFile', () => {
       const content = 'content';
 
-      saver.run(content, { directory: '', filename: 'test-log', addTimestamp: false });
+      LogSaver.run(content, { directory: '', filename: 'test-log', addTimestamp: false });
 
       expect(fsWriteFileSyncSpy).toHaveBeenCalled();
       const filePath = fsWriteFileSyncSpy.mock.calls[0][0];
@@ -202,7 +200,7 @@ describe('LogSaver', () => {
     test('test_run_WHEN_emptyStringFilename_THEN_savesFile', () => {
       const content = 'content';
 
-      saver.run(content, { directory: testDir, filename: '', addTimestamp: false });
+      LogSaver.run(content, { directory: testDir, filename: '', addTimestamp: false });
 
       expect(fsWriteFileSyncSpy).toHaveBeenCalled();
       const filePath = fsWriteFileSyncSpy.mock.calls[0][0];
@@ -215,7 +213,7 @@ describe('LogSaver', () => {
       const content = 'content';
       const relativeDir = 'logs';
 
-      saver.run(content, { directory: relativeDir, filename: 'test', addTimestamp: false });
+      LogSaver.run(content, { directory: relativeDir, filename: 'test', addTimestamp: false });
 
       const filePath = fsWriteFileSyncSpy.mock.calls[0][0];
       expect(filePath).toBe(path.join(relativeDir, 'test.log'));
@@ -225,7 +223,7 @@ describe('LogSaver', () => {
       const content = 'content';
       const absoluteDir = path.resolve(testDir);
 
-      saver.run(content, { directory: absoluteDir, filename: 'test', addTimestamp: false });
+      LogSaver.run(content, { directory: absoluteDir, filename: 'test', addTimestamp: false });
 
       const filePath = fsWriteFileSyncSpy.mock.calls[0][0];
       expect(filePath).toBe(path.join(absoluteDir, 'test.log'));
@@ -234,7 +232,7 @@ describe('LogSaver', () => {
     test('test_run_WHEN_filenameWithExtension_THEN_appendsLogExtension', () => {
       const content = 'content';
 
-      saver.run(content, { directory: testDir, filename: 'test.txt', addTimestamp: false });
+      LogSaver.run(content, { directory: testDir, filename: 'test.txt', addTimestamp: false });
 
       const filePath = fsWriteFileSyncSpy.mock.calls[0][0];
       expect(filePath).toBe(path.join(testDir, 'test.txt.log'));
@@ -243,7 +241,7 @@ describe('LogSaver', () => {
     test('test_run_WHEN_filenameWithSpecialChars_THEN_preservesInFilename', () => {
       const content = 'content';
 
-      saver.run(content, { directory: testDir, filename: 'test-log_2024', addTimestamp: false });
+      LogSaver.run(content, { directory: testDir, filename: 'test-log_2024', addTimestamp: false });
 
       const filePath = fsWriteFileSyncSpy.mock.calls[0][0];
       expect(filePath).toContain('test-log_2024.log');
