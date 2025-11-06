@@ -1,0 +1,58 @@
+import { describe, test, expect, beforeEach } from '@jest/globals';
+import Config from 'src/commands/config.js';
+
+describe('Config', () => {
+  beforeEach(() => {
+    Config.reset();
+  });
+
+  test('test_get_WHEN_noConfigSet_THEN_returnsEmptyObject', () => {
+    const result = Config.get();
+    expect(result).toEqual({});
+  });
+
+  test('test_throwError_WHEN_setToTrue_THEN_setsConfigValue', () => {
+    Config.throwError(true);
+    const result = Config.get();
+    expect(result).toEqual({ throwError: true });
+  });
+
+  test('test_throwError_WHEN_setToFalse_THEN_setsConfigValue', () => {
+    Config.throwError(false);
+    const result = Config.get();
+    expect(result).toEqual({ throwError: false });
+  });
+
+  test('test_get_WHEN_configSet_THEN_returnsConfigObject', () => {
+    Config.throwError(true);
+    const result = Config.get();
+    expect(result.throwError).toBe(true);
+  });
+
+  test('test_reset_WHEN_called_THEN_clearsConfig', () => {
+    Config.throwError(true);
+    Config.reset();
+    const result = Config.get();
+    expect(result).toEqual({});
+  });
+
+  test('test_throwError_WHEN_calledMultipleTimes_THEN_updatesValue', () => {
+    Config.throwError(true);
+    expect(Config.get().throwError).toBe(true);
+    
+    Config.throwError(false);
+    expect(Config.get().throwError).toBe(false);
+    
+    Config.throwError(true);
+    expect(Config.get().throwError).toBe(true);
+  });
+
+  test('test_get_WHEN_afterReset_THEN_returnsEmptyObject', () => {
+    Config.throwError(true);
+    Config.reset();
+    const result = Config.get();
+    expect(result).toEqual({});
+    expect(result.throwError).toBeUndefined();
+  });
+});
+

@@ -348,3 +348,14 @@ export class SaltoolsError extends Error {
 export const errors: {
   SaltoolsError: typeof SaltoolsError;
 };
+
+export const config: {
+  /** Set the throwError configuration value
+   *  @param value - The boolean value to set */
+  throwError(value: boolean): void;
+  /** Get the current configuration object
+   *  @returns The configuration object */
+  get(): Record<string, any>;
+  /** Reset the configuration to an empty object */
+  reset(): void;
+};

@@ -2,9 +2,10 @@ import { parsePhoneNumberWithError, isValidPhoneNumber } from 'libphonenumber-js
 import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
 import CachedOptions from 'src/helper/cachedOptions.js';
+import OptionsService from 'src/helper/options-service.js';
 
-class PhoneParser {
-  static DEFAULT_OPTIONS = {
+export default class PhoneParser {
+  static #DEFAULT_OPTIONS = {
     addCountryCode: true,
     addPlusPrefix: false,
     addAreaCode: true,
@@ -13,7 +14,9 @@ class PhoneParser {
   };
   static #cachedOptions = new CachedOptions();
 
-  static parse(phone, options) {
+  static parse(phone, options = {}) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+
     try {
       this.#validateOptions(options);
       return this.#parse(phone, options);
@@ -102,9 +105,4 @@ class PhoneParser {
     }
     return phoneNumber.format('NATIONAL');
   }
-}
-
-export default function parsePhone(phone, options = {}) {
-  const mergedOptions = { ...PhoneParser.DEFAULT_OPTIONS, ...options };
-  return PhoneParser.parse(phone, mergedOptions);
 }

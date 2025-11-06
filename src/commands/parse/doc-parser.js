@@ -1,9 +1,10 @@
 import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
 import CachedOptions from 'src/helper/cachedOptions.js';
+import OptionsService from 'src/helper/options-service.js';
 
 export default class DocParser {
-  static DEFAULT_OPTIONS = {
+  static #DEFAULT_OPTIONS = {
     numbersOnly: true,
     type: undefined,
     throwError: true,
@@ -15,12 +16,13 @@ export default class DocParser {
   static #cachedOptions = new CachedOptions();
 
   static parse(doc, options = {}) {
-    const mergedOptions = { ...DocParser.DEFAULT_OPTIONS, ...options };
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+
     try {
-      this.#validateOptions(mergedOptions);
-      return this.#parse(doc, mergedOptions);
+      this.#validateOptions(options);
+      return this.#parse(doc, options);
     } catch (error) {
-      if (!mergedOptions.throwError && error instanceof SaltoolsError) {
+      if (!options.throwError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;

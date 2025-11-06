@@ -1,9 +1,10 @@
 import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
 import CachedOptions from 'src/helper/cachedOptions.js';
+import OptionsService from 'src/helper/options-service.js';
 
-class NumberParser {
-  static DEFAULT_OPTIONS = {
+export default class NumberParser {
+  static #DEFAULT_OPTIONS = {
     allowEmptyString: false,
     allowNull: false,
     allowNegative: true,
@@ -14,7 +15,18 @@ class NumberParser {
   };
   static #cachedOptions = new CachedOptions();
 
+  static parseNumber(value, options = {}) {
+    options.integer = false;
+    return this.parse(value, options);
+  }
+
+  static parseInteger(value, options = {}) {
+    options.integer = true;
+    return this.parse(value, options);
+  }
+
   static parse(value, options) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
     this.#validateOptions(options);
 
     try {
@@ -112,14 +124,4 @@ class NumberParser {
     message = `${message} chave ${varName}, valor ${value}, tipo ${typeof value}`;
     throw new SaltoolsError(message);
   }
-}
-
-export function number(value, options = {}) {
-  const mergedOptions = { ...NumberParser.DEFAULT_OPTIONS, ...options, integer: false };
-  return NumberParser.parse(value, mergedOptions);
-}
-
-export function integer(value, options = {}) {
-  const mergedOptions = { ...NumberParser.DEFAULT_OPTIONS, ...options, integer: true };
-  return NumberParser.parse(value, mergedOptions);
 }

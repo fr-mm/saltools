@@ -3,8 +3,9 @@ import net from 'net';
 import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
 import CachedOptions from 'src/helper/cachedOptions.js';
+import OptionsService from 'src/helper/options-service.js';
 
-class DNSParser {
+export default class DNSParser {
   static #DEFAULT_OPTIONS = {
     validateSPF: true,
     validateDMARC: true,
@@ -16,11 +17,11 @@ class DNSParser {
   static #cachedOptions = new CachedOptions();
 
   static async parse(domainOrEmail, options = {}) {
-    const mergedOptions = { ...DNSParser.#DEFAULT_OPTIONS, ...options };
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
     try {
-      return await DNSParser.#parse(domainOrEmail, mergedOptions);
+      return await DNSParser.#parse(domainOrEmail, options);
     } catch (error) {
-      if (!mergedOptions.throwError && error instanceof SaltoolsError) {
+      if (!options.throwError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
@@ -165,5 +166,3 @@ class DNSParser {
     }
   }
 }
-
-export default DNSParser;

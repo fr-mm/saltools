@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import phone from 'src/commands/parse/parse-phone.js';
+import { phone } from 'src/commands/parse/index.js';
 import SaltoolsError from 'src/errors/saltools-error.js';
 
 describe('phone', () => {

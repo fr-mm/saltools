@@ -1,10 +1,11 @@
 import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
 import CachedOptions from 'src/helper/cachedOptions.js';
+import OptionsService from 'src/helper/options-service.js';
 
-class StringParser {
+export default class StringParser {
   static #DO_NOT_CAPITALIZE = ['de', 'do', 'da', 'dos', 'das', 'e'];
-  static DEFAULT_OPTIONS = {
+  static #DEFAULT_OPTIONS = {
     allowEmpty: false,
     cast: false,
     trim: true,
@@ -15,7 +16,8 @@ class StringParser {
 
   static #cachedOptions = new CachedOptions();
 
-  static parse(value, options) {
+  static parse(value, options = {}) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
     this.#validateOptions(options);
 
     try {
@@ -98,9 +100,4 @@ class StringParser {
     message = varName ? `${message} varName: ${varName}` : message;
     throw new SaltoolsError(message);
   }
-}
-
-export default function string(value, options = {}) {
-  const mergedOptions = { ...StringParser.DEFAULT_OPTIONS, ...options };
-  return StringParser.parse(value, mergedOptions);
 }

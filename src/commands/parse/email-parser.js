@@ -2,6 +2,7 @@ import CachedOptions from 'src/helper/cachedOptions.js';
 import validator from 'validator';
 import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
+import OptionsService from 'src/helper/options-service.js';
 
 export default class EmailParser {
   static #DEFAULT_OPTIONS = {
@@ -14,11 +15,11 @@ export default class EmailParser {
   static #cachedOptions = new CachedOptions();
 
   static parse(email, options = {}) {
-    const mergedOptions = { ...EmailParser.#DEFAULT_OPTIONS, ...options };
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
     try {
-      return this.#parse(email, mergedOptions);
+      return this.#parse(email, options);
     } catch (error) {
-      if (!mergedOptions.throwError && error instanceof SaltoolsError) {
+      if (!options.throwError && error instanceof SaltoolsError) {
         return null;
       }
       throw error;
