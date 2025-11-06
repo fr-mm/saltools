@@ -248,7 +248,7 @@ export const parse: {
       /** @default true */
       throwError?: boolean;
     }
-  ): Promise<string | null>;
+  ): string | null;
   /** Parse a document (CPF or CNPJ)
    *  @param doc - The document to parse (CPF or CNPJ)
    *  @param options - Options object
