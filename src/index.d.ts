@@ -361,6 +361,20 @@ export const config: {
   /** Define o valor de configuração throwError
    *  @param value - O valor booleano a ser definido */
   throwError(value: boolean): void;
+  /** Configurações específicas para parsing de datas */
+  date: {
+    /** Define o formato de entrada para parsing de datas
+     *  @param value - O formato de entrada (ex: 'dd/mm/yyyy', 'iso') */
+    inputFormat(value: string): void;
+    /** Define o formato de saída para parsing de datas
+     *  @param value - O formato de saída (ex: 'dd/mm/yyyy', 'iso') */
+    outputFormat(value: string): void;
+    /** Obtém o objeto de configuração de data atual
+     *  @returns O objeto de configuração de data */
+    get(): Record<string, string>;
+    /** Redefine a configuração de data para um objeto vazio */
+    reset(): void;
+  };
 };
 
 /** Classe SaltoolsError */
