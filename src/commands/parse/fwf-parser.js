@@ -1,25 +1,43 @@
 import fs from 'fs';
 import SaltoolsError from 'src/errors/saltools-error.js';
+import OptionsService from 'src/helper/options-service.js';
 
 export default class FwfParser {
-  static parse(path, fields) {
-    FwfParser.#validateFields(fields);
-    const content = FwfParser.#readFile(path);
-    return FwfParser.#parseContent(content, fields);
+  static #DEFAULT_OPTIONS = {
+    lineValidation: undefined,
+  };
+
+  static parse(path, fields, options = {}) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    this.#validateOptions(options);
+    this.#validateFields(fields);
+    const content = this.#readFile(path);
+    return this.#parseContent(content, fields, options);
   }
 
-  static #parseContent(content, fields) {
+  static #validateOptions(options) {
+    if (options.lineValidation && typeof options.lineValidation !== 'function') {
+      throw new SaltoolsError('lineValidation tem que ser uma function');
+    }
+  }
+
+  static #parseContent(content, fields, options) {
     if (!content.trim()) return [];
 
     const lines = content.split(/\r?\n/);
     const parsedItems = [];
 
     for (const line of lines) {
-      if (line === '') continue;
-      const item = FwfParser.#parseLine(line, fields);
+      if (line === '' || !this.#lineIsValid(line, options.lineValidation)) continue;
+      const item = this.#parseLine(line, fields);
       parsedItems.push(item);
     }
     return parsedItems;
+  }
+
+  static #lineIsValid(line, validation) {
+    if (!validation) return true;
+    return validation(line);
   }
 
   static #parseLine(line, fields) {
@@ -27,7 +45,7 @@ export default class FwfParser {
     for (const field of fields) {
       const endIndex = Math.min(field.end + 1, line.length);
       const value = line.slice(field.start, endIndex).trim();
-      result[field.key] = FwfParser.#cast(value, field.type);
+      result[field.key] = this.#cast(value, field.type);
     }
     return result;
   }
@@ -64,7 +82,7 @@ export default class FwfParser {
       throw new SaltoolsError('Fields array cannot be empty');
     }
     for (const field of fields) {
-      FwfParser.#validateField(field);
+      this.#validateField(field);
     }
   }
 

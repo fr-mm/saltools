@@ -376,4 +376,148 @@ describe('FwfParser', () => {
       expect(result).toEqual([{ value: 'cd' }]);
     });
   });
+
+  describe('line validation', () => {
+    test('test_parse_WHEN_lineValidationNotProvided_THEN_parsesAllLines', () => {
+      const filePath = path.join(testDir, 'validation.txt');
+      fs.writeFileSync(filePath, 'John Doe  30\nJane Smith25\nBob Wilson40');
+
+      const fields = [
+        { key: 'name', start: 0, end: 9 },
+        { key: 'age', start: 10, end: 11 },
+      ];
+
+      const result = FwfParser.parse(filePath, fields);
+
+      expect(result).toEqual([
+        { name: 'John Doe', age: '30' },
+        { name: 'Jane Smith', age: '25' },
+        { name: 'Bob Wilson', age: '40' },
+      ]);
+    });
+
+    test('test_parse_WHEN_lineValidationReturnsTrue_THEN_includesLine', () => {
+      const filePath = path.join(testDir, 'validation.txt');
+      fs.writeFileSync(filePath, 'John Doe  30\nJane Smith25');
+
+      const fields = [
+        { key: 'name', start: 0, end: 9 },
+        { key: 'age', start: 10, end: 11 },
+      ];
+
+      const lineValidation = () => true;
+
+      const result = FwfParser.parse(filePath, fields, { lineValidation });
+
+      expect(result).toEqual([
+        { name: 'John Doe', age: '30' },
+        { name: 'Jane Smith', age: '25' },
+      ]);
+    });
+
+    test('test_parse_WHEN_lineValidationReturnsFalse_THEN_excludesLine', () => {
+      const filePath = path.join(testDir, 'validation.txt');
+      fs.writeFileSync(filePath, 'John Doe  30\nJane Smith25\nBob Wilson40');
+
+      const fields = [
+        { key: 'name', start: 0, end: 9 },
+        { key: 'age', start: 10, end: 11 },
+      ];
+
+      const lineValidation = (line) => !line.includes('Jane');
+
+      const result = FwfParser.parse(filePath, fields, { lineValidation });
+
+      expect(result).toEqual([
+        { name: 'John Doe', age: '30' },
+        { name: 'Bob Wilson', age: '40' },
+      ]);
+    });
+
+    test('test_parse_WHEN_lineValidationFiltersByPattern_THEN_onlyValidLinesParsed', () => {
+      const filePath = path.join(testDir, 'validation.txt');
+      fs.writeFileSync(filePath, 'VALID  30\nINVALID25\nVALID  40\nINVALID50');
+
+      const fields = [
+        { key: 'status', start: 0, end: 6 },
+        { key: 'age', start: 7, end: 8 },
+      ];
+
+      const lineValidation = (line) => line.startsWith('VALID');
+
+      const result = FwfParser.parse(filePath, fields, { lineValidation });
+
+      expect(result).toEqual([
+        { status: 'VALID', age: '30' },
+        { status: 'VALID', age: '40' },
+      ]);
+    });
+
+    test('test_parse_WHEN_lineValidationIsNotFunction_THEN_throwsError', () => {
+      const filePath = path.join(testDir, 'validation.txt');
+      fs.writeFileSync(filePath, 'John Doe  30');
+
+      const fields = [{ key: 'name', start: 0, end: 9 }];
+
+      expect(() => {
+        FwfParser.parse(filePath, fields, { lineValidation: 'not a function' });
+      }).toThrow(SaltoolsError);
+
+      expect(() => {
+        FwfParser.parse(filePath, fields, { lineValidation: 'not a function' });
+      }).toThrow('lineValidation tem que ser uma function');
+    });
+
+    test('test_parse_WHEN_lineValidationIsNull_THEN_parsesAllLines', () => {
+      const filePath = path.join(testDir, 'validation.txt');
+      fs.writeFileSync(filePath, 'John Doe  30\nJane Smith25');
+
+      const fields = [
+        { key: 'name', start: 0, end: 9 },
+        { key: 'age', start: 10, end: 11 },
+      ];
+
+      const result = FwfParser.parse(filePath, fields, { lineValidation: null });
+
+      expect(result).toEqual([
+        { name: 'John Doe', age: '30' },
+        { name: 'Jane Smith', age: '25' },
+      ]);
+    });
+
+    test('test_parse_WHEN_lineValidationChecksLineLength_THEN_filtersByLength', () => {
+      const filePath = path.join(testDir, 'validation.txt');
+      fs.writeFileSync(filePath, 'John  30\nJane Smith25\nBob40');
+
+      const fields = [
+        { key: 'name', start: 0, end: 9 },
+        { key: 'age', start: 10, end: 11 },
+      ];
+
+      const lineValidation = (line) => line.length >= 10;
+
+      const result = FwfParser.parse(filePath, fields, { lineValidation });
+
+      expect(result).toEqual([{ name: 'Jane Smith', age: '25' }]);
+    });
+
+    test('test_parse_WHEN_lineValidationWithEmptyLines_THEN_emptyLinesStillSkipped', () => {
+      const filePath = path.join(testDir, 'validation.txt');
+      fs.writeFileSync(filePath, 'John Doe  30\n\nJane Smith25\n');
+
+      const fields = [
+        { key: 'name', start: 0, end: 9 },
+        { key: 'age', start: 10, end: 11 },
+      ];
+
+      const lineValidation = () => true;
+
+      const result = FwfParser.parse(filePath, fields, { lineValidation });
+
+      expect(result).toEqual([
+        { name: 'John Doe', age: '30' },
+        { name: 'Jane Smith', age: '25' },
+      ]);
+    });
+  });
 });

@@ -117,11 +117,13 @@ describe('DateParser', () => {
         throw error;
       });
 
-      expect(() => DateParser.parse('invalid-date', {
-        inputFormat: 'iso',
-        outputFormat: 'iso',
-        throwError: true,
-      })).toThrow(SaltoolsError);
+      expect(() =>
+        DateParser.parse('invalid-date', {
+          inputFormat: 'iso',
+          outputFormat: 'iso',
+          throwError: true,
+        })
+      ).toThrow(SaltoolsError);
       expect(dateToStringParserSpy).not.toHaveBeenCalled();
     });
 
@@ -131,10 +133,12 @@ describe('DateParser', () => {
         throw error;
       });
 
-      expect(() => DateParser.parse('invalid-date', {
-        inputFormat: 'iso',
-        outputFormat: 'iso',
-      })).toThrow(SaltoolsError);
+      expect(() =>
+        DateParser.parse('invalid-date', {
+          inputFormat: 'iso',
+          outputFormat: 'iso',
+        })
+      ).toThrow(SaltoolsError);
       expect(dateToStringParserSpy).not.toHaveBeenCalled();
     });
 
@@ -146,11 +150,13 @@ describe('DateParser', () => {
         throw error;
       });
 
-      expect(() => DateParser.parse('2024-03-15T10:30:00Z', {
-        inputFormat: 'iso',
-        outputFormat: 'invalid-format',
-        throwError: true,
-      })).toThrow(SaltoolsError);
+      expect(() =>
+        DateParser.parse('2024-03-15T10:30:00Z', {
+          inputFormat: 'iso',
+          outputFormat: 'invalid-format',
+          throwError: true,
+        })
+      ).toThrow(SaltoolsError);
       expect(stringToDateParserSpy).toHaveBeenCalled();
     });
 
@@ -160,11 +166,13 @@ describe('DateParser', () => {
         throw error;
       });
 
-      expect(() => DateParser.parse('test', {
-        inputFormat: 'iso',
-        outputFormat: 'iso',
-        throwError: true,
-      })).toThrow('Unexpected error');
+      expect(() =>
+        DateParser.parse('test', {
+          inputFormat: 'iso',
+          outputFormat: 'iso',
+          throwError: true,
+        })
+      ).toThrow('Unexpected error');
       expect(dateToStringParserSpy).not.toHaveBeenCalled();
     });
   });
@@ -210,11 +218,13 @@ describe('DateParser', () => {
         throw error;
       });
 
-      expect(() => DateParser.parse('test', {
-        inputFormat: 'iso',
-        outputFormat: 'iso',
-        throwError: false,
-      })).toThrow('Unexpected error');
+      expect(() =>
+        DateParser.parse('test', {
+          inputFormat: 'iso',
+          outputFormat: 'iso',
+          throwError: false,
+        })
+      ).toThrow('Unexpected error');
       expect(dateToStringParserSpy).not.toHaveBeenCalled();
     });
   });
