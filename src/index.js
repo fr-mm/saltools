@@ -2,7 +2,7 @@ import ErrorLogger from './commands/log/error-logger.js';
 import LogSaver from './commands/log/log-saver.js';
 import timestamp from './commands/timestamp.js';
 import helloWorld from './commands/hello-world.js';
-import Config from './commands/config.js';
+import Config from './commands/config/config.js';
 import DocParser from './commands/parse/doc-parser.js';
 import DateParser from './commands/parse/parse-date/date-parser.js';
 import CSVParser from './commands/parse/parse-csv/csv-parser.js';

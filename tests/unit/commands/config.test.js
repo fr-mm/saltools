@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from '@jest/globals';
-import Config from 'src/commands/config.js';
+import Config from 'src/commands/config/config.js';
 
 describe('Config', () => {
   beforeEach(() => {
@@ -39,10 +39,10 @@ describe('Config', () => {
   test('test_throwError_WHEN_calledMultipleTimes_THEN_updatesValue', () => {
     Config.throwError(true);
     expect(Config.get().throwError).toBe(true);
-    
+
     Config.throwError(false);
     expect(Config.get().throwError).toBe(false);
-    
+
     Config.throwError(true);
     expect(Config.get().throwError).toBe(true);
   });
@@ -54,5 +54,14 @@ describe('Config', () => {
     expect(result).toEqual({});
     expect(result.throwError).toBeUndefined();
   });
-});
 
+  describe('Config.date', () => {
+    test('test_date_WHEN_accessed_THEN_returnsDateConfig', () => {
+      expect(Config.date).toBeDefined();
+      expect(typeof Config.date.get).toBe('function');
+      expect(typeof Config.date.reset).toBe('function');
+      expect(typeof Config.date.inputFormat).toBe('function');
+      expect(typeof Config.date.outputFormat).toBe('function');
+    });
+  });
+});

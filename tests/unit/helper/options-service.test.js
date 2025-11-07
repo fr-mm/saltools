@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from '@jest/globals';
 import OptionsService from 'src/helper/options-service.js';
-import Config from 'src/commands/config.js';
+import Config from 'src/commands/config/config.js';
 
 describe('OptionsService', () => {
   beforeEach(() => {
@@ -106,5 +106,71 @@ describe('OptionsService', () => {
     const options = { throwError: undefined };
     const result = OptionsService.update(options, defaultOptions);
     expect(result.throwError).toBe(false);
+  });
+
+  describe('specificConfig parameter', () => {
+    test('test_update_WHEN_specificConfigNotProvided_THEN_usesOnlyMainConfig', () => {
+      Config.throwError(false);
+      Config.date.inputFormat('dd/mm/yyyy');
+      const defaultOptions = { throwError: true, inputFormat: 'iso' };
+      const options = {};
+      const result = OptionsService.update(options, defaultOptions);
+      expect(result.throwError).toBe(false);
+      expect(result.inputFormat).toBe('iso');
+    });
+
+    test('test_update_WHEN_specificConfigIsDate_THEN_mergesDateConfig', () => {
+      Config.throwError(false);
+      Config.date.inputFormat('dd/mm/yyyy');
+      Config.date.outputFormat('mm/dd/yyyy');
+      const defaultOptions = { throwError: true, inputFormat: 'iso', outputFormat: 'iso' };
+      const options = {};
+      const result = OptionsService.update(options, defaultOptions, 'date');
+      expect(result.throwError).toBe(false);
+      expect(result.inputFormat).toBe('dd/mm/yyyy');
+      expect(result.outputFormat).toBe('mm/dd/yyyy');
+    });
+
+    test('test_update_WHEN_specificConfigIsDateAndOptionDefined_THEN_doesNotOverrideOption', () => {
+      Config.date.inputFormat('dd/mm/yyyy');
+      Config.date.outputFormat('mm/dd/yyyy');
+      const defaultOptions = { inputFormat: 'iso', outputFormat: 'iso' };
+      const options = { inputFormat: 'yyyy-mm-dd' };
+      const result = OptionsService.update(options, defaultOptions, 'date');
+      expect(result.inputFormat).toBe('yyyy-mm-dd');
+      expect(result.outputFormat).toBe('mm/dd/yyyy');
+    });
+
+    test('test_update_WHEN_specificConfigIsDateAndMainConfigSet_THEN_mergesBoth', () => {
+      Config.throwError(false);
+      Config.date.inputFormat('dd/mm/yyyy');
+      const defaultOptions = { throwError: true, inputFormat: 'iso' };
+      const options = {};
+      const result = OptionsService.update(options, defaultOptions, 'date');
+      expect(result.throwError).toBe(false);
+      expect(result.inputFormat).toBe('dd/mm/yyyy');
+    });
+
+    test('test_update_WHEN_specificConfigIsDateAndDateConfigEmpty_THEN_usesMainConfig', () => {
+      Config.throwError(false);
+      Config.date.reset();
+      const defaultOptions = { throwError: true, inputFormat: 'iso' };
+      const options = {};
+      const result = OptionsService.update(options, defaultOptions, 'date');
+      expect(result.throwError).toBe(false);
+      expect(result.inputFormat).toBe('iso');
+    });
+
+    test('test_update_WHEN_specificConfigIsDateAndBothConfigsSet_THEN_prioritizesSpecificConfig', () => {
+      Config.throwError(false);
+      Config.date.inputFormat('dd/mm/yyyy');
+      Config.date.outputFormat('mm/dd/yyyy');
+      const defaultOptions = { throwError: true, inputFormat: 'iso', outputFormat: 'iso' };
+      const options = {};
+      const result = OptionsService.update(options, defaultOptions, 'date');
+      expect(result.throwError).toBe(false);
+      expect(result.inputFormat).toBe('dd/mm/yyyy');
+      expect(result.outputFormat).toBe('mm/dd/yyyy');
+    });
   });
 });

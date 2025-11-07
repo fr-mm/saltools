@@ -11,7 +11,7 @@ export default class DateParser {
   };
 
   static parse(date, options = {}) {
-    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS, 'date');
 
     try {
       const parsedDate = StringToDateParser.parse(date, options.inputFormat);

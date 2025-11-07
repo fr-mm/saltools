@@ -25,7 +25,7 @@ describe('FwfParser', () => {
 
   describe('parse', () => {
     test('test_parse_WHEN_validFileWithFields_THEN_returnsParsedData', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'valid-fields.txt');
       const content = 'John Doe  30New York\nJane Smith25London  ';
       fs.writeFileSync(filePath, content);
 
@@ -144,7 +144,7 @@ describe('FwfParser', () => {
 
   describe('field validation', () => {
     test('test_parse_WHEN_fieldsIsNotArray_THEN_throwsError', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'fields-not-array.txt');
       fs.writeFileSync(filePath, 'content');
 
       expect(() => {
@@ -157,7 +157,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_fieldIsNull_THEN_throwsError', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'field-null.txt');
       fs.writeFileSync(filePath, 'content');
 
       expect(() => {
@@ -166,7 +166,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_fieldIsNotObject_THEN_throwsError', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'field-not-object.txt');
       fs.writeFileSync(filePath, 'content');
 
       expect(() => {
@@ -175,7 +175,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_fieldMissingKey_THEN_throwsError', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'field-missing-key.txt');
       fs.writeFileSync(filePath, 'content');
 
       expect(() => {
@@ -184,7 +184,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_fieldMissingStart_THEN_throwsError', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'field-missing-start.txt');
       fs.writeFileSync(filePath, 'content');
 
       expect(() => {
@@ -193,7 +193,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_fieldMissingEnd_THEN_throwsError', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'field-missing-end.txt');
       fs.writeFileSync(filePath, 'content');
 
       expect(() => {
@@ -202,7 +202,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_fieldHasInheritedProperties_THEN_throwsError', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'field-inherited.txt');
       fs.writeFileSync(filePath, 'content');
 
       const field = Object.create({ key: 'inherited', start: 0, end: 10 });
@@ -213,7 +213,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_allFieldsValid_THEN_doesNotThrow', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'all-fields-valid.txt');
       fs.writeFileSync(filePath, 'John Doe  30');
 
       const fields = [
@@ -253,7 +253,7 @@ describe('FwfParser', () => {
 
   describe('edge cases', () => {
     test('test_parse_WHEN_fieldsWithStartEqualsEnd_THEN_extractsSingleCharacter', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'start-equals-end.txt');
       fs.writeFileSync(filePath, 'John Doe');
 
       const fields = [
@@ -268,7 +268,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_fieldsWithStartGreaterThanEnd_THEN_throwsError', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'start-greater-end.txt');
       fs.writeFileSync(filePath, 'John Doe');
 
       const fields = [{ key: 'name', start: 10, end: 5 }];
@@ -283,7 +283,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_lineShorterThanFieldEnd_THEN_usesLineLength', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'short-line.txt');
       fs.writeFileSync(filePath, 'John');
 
       const fields = [{ key: 'name', start: 0, end: 20 }];
@@ -294,7 +294,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_emptyFieldsArray_THEN_throwsError', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'empty-fields-array.txt');
       fs.writeFileSync(filePath, 'John Doe\nJane Smith');
 
       expect(() => {
@@ -307,7 +307,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_fileWithTrailingNewline_THEN_parsesCorrectly', () => {
-      const filePath = path.join(testDir, 'test.txt');
+      const filePath = path.join(testDir, 'trailing-newline.txt');
       fs.writeFileSync(filePath, 'John Doe  30\n');
 
       const fields = [

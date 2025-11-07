@@ -1,9 +1,13 @@
-import Config from '../commands/config.js';
+import Config from '../commands/config/config.js';
 
 export default class OptionsService {
-  static update(options, defaultOptions) {
+  static update(options, defaultOptions, specificConfig) {
     const mergedOptions = { ...defaultOptions, ...options };
-    const config = Config.get();
+    let config = Config.get();
+    if (specificConfig) {
+      const specifics = Config[specificConfig].get();
+      config = { ...config, ...specifics };
+    }
 
     for (const [key, value] of Object.entries(config)) {
       if (value !== undefined && options[key] === undefined) {
