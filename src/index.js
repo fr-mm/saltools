@@ -38,7 +38,12 @@ export const config = {
   get: Config.get.bind(Config),
   reset: Config.reset.bind(Config),
   throwError: Config.throwError.bind(Config),
-  date: Config.date,
+  date: {
+    inputFormat: Config.date.inputFormat.bind(Config.date),
+    outputFormat: Config.date.outputFormat.bind(Config.date),
+    get: Config.date.get.bind(Config.date),
+    reset: Config.date.reset.bind(Config.date),
+  },
 };
 
 export const errors = {

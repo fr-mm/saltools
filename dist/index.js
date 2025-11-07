@@ -184,28 +184,82 @@ function helloWorld() {
   console.log("Hello, World!");
 }
 
-class Config {
+class ConfigSetter {
+  static setBool(key, value, config) {
+    this.#set(key, value, 'boolean', config);
+  }
+
+  static setString(key, value, config) {
+    this.#set(key, value, 'string', config);
+  }
+
+  static setNumber(key, value, config) {
+    this.#set(key, value, 'number', config);
+  }
+
+  static setFunction(key, value, config) {
+    this.#set(key, value, 'function', config);
+  }
+
+  static setObject(key, value, config) {
+    this.#set(key, value, 'object', config);
+  }
+
+  static setArray(key, value, config) {
+    if (!Array.isArray(value)) {
+      throw new SaltoolsError(
+        `Valor inválido para ${key}. Tipo ${typeof value} não é array. Valor: ${value}`
+      );
+    }
+    config[key] = value;
+  }
+
+  static #set(key, value, type, config) {
+    if (typeof value !== type) {
+      throw new SaltoolsError(
+        `Valor inválido para ${key}. Tipo ${typeof value} não é ${type}. Valor: ${value}`
+      );
+    }
+    config[key] = value;
+  }
+}
+
+class DateConfig {
   static #config = {};
 
-  static throwError(value) {
-    this.#setBool('throwError', value);
+  static inputFormat(value) {
+    ConfigSetter.setString('inputFormat', value, this.#config);
+  }
+
+  static outputFormat(value) {
+    ConfigSetter.setString('outputFormat', value, this.#config);
   }
 
   static get() {
     return this.#config;
   }
 
-  static #setBool(key, value) {
-    if (typeof value !== 'boolean') {
-      throw new SaltoolsError(
-        `Valor inválido para ${key}. Tipo ${typeof value} não é boolean. Valor: ${value}`
-      );
-    }
-    this.#config[key] = value;
+  static reset() {
+    this.#config = {};
+  }
+}
+
+class Config {
+  static #config = {};
+
+  static date = DateConfig;
+
+  static throwError(value) {
+    ConfigSetter.setBool('throwError', value, this.#config);
+  }
+
+  static get() {
+    return this.#config;
   }
 
   static reset() {
     this.#config = {};
+    this.date.reset();
   }
 }
 
@@ -233,9 +287,13 @@ class CachedOptions {
 }
 
 class OptionsService {
-  static update(options, defaultOptions) {
+  static update(options, defaultOptions, specificConfig) {
     const mergedOptions = { ...defaultOptions, ...options };
-    const config = Config.get();
+    let config = Config.get();
+    if (specificConfig) {
+      const specifics = Config[specificConfig].get();
+      config = { ...config, ...specifics };
+    }
 
     for (const [key, value] of Object.entries(config)) {
       if (value !== undefined && options[key] === undefined) {
@@ -750,7 +808,7 @@ class DateParser {
   };
 
   static parse(date, options = {}) {
-    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS, 'date');
 
     try {
       const parsedDate = StringToDateParser.parse(date, options.inputFormat);
@@ -1293,6 +1351,7 @@ class NumberParser {
   }
 }
 
+// todo: ddd < 47 tem 9, maior nao tem
 class PhoneParser {
   static #DEFAULT_OPTIONS = {
     addCountryCode: true,
@@ -1645,24 +1704,41 @@ class EmailParser {
 }
 
 class FwfParser {
-  static parse(path, fields) {
-    FwfParser.#validateFields(fields);
-    const content = FwfParser.#readFile(path);
-    return FwfParser.#parseContent(content, fields);
+  static #DEFAULT_OPTIONS = {
+    lineValidation: undefined,
+  };
+
+  static parse(path, fields, options = {}) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    this.#validateOptions(options);
+    this.#validateFields(fields);
+    const content = this.#readFile(path);
+    return this.#parseContent(content, fields, options);
   }
 
-  static #parseContent(content, fields) {
+  static #validateOptions(options) {
+    if (options.lineValidation && typeof options.lineValidation !== 'function') {
+      throw new SaltoolsError('lineValidation tem que ser uma function');
+    }
+  }
+
+  static #parseContent(content, fields, options) {
     if (!content.trim()) return [];
 
     const lines = content.split(/\r?\n/);
     const parsedItems = [];
 
     for (const line of lines) {
-      if (line === '') continue;
-      const item = FwfParser.#parseLine(line, fields);
+      if (line === '' || !this.#lineIsValid(line, options.lineValidation)) continue;
+      const item = this.#parseLine(line, fields);
       parsedItems.push(item);
     }
     return parsedItems;
+  }
+
+  static #lineIsValid(line, validation) {
+    if (!validation) return true;
+    return validation(line);
   }
 
   static #parseLine(line, fields) {
@@ -1670,7 +1746,7 @@ class FwfParser {
     for (const field of fields) {
       const endIndex = Math.min(field.end + 1, line.length);
       const value = line.slice(field.start, endIndex).trim();
-      result[field.key] = FwfParser.#cast(value, field.type);
+      result[field.key] = this.#cast(value, field.type);
     }
     return result;
   }
@@ -1707,7 +1783,7 @@ class FwfParser {
       throw new SaltoolsError('Fields array cannot be empty');
     }
     for (const field of fields) {
-      FwfParser.#validateField(field);
+      this.#validateField(field);
     }
   }
 
@@ -1751,6 +1827,7 @@ const config = {
   get: Config.get.bind(Config),
   reset: Config.reset.bind(Config),
   throwError: Config.throwError.bind(Config),
+  date: Config.date,
 };
 
 const errors = {
