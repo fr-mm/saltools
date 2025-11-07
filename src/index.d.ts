@@ -88,6 +88,10 @@ export interface FwfField {
   type?: 'number' | 'bool';
 }
 
+export interface FwfParseOptions {
+  lineValidation?: (line: string) => boolean;
+}
+
 export function timestamp(): string;
 
 export function helloWorld(): void;
@@ -137,8 +141,17 @@ export const parse: {
   /** Faz o parse de um arquivo de largura fixa
    *  @param path - O caminho do arquivo de largura fixa
    *  @param fields - Array descrevendo os cortes dos campos
-   *  Cada campo contém uma chave, índice inicial e índice final (inclusivo) */
-  fwf(path: string, fields: FwfField[]): Array<Record<string, string | number | boolean>>;
+   *  Cada campo contém uma chave, índice inicial e índice final (inclusivo)
+   *  @param options - Objeto de opções
+   *  @param options.lineValidation - Função para validar se uma linha deve ser processada. Padrão: undefined */
+  fwf(
+    path: string,
+    fields: FwfField[],
+    options?: {
+      /** Função para validar se uma linha deve ser processada. @default undefined */
+      lineValidation?: (line: string) => boolean;
+    }
+  ): Array<Record<string, string | number | boolean>>;
   /** Faz o parse de um documento (CPF ou CNPJ)
    *  @param doc - O documento a ser parseado (CPF ou CNPJ)
    *  @param options - Objeto de opções

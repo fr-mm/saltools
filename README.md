@@ -253,6 +253,39 @@ await saltools.parse.email('usuario@exemplo.com', {
 // Permite aliases e não valida SPF
 ```
 
+### saltools.parse.fwf()
+
+Faz o parse de um arquivo de largura fixa (fixed-width file).
+
+```javascript
+saltools.parse.fwf(path, fields, {
+  lineValidation: undefined, // Função para validar se uma linha deve ser processada (padrão: undefined)
+});
+```
+
+**Exemplo:**
+
+```javascript
+const fields = [
+  { key: 'name', start: 0, end: 9 },
+  { key: 'age', start: 10, end: 11 },
+  { key: 'city', start: 12, end: 19 },
+];
+
+saltools.parse.fwf('./data.txt', fields);
+// Retorna: Array de objetos com os campos parseados
+
+saltools.parse.fwf('./data.txt', fields, {
+  lineValidation: (line) => line.startsWith('VALID'),
+});
+// Retorna: Array apenas com linhas que começam com 'VALID'
+
+saltools.parse.fwf('./data.txt', fields, {
+  lineValidation: (line) => line.length >= 10,
+});
+// Retorna: Array apenas com linhas que têm 10 ou mais caracteres
+```
+
 ### saltools.parse.doc()
 
 Valida e formata documentos CPF ou CNPJ.
