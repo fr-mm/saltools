@@ -285,15 +285,26 @@ describe('ErrorLogger', () => {
 
     test('test_run_WHEN_nestedDirectoryDoesNotExist_THEN_createsNestedDirectories', () => {
       fsWriteFileSyncSpy.mockRestore();
-      const nestedDir = path.join(process.cwd(), 'tests', 'temp', 'nested', 'deep', 'error-logs');
-      createdDirs.push(path.join(process.cwd(), 'tests', 'temp', 'nested'));
+      const nestedDir = path.join(process.cwd(), 'tests', 'temp', 'nested-error', 'deep', 'error-logs');
+      createdDirs.push(path.join(process.cwd(), 'tests', 'temp', 'nested-error'));
       const error = new Error('Test error');
+
+      // Ensure directory doesn't exist before test
+      try {
+        if (fs.existsSync(nestedDir)) {
+          fs.rmSync(nestedDir, { recursive: true, force: true });
+        }
+      } catch (_) {
+        /* ignore cleanup errors */
+      }
 
       ErrorLogger.run(error, { directory: nestedDir, filename: 'error', addTimestamp: false, print: false });
 
       expect(fs.existsSync(nestedDir)).toBe(true);
       const filePath = path.join(nestedDir, 'error.log');
       expect(fs.existsSync(filePath)).toBe(true);
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      expect(fileContent).toContain('Test error');
     });
   });
 });
