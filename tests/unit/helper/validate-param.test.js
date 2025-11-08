@@ -407,4 +407,85 @@ describe('param', () => {
       expect(result).toBe(error);
     });
   });
+
+  describe('date', () => {
+    test('test_date_WHEN_validDate_THEN_returnsDate', () => {
+      const date = new Date('2024-03-15T10:30:00Z');
+      const result = param.date({ value: date, name: 'date' });
+      expect(result).toBe(date);
+      expect(result).toBeInstanceOf(Date);
+    });
+
+    test('test_date_WHEN_null_THEN_returnsNull', () => {
+      const result = param.date({ value: null, name: 'date' });
+      expect(result).toBeNull();
+    });
+
+    test('test_date_WHEN_undefined_THEN_returnsUndefined', () => {
+      const result = param.date({ value: undefined, name: 'date' });
+      expect(result).toBeUndefined();
+    });
+
+    test('test_date_WHEN_stringForDate_THEN_throwsError', () => {
+      expect(() => {
+        param.date({ value: '2024-03-15', name: 'date' });
+      }).toThrow(SaltoolsError);
+      expect(() => {
+        param.date({ value: '2024-03-15', name: 'date' });
+      }).toThrow('date deve ser uma data');
+    });
+
+    test('test_date_WHEN_numberForDate_THEN_throwsError', () => {
+      expect(() => {
+        param.date({ value: 123, name: 'date' });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_date_WHEN_booleanForDate_THEN_throwsError', () => {
+      expect(() => {
+        param.date({ value: true, name: 'date' });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_date_WHEN_objectForDate_THEN_throwsError', () => {
+      expect(() => {
+        param.date({ value: {}, name: 'date' });
+      }).toThrow(SaltoolsError);
+    });
+
+    test('test_date_WHEN_invalidDate_THEN_throwsError', () => {
+      const invalidDate = new Date('invalid-date');
+      expect(() => {
+        param.date({ value: invalidDate, name: 'date' });
+      }).toThrow(SaltoolsError);
+      expect(() => {
+        param.date({ value: invalidDate, name: 'date' });
+      }).toThrow('date deve ser uma data válida');
+    });
+
+    test('test_date_WHEN_requiredTrueAndNull_THEN_throwsError', () => {
+      expect(() => {
+        param.date({ value: null, name: 'date', required: true });
+      }).toThrow(SaltoolsError);
+      expect(() => {
+        param.date({ value: null, name: 'date', required: true });
+      }).toThrow('date é obrigatório');
+    });
+
+    test('test_date_WHEN_requiredTrueAndUndefined_THEN_throwsError', () => {
+      expect(() => {
+        param.date({ value: undefined, name: 'date', required: true });
+      }).toThrow(SaltoolsError);
+      expect(() => {
+        param.date({ value: undefined, name: 'date', required: true });
+      }).toThrow('date é obrigatório');
+    });
+
+    test('test_date_WHEN_requiredTrueAndValidValue_THEN_returnsValue', () => {
+      const date = new Date('2024-03-15T10:30:00Z');
+      const result = param.date({ value: date, name: 'date', required: true });
+      expect(result).toBe(date);
+      expect(result).toBeInstanceOf(Date);
+    });
+  });
 });

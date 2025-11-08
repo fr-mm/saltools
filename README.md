@@ -174,15 +174,21 @@ saltools.parse.csv('./data.csv', { delimiter: ';' });
 
 ### saltools.parse.date()
 
-Converte uma string de data de um formato para outro formato.
+Converte uma string de data de um formato para outro formato. Também aceita objetos Date como entrada.
 
 ```javascript
 saltools.parse.date(date, {
-  inputFormat: 'iso', // Formato de entrada (padrão: 'iso')
+  inputFormat: 'iso', // Formato de entrada (padrão: 'iso') - usado apenas quando date é uma string
   outputFormat: 'iso', // Formato de saída (padrão: 'iso')
   throwError: true, // Lança erro se inválido, senão retorna null (padrão: true)
 });
 ```
+
+**Parâmetros:**
+- `date` - String ou objeto Date a ser parseado
+- `options.inputFormat` - Formato de entrada (usado apenas quando `date` é uma string)
+- `options.outputFormat` - Formato de saída
+- `options.throwError` - Lança erro se inválido, senão retorna null
 
 **Formatos suportados:**
 
@@ -222,6 +228,11 @@ saltools.parse.date('15/03/2024', {
   outputFormat: 'dd/mm/yy',
 });
 // Retorna: "15/03/24"
+
+saltools.parse.date(new Date('2024-03-15T10:30:00Z'), {
+  outputFormat: 'dd/mm/yyyy',
+});
+// Retorna: "15/03/2024" (inputFormat é ignorado quando date é um objeto Date)
 ```
 
 ### saltools.parse.email()

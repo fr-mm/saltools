@@ -170,13 +170,13 @@ export const parse: {
     }
   ): string | null;
   /** Faz o parse de um valor de data
-   *  @param value - O valor de data a ser parseado
+   *  @param value - O valor de data a ser parseado (string ou Date)
    *  @param options - Objeto de opções
-   *  @param options.inputFormat - Padrão: 'iso'
+   *  @param options.inputFormat - Padrão: 'iso' (usado apenas quando value é uma string)
    *  @param options.outputFormat - Padrão: 'iso'
    *  @param options.throwError - Padrão: true */
   date(
-    value: any,
+    value: string | Date,
     options?: {
       /** @default 'iso' */
       inputFormat?: string;

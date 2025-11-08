@@ -40,6 +40,35 @@ describe('DateParser', () => {
       expect(result).toBe(mockOutputString);
     });
 
+    test('test_parse_WHEN_dateObjectInput_THEN_skipsStringParser', () => {
+      const inputDate = new Date('2024-03-15T10:30:00Z');
+      const outputFormat = 'dd/mm/yyyy';
+      const mockOutputString = '15/03/2024';
+
+      dateToStringParserSpy.mockReturnValue(mockOutputString);
+
+      const result = DateParser.parse(inputDate, {
+        outputFormat,
+      });
+
+      expect(stringToDateParserSpy).not.toHaveBeenCalled();
+      expect(dateToStringParserSpy).toHaveBeenCalledWith(inputDate, outputFormat);
+      expect(result).toBe(mockOutputString);
+    });
+
+    test('test_parse_WHEN_dateObjectInputWithDefaultFormat_THEN_usesIsoOutput', () => {
+      const inputDate = new Date('2024-03-15T10:30:00Z');
+      const mockOutputString = '2024-03-15T10:30:00.000Z';
+
+      dateToStringParserSpy.mockReturnValue(mockOutputString);
+
+      const result = DateParser.parse(inputDate);
+
+      expect(stringToDateParserSpy).not.toHaveBeenCalled();
+      expect(dateToStringParserSpy).toHaveBeenCalledWith(inputDate, 'iso');
+      expect(result).toBe(mockOutputString);
+    });
+
     test('test_parse_WHEN_defaultFormats_THEN_usesIsoForBoth', () => {
       const inputDate = '2024-03-15T10:30:00Z';
       const mockDateObject = new Date('2024-03-15T10:30:00Z');
@@ -113,6 +142,18 @@ describe('DateParser', () => {
   });
 
   describe('parse - error handling with throwError true', () => {
+    test('test_parse_WHEN_invalidDateObject_THEN_throwsError', () => {
+      const invalidDate = new Date('invalid-date');
+      expect(() =>
+        DateParser.parse(invalidDate, {
+          outputFormat: 'iso',
+          throwError: true,
+        })
+      ).toThrow(SaltoolsError);
+      expect(stringToDateParserSpy).not.toHaveBeenCalled();
+      expect(dateToStringParserSpy).not.toHaveBeenCalled();
+    });
+
     test('test_parse_WHEN_stringParserThrowsSaltoolsErrorWithThrowErrorTrue_THEN_throwsError', () => {
       const error = new SaltoolsError('Invalid date');
       stringToDateParserSpy.mockImplementation(() => {
@@ -180,6 +221,18 @@ describe('DateParser', () => {
   });
 
   describe('parse - error handling with throwError false', () => {
+    test('test_parse_WHEN_invalidDateObjectWithThrowErrorFalse_THEN_returnsNull', () => {
+      const invalidDate = new Date('invalid-date');
+      const result = DateParser.parse(invalidDate, {
+        outputFormat: 'iso',
+        throwError: false,
+      });
+
+      expect(result).toBeNull();
+      expect(stringToDateParserSpy).not.toHaveBeenCalled();
+      expect(dateToStringParserSpy).not.toHaveBeenCalled();
+    });
+
     test('test_parse_WHEN_stringParserThrowsSaltoolsErrorWithThrowErrorFalse_THEN_returnsNull', () => {
       const error = new SaltoolsError('Invalid date');
       stringToDateParserSpy.mockImplementation(() => {
