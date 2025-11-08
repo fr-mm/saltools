@@ -3,30 +3,29 @@ import path from 'path';
 import timestamp from 'src/commands/timestamp.js';
 import SaltoolsError from 'src/errors/saltools-error.js';
 import { param } from 'src/helper/index.js';
+import OptionsService from 'src/helper/options-service.js';
 
 export default class ErrorLogger {
-  static run(
-    error,
-    {
-      directory = undefined,
-      filename = undefined,
-      addTimestamp = true,
-      print = true,
-      throwError = false,
-    } = {}
-  ) {
-    ErrorLogger.#validateParameters({
-      error,
-      directory,
-      filename,
-      print,
-      addTimestamp,
-      throwError,
-    });
+  static #DEFAULT_OPTIONS = {
+    directory: undefined,
+    filename: undefined,
+    addTimestamp: true,
+    print: true,
+    throwError: false,
+  };
+
+  static run(error, options = {}) {
+    options = OptionsService.update(options, this.#DEFAULT_OPTIONS, 'log.error');
+    ErrorLogger.#validateParameters({ error, ...options });
     const parsedError = ErrorLogger.#parseError(error);
-    ErrorLogger.#saveLog({ parsedError, directory, filename, addTimestamp });
-    if (print) console.error(parsedError);
-    if (throwError) throw error;
+    ErrorLogger.#saveLog({
+      parsedError,
+      directory: options.directory,
+      filename: options.filename,
+      addTimestamp: options.addTimestamp,
+    });
+    if (options.print) console.error(parsedError);
+    if (options.throwError) throw error;
   }
 
   static #validateParameters({ error, directory, filename, print, addTimestamp, throwError }) {

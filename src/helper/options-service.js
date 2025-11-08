@@ -5,7 +5,12 @@ export default class OptionsService {
     const mergedOptions = { ...defaultOptions, ...options };
     let config = Config.get();
     if (specificConfig) {
-      const specifics = Config[specificConfig].get();
+      const configPath = specificConfig.split('.');
+      let configObject = Config;
+      for (const pathPart of configPath) {
+        configObject = configObject[pathPart];
+      }
+      const specifics = configObject.get();
       config = { ...config, ...specifics };
     }
 
