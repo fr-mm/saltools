@@ -7,9 +7,6 @@ import OptionsService from 'src/helper/options-service.js';
 
 export default class DNSParser {
   static #DEFAULT_OPTIONS = {
-    validateSPF: true,
-    validateDMARC: true,
-    validateDKIM: true,
     validateMX: true,
     validateSMTP: true,
     throwError: true,
@@ -36,9 +33,6 @@ export default class DNSParser {
     const email = { value: domainOrEmail, domain, local: domainOrEmail.split('@')[0] || '' };
 
     await Promise.all([
-      DNSParser.#validateSPF(email, options.validateSPF),
-      DNSParser.#validateDMARC(email, options.validateDMARC),
-      DNSParser.#validateDKIM(email, options.validateDKIM),
       DNSParser.#validateMX(email, options.validateMX),
       DNSParser.#validateSMTP(email, options.validateSMTP),
     ]);
@@ -60,36 +54,11 @@ export default class DNSParser {
   static #validateOptions(options) {
     if (DNSParser.#cachedOptions.isCached(options)) return;
 
-    param.bool({ value: options.validateSPF, name: 'validateSPF' });
-    param.bool({ value: options.validateDMARC, name: 'validateDMARC' });
-    param.bool({ value: options.validateDKIM, name: 'validateDKIM' });
     param.bool({ value: options.validateMX, name: 'validateMX' });
     param.bool({ value: options.validateSMTP, name: 'validateSMTP' });
     param.bool({ value: options.throwError, name: 'throwError' });
 
     DNSParser.#cachedOptions.cache(options);
-  }
-
-  static async #validateSPF(email, validateSPF) {
-    if (validateSPF) {
-      await DNSParser.#dnsResolveText({ email, type: 'SPF', text: email.domain });
-    }
-  }
-
-  static async #validateDMARC(email, validateDMARC) {
-    if (validateDMARC) {
-      await DNSParser.#dnsResolveText({ email, type: 'DMARC', text: `_dmarc.${email.domain}` });
-    }
-  }
-
-  static async #validateDKIM(email, validateDKIM) {
-    if (validateDKIM) {
-      await DNSParser.#dnsResolveText({
-        email,
-        type: 'DKIM',
-        text: `default._domainkey.${email.domain}`,
-      });
-    }
   }
 
   static async #validateMX(email, validateMX) {
@@ -152,17 +121,6 @@ export default class DNSParser {
         throw error;
       }
       throw new SaltoolsError(`Erro ao validar SMTP para ${email.value} ${error.message}`);
-    }
-  }
-
-  static async #dnsResolveText({ email, type, text }) {
-    try {
-      const txt = await dns.promises.resolveTxt(text);
-      if (txt.flat().length === 0) {
-        throw new SaltoolsError(`${type} não encontrado para ${email.value}`);
-      }
-    } catch {
-      throw new SaltoolsError(`Erro ao validar ${type} para ${email.value}`);
     }
   }
 }

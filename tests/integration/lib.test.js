@@ -237,9 +237,6 @@ describe('saltools - integration tests', () => {
   describe('parse.email', () => {
     test('test_parseEmail_WHEN_validEmail_THEN_validatesEmail', () => {
       const result = saltools.parse.email('test@example.com', {
-        validateSPF: false,
-        validateDMARC: false,
-        validateDKIM: false,
         validateMX: false,
         validateSMTP: false,
       });
@@ -249,9 +246,6 @@ describe('saltools - integration tests', () => {
     test('test_parseEmail_WHEN_invalidEmail_THEN_throwsError', () => {
       expect(() =>
         saltools.parse.email('invalid-email', {
-          validateSPF: false,
-          validateDMARC: false,
-          validateDKIM: false,
           validateMX: false,
           validateSMTP: false,
         })

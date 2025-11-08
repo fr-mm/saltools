@@ -7,10 +7,18 @@ import SaltoolsError from 'src/errors/saltools-error.js';
 describe('FwfParser', () => {
   const testDir = path.join(process.cwd(), 'tests', 'temp');
 
-  beforeEach(() => {
-    if (!fs.existsSync(testDir)) {
-      fs.mkdirSync(testDir, { recursive: true });
+  const ensureTestDir = () => {
+    try {
+      if (!fs.existsSync(testDir)) {
+        fs.mkdirSync(testDir, { recursive: true });
+      }
+    } catch (_) {
+      /* ignore directory creation errors */
     }
+  };
+
+  beforeEach(() => {
+    ensureTestDir();
   });
 
   afterEach(() => {
@@ -184,6 +192,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_fieldMissingStart_THEN_throwsError', () => {
+      ensureTestDir();
       const filePath = path.join(testDir, 'field-missing-start.txt');
       fs.writeFileSync(filePath, 'content');
 
@@ -202,6 +211,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_fieldHasInheritedProperties_THEN_throwsError', () => {
+      ensureTestDir();
       const filePath = path.join(testDir, 'field-inherited.txt');
       fs.writeFileSync(filePath, 'content');
 
@@ -213,6 +223,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_allFieldsValid_THEN_doesNotThrow', () => {
+      ensureTestDir();
       const filePath = path.join(testDir, 'all-fields-valid.txt');
       fs.writeFileSync(filePath, 'John Doe  30');
 
