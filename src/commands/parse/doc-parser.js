@@ -16,7 +16,7 @@ export default class DocParser {
   static #cachedOptions = new CachedOptions();
 
   static parse(doc, options = {}) {
-    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    options = OptionsService.update({ options, default: this.#DEFAULT_OPTIONS });
 
     try {
       this.#validateOptions(options);

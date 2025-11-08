@@ -16,7 +16,7 @@ export default class PhoneParser {
   static #cachedOptions = new CachedOptions();
 
   static parse(phone, options = {}) {
-    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    options = OptionsService.update({ options, default: this.#DEFAULT_OPTIONS });
 
     try {
       this.#validateOptions(options);

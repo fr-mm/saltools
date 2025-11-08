@@ -15,7 +15,7 @@ export default class EmailParser {
   static #cachedOptions = new CachedOptions();
 
   static parse(email, options = {}) {
-    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    options = OptionsService.update({ options, default: this.#DEFAULT_OPTIONS });
     try {
       return this.#parse(email, options);
     } catch (error) {

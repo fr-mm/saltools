@@ -3,6 +3,7 @@ import path from 'path';
 import timestamp from 'src/commands/timestamp.js';
 import { param } from 'src/helper/index.js';
 import OptionsService from 'src/helper/options-service.js';
+import SaveLogConfig from 'src/commands/config/save-log-config.js';
 
 export default class LogSaver {
   static #DEFAULT_OPTIONS = {
@@ -12,8 +13,15 @@ export default class LogSaver {
   };
 
   static run(content, options = {}) {
-    options = OptionsService.update(options, this.#DEFAULT_OPTIONS, 'log.saveLog');
+    options = OptionsService.update({
+      options,
+      default: this.#DEFAULT_OPTIONS,
+      specificConfig: SaveLogConfig,
+    });
     LogSaver.#validateParameters(content, options);
+    if (options.directory && !fs.existsSync(options.directory)) {
+      fs.mkdirSync(options.directory, { recursive: true });
+    }
     const stamp = options.addTimestamp ? `-${timestamp()}` : '';
     const filePath = path.join(options.directory, `${options.filename}${stamp}.log`);
     fs.writeFileSync(filePath, content);

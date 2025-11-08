@@ -8,7 +8,7 @@ export default class FwfParser {
   };
 
   static parse(path, fields, options = {}) {
-    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    options = OptionsService.update({ options, default: this.#DEFAULT_OPTIONS });
     this.#validateOptions(options);
     this.#validateFields(fields);
     const content = this.#readFile(path);

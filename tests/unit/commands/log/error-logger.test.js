@@ -8,16 +8,9 @@ describe('ErrorLogger', () => {
   let consoleErrorSpy;
   let fsWriteFileSyncSpy;
   const testDir = path.join(process.cwd(), 'tests', 'temp', 'logs');
+  const createdDirs = [];
 
   beforeEach(() => {
-    try {
-      if (!fs.existsSync(testDir)) {
-        fs.mkdirSync(testDir, { recursive: true });
-      }
-    } catch (_) {
-      /* ignore directory creation errors */
-    }
-
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     fsWriteFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation();
   });
@@ -25,6 +18,16 @@ describe('ErrorLogger', () => {
   afterEach(() => {
     consoleErrorSpy.mockRestore();
     fsWriteFileSyncSpy.mockRestore();
+    createdDirs.forEach((dir) => {
+      try {
+        if (fs.existsSync(dir)) {
+          fs.rmSync(dir, { recursive: true, force: true });
+        }
+      } catch (_) {
+        /* ignore cleanup errors */
+      }
+    });
+    createdDirs.length = 0;
     try {
       if (fs.existsSync(testDir)) {
         fs.rmSync(testDir, { recursive: true, force: true });
@@ -261,6 +264,36 @@ describe('ErrorLogger', () => {
       const writtenContent = fsWriteFileSyncSpy.mock.calls[0][1];
       expect(writtenContent).toContain('ERR_TEST');
       expect(writtenContent).toContain('Test error');
+    });
+  });
+
+  describe('directory creation', () => {
+    test('test_run_WHEN_directoryDoesNotExist_THEN_createsDirectory', () => {
+      fsWriteFileSyncSpy.mockRestore();
+      const newDir = path.join(process.cwd(), 'tests', 'temp', 'new-error-logs');
+      createdDirs.push(newDir);
+      const error = new Error('Test error');
+
+      ErrorLogger.run(error, { directory: newDir, filename: 'error', addTimestamp: false, print: false });
+
+      expect(fs.existsSync(newDir)).toBe(true);
+      const filePath = path.join(newDir, 'error.log');
+      expect(fs.existsSync(filePath)).toBe(true);
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      expect(fileContent).toContain('Test error');
+    });
+
+    test('test_run_WHEN_nestedDirectoryDoesNotExist_THEN_createsNestedDirectories', () => {
+      fsWriteFileSyncSpy.mockRestore();
+      const nestedDir = path.join(process.cwd(), 'tests', 'temp', 'nested', 'deep', 'error-logs');
+      createdDirs.push(path.join(process.cwd(), 'tests', 'temp', 'nested'));
+      const error = new Error('Test error');
+
+      ErrorLogger.run(error, { directory: nestedDir, filename: 'error', addTimestamp: false, print: false });
+
+      expect(fs.existsSync(nestedDir)).toBe(true);
+      const filePath = path.join(nestedDir, 'error.log');
+      expect(fs.existsSync(filePath)).toBe(true);
     });
   });
 });

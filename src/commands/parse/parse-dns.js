@@ -17,7 +17,7 @@ export default class DNSParser {
   static #cachedOptions = new CachedOptions();
 
   static async parse(domainOrEmail, options = {}) {
-    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    options = OptionsService.update({ options, default: this.#DEFAULT_OPTIONS });
     try {
       return await DNSParser.#parse(domainOrEmail, options);
     } catch (error) {

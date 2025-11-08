@@ -17,7 +17,7 @@ export default class StringParser {
   static #cachedOptions = new CachedOptions();
 
   static parse(value, options = {}) {
-    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    options = OptionsService.update({ options, default: this.#DEFAULT_OPTIONS });
     this.#validateOptions(options);
 
     try {

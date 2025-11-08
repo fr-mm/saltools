@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeEach } from '@jest/globals';
 import OptionsService from 'src/helper/options-service.js';
 import Config from 'src/commands/config/config.js';
+import DateConfig from 'src/commands/config/date-config.js';
 
 describe('OptionsService', () => {
   beforeEach(() => {
@@ -10,7 +11,7 @@ describe('OptionsService', () => {
   test('test_update_WHEN_noConfig_THEN_returnsMergedOptions', () => {
     const defaultOptions = { allowEmpty: false, trim: true };
     const options = { trim: false };
-    const result = OptionsService.update(options, defaultOptions);
+    const result = OptionsService.update({ options, default: defaultOptions });
     expect(result).toEqual({ allowEmpty: false, trim: false });
     expect(options).toEqual({ trim: false });
   });
@@ -19,7 +20,7 @@ describe('OptionsService', () => {
     Config.throwError(false);
     const defaultOptions = { allowEmpty: false, throwError: true };
     const options = { allowEmpty: true };
-    const result = OptionsService.update(options, defaultOptions);
+    const result = OptionsService.update({ options, default: defaultOptions });
     expect(result).toEqual({ allowEmpty: true, throwError: false });
     expect(options).toEqual({ allowEmpty: true });
   });
@@ -28,7 +29,7 @@ describe('OptionsService', () => {
     Config.throwError(false);
     const defaultOptions = { allowEmpty: false, throwError: true };
     const options = { allowEmpty: true, throwError: true };
-    const result = OptionsService.update(options, defaultOptions);
+    const result = OptionsService.update({ options, default: defaultOptions });
     expect(result).toEqual({ allowEmpty: true, throwError: true });
     expect(options).toEqual({ allowEmpty: true, throwError: true });
   });
@@ -37,7 +38,7 @@ describe('OptionsService', () => {
     Config.reset();
     const defaultOptions = { allowEmpty: false };
     const options = {};
-    const result = OptionsService.update(options, defaultOptions);
+    const result = OptionsService.update({ options, default: defaultOptions });
     expect(result).toEqual({ allowEmpty: false });
     expect(result.throwError).toBeUndefined();
   });
@@ -46,21 +47,21 @@ describe('OptionsService', () => {
     Config.throwError(false);
     const defaultOptions = { allowEmpty: false, throwError: true, trim: true };
     const options = { allowEmpty: true };
-    const result = OptionsService.update(options, defaultOptions);
+    const result = OptionsService.update({ options, default: defaultOptions });
     expect(result).toEqual({ allowEmpty: true, throwError: false, trim: true });
   });
 
   test('test_update_WHEN_emptyOptionsAndDefaultOptions_THEN_returnsEmptyObject', () => {
     const defaultOptions = {};
     const options = {};
-    const result = OptionsService.update(options, defaultOptions);
+    const result = OptionsService.update({ options, default: defaultOptions });
     expect(result).toEqual({});
   });
 
   test('test_update_WHEN_optionsOverrideDefaults_THEN_usesOptions', () => {
     const defaultOptions = { allowEmpty: false, trim: true };
     const options = { allowEmpty: true, trim: false };
-    const result = OptionsService.update(options, defaultOptions);
+    const result = OptionsService.update({ options, default: defaultOptions });
     expect(result).toEqual({ allowEmpty: true, trim: false });
   });
 
@@ -68,7 +69,7 @@ describe('OptionsService', () => {
     Config.throwError(false);
     const defaultOptions = { throwError: true };
     const options = {};
-    const result = OptionsService.update(options, defaultOptions);
+    const result = OptionsService.update({ options, default: defaultOptions });
     expect(result).toEqual({ throwError: false });
   });
 
@@ -76,7 +77,7 @@ describe('OptionsService', () => {
     Config.throwError(true);
     const defaultOptions = { throwError: false };
     const options = {};
-    const result = OptionsService.update(options, defaultOptions);
+    const result = OptionsService.update({ options, default: defaultOptions });
     expect(result).toEqual({ throwError: true });
   });
 
@@ -85,7 +86,7 @@ describe('OptionsService', () => {
     const defaultOptions = { allowEmpty: false, throwError: true };
     const options = { allowEmpty: true };
     const originalOptions = { ...options };
-    OptionsService.update(options, defaultOptions);
+    OptionsService.update({ options, default: defaultOptions });
     expect(options).toEqual(originalOptions);
   });
 
@@ -93,7 +94,7 @@ describe('OptionsService', () => {
     Config.throwError(false);
     const defaultOptions = { allowEmpty: false, throwError: true, trim: true, capitalize: false };
     const options = { allowEmpty: true };
-    const result = OptionsService.update(options, defaultOptions);
+    const result = OptionsService.update({ options, default: defaultOptions });
     expect(result.throwError).toBe(false);
     expect(result.allowEmpty).toBe(true);
     expect(result.trim).toBe(true);
@@ -104,7 +105,7 @@ describe('OptionsService', () => {
     Config.throwError(false);
     const defaultOptions = { throwError: true };
     const options = { throwError: undefined };
-    const result = OptionsService.update(options, defaultOptions);
+    const result = OptionsService.update({ options, default: defaultOptions });
     expect(result.throwError).toBe(false);
   });
 
@@ -114,7 +115,7 @@ describe('OptionsService', () => {
       Config.date.inputFormat('dd/mm/yyyy');
       const defaultOptions = { throwError: true, inputFormat: 'iso' };
       const options = {};
-      const result = OptionsService.update(options, defaultOptions);
+      const result = OptionsService.update({ options, default: defaultOptions });
       expect(result.throwError).toBe(false);
       expect(result.inputFormat).toBe('iso');
     });
@@ -125,7 +126,7 @@ describe('OptionsService', () => {
       Config.date.outputFormat('mm/dd/yyyy');
       const defaultOptions = { throwError: true, inputFormat: 'iso', outputFormat: 'iso' };
       const options = {};
-      const result = OptionsService.update(options, defaultOptions, 'date');
+      const result = OptionsService.update({ options, default: defaultOptions, specificConfig: DateConfig });
       expect(result.throwError).toBe(false);
       expect(result.inputFormat).toBe('dd/mm/yyyy');
       expect(result.outputFormat).toBe('mm/dd/yyyy');
@@ -136,7 +137,7 @@ describe('OptionsService', () => {
       Config.date.outputFormat('mm/dd/yyyy');
       const defaultOptions = { inputFormat: 'iso', outputFormat: 'iso' };
       const options = { inputFormat: 'yyyy-mm-dd' };
-      const result = OptionsService.update(options, defaultOptions, 'date');
+      const result = OptionsService.update({ options, default: defaultOptions, specificConfig: DateConfig });
       expect(result.inputFormat).toBe('yyyy-mm-dd');
       expect(result.outputFormat).toBe('mm/dd/yyyy');
     });
@@ -146,7 +147,7 @@ describe('OptionsService', () => {
       Config.date.inputFormat('dd/mm/yyyy');
       const defaultOptions = { throwError: true, inputFormat: 'iso' };
       const options = {};
-      const result = OptionsService.update(options, defaultOptions, 'date');
+      const result = OptionsService.update({ options, default: defaultOptions, specificConfig: DateConfig });
       expect(result.throwError).toBe(false);
       expect(result.inputFormat).toBe('dd/mm/yyyy');
     });
@@ -156,7 +157,7 @@ describe('OptionsService', () => {
       Config.date.reset();
       const defaultOptions = { throwError: true, inputFormat: 'iso' };
       const options = {};
-      const result = OptionsService.update(options, defaultOptions, 'date');
+      const result = OptionsService.update({ options, default: defaultOptions, specificConfig: DateConfig });
       expect(result.throwError).toBe(false);
       expect(result.inputFormat).toBe('iso');
     });
@@ -167,7 +168,7 @@ describe('OptionsService', () => {
       Config.date.outputFormat('mm/dd/yyyy');
       const defaultOptions = { throwError: true, inputFormat: 'iso', outputFormat: 'iso' };
       const options = {};
-      const result = OptionsService.update(options, defaultOptions, 'date');
+      const result = OptionsService.update({ options, default: defaultOptions, specificConfig: DateConfig });
       expect(result.throwError).toBe(false);
       expect(result.inputFormat).toBe('dd/mm/yyyy');
       expect(result.outputFormat).toBe('mm/dd/yyyy');

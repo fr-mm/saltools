@@ -26,7 +26,7 @@ export default class NumberParser {
   }
 
   static parse(value, options) {
-    options = OptionsService.update(options, this.#DEFAULT_OPTIONS);
+    options = OptionsService.update({ options, default: this.#DEFAULT_OPTIONS });
     this.#validateOptions(options);
 
     try {

@@ -1,16 +1,11 @@
 import Config from '../commands/config/config.js';
 
 export default class OptionsService {
-  static update(options, defaultOptions, specificConfig) {
+  static update({ options, default: defaultOptions, specificConfig }) {
     const mergedOptions = { ...defaultOptions, ...options };
     let config = Config.get();
     if (specificConfig) {
-      const configPath = specificConfig.split('.');
-      let configObject = Config;
-      for (const pathPart of configPath) {
-        configObject = configObject[pathPart];
-      }
-      const specifics = configObject.get();
+      const specifics = specificConfig.get();
       config = { ...config, ...specifics };
     }
 
