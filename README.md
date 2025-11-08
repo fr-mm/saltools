@@ -322,3 +322,136 @@ saltools.parse.doc('123.456.789-00', { numbersOnly: false });
 saltools.parse.doc('12.345.678/0001-90', { numbersOnly: false });
 // Retorna: "12.345.678/0001-90" (CNPJ formatado)
 ```
+
+### saltools.config
+
+Configurações globais para o saltools.
+
+#### saltools.config.date
+
+Configurações específicas para parsing de datas.
+
+```javascript
+saltools.config.date.inputFormat('dd/mm/yyyy');
+saltools.config.date.outputFormat('iso');
+saltools.config.date.get();
+saltools.config.date.reset();
+```
+
+**Métodos:**
+
+- `inputFormat(value)` - Define o formato de entrada padrão para parsing de datas (ex: 'dd/mm/yyyy', 'iso')
+- `outputFormat(value)` - Define o formato de saída padrão para parsing de datas (ex: 'dd/mm/yyyy', 'iso')
+- `get()` - Obtém o objeto de configuração de data atual
+- `reset()` - Redefine a configuração de data para um objeto vazio
+
+**Exemplo:**
+
+```javascript
+saltools.config.date.inputFormat('dd/mm/yyyy');
+saltools.config.date.outputFormat('iso');
+
+const config = saltools.config.date.get();
+// Retorna: { inputFormat: 'dd/mm/yyyy', outputFormat: 'iso' }
+
+saltools.config.date.reset();
+// Limpa todas as configurações de data
+```
+
+#### saltools.config.log.error
+
+Configurações específicas para `saltools.log.error`.
+
+```javascript
+saltools.config.log.error.directory('./logs');
+saltools.config.log.error.filename('error');
+saltools.config.log.error.addTimestamp(true);
+saltools.config.log.error.print(true);
+saltools.config.log.error.throwError(false);
+saltools.config.log.error.get();
+saltools.config.log.error.reset();
+```
+
+**Métodos:**
+
+- `directory(value)` - Define o diretório padrão para salvar arquivos de log de erro
+- `filename(value)` - Define o nome padrão do arquivo de log de erro
+- `addTimestamp(value)` - Define se deve adicionar timestamp ao nome do arquivo por padrão (true/false)
+- `print(value)` - Define se deve imprimir erros no console por padrão (true/false)
+- `throwError(value)` - Define se deve relançar erros após o registro por padrão (true/false)
+- `get()` - Obtém o objeto de configuração de log de erro atual
+- `reset()` - Redefine a configuração de log de erro para um objeto vazio
+
+**Exemplo:**
+
+```javascript
+saltools.config.log.error.directory('./logs');
+saltools.config.log.error.filename('error');
+saltools.config.log.error.addTimestamp(true);
+saltools.config.log.error.print(false);
+
+const config = saltools.config.log.error.get();
+// Retorna: { directory: './logs', filename: 'error', addTimestamp: true, print: false }
+
+saltools.config.log.error.reset();
+// Limpa todas as configurações de log de erro
+```
+
+#### saltools.config.log.saveLog
+
+Configurações específicas para `saltools.log.saveLog`.
+
+```javascript
+saltools.config.log.saveLog.directory('./logs');
+saltools.config.log.saveLog.filename('app');
+saltools.config.log.saveLog.addTimestamp(true);
+saltools.config.log.saveLog.get();
+saltools.config.log.saveLog.reset();
+```
+
+**Métodos:**
+
+- `directory(value)` - Define o diretório padrão para salvar arquivos de log
+- `filename(value)` - Define o nome padrão do arquivo de log
+- `addTimestamp(value)` - Define se deve adicionar timestamp ao nome do arquivo por padrão (true/false)
+- `get()` - Obtém o objeto de configuração de log atual
+- `reset()` - Redefine a configuração de log para um objeto vazio
+
+**Exemplo:**
+
+```javascript
+saltools.config.log.saveLog.directory('./logs');
+saltools.config.log.saveLog.filename('app');
+saltools.config.log.saveLog.addTimestamp(true);
+
+const config = saltools.config.log.saveLog.get();
+// Retorna: { directory: './logs', filename: 'app', addTimestamp: true }
+
+saltools.config.log.saveLog.reset();
+// Limpa todas as configurações de log
+```
+
+#### saltools.config.throwError
+
+Define o valor de configuração throwError global.
+
+```javascript
+saltools.config.throwError(true);
+saltools.config.throwError(false);
+```
+
+#### saltools.config.get()
+
+Obtém o objeto de configuração atual.
+
+```javascript
+const config = saltools.config.get();
+```
+
+#### saltools.config.reset()
+
+Redefine todas as configurações para valores padrão.
+
+```javascript
+saltools.config.reset();
+```

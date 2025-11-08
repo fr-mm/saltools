@@ -64,4 +64,30 @@ describe('Config', () => {
       expect(typeof Config.date.outputFormat).toBe('function');
     });
   });
+
+  describe('Config.log', () => {
+    describe('Config.log.error', () => {
+      test('test_logError_WHEN_accessed_THEN_returnsErrorLogConfig', () => {
+        expect(Config.log.error).toBeDefined();
+        expect(typeof Config.log.error.get).toBe('function');
+        expect(typeof Config.log.error.reset).toBe('function');
+        expect(typeof Config.log.error.directory).toBe('function');
+        expect(typeof Config.log.error.filename).toBe('function');
+        expect(typeof Config.log.error.addTimestamp).toBe('function');
+        expect(typeof Config.log.error.print).toBe('function');
+        expect(typeof Config.log.error.throwError).toBe('function');
+      });
+    });
+
+    describe('Config.log.saveLog', () => {
+      test('test_logSaveLog_WHEN_accessed_THEN_returnsSaveLogConfig', () => {
+        expect(Config.log.saveLog).toBeDefined();
+        expect(typeof Config.log.saveLog.get).toBe('function');
+        expect(typeof Config.log.saveLog.reset).toBe('function');
+        expect(typeof Config.log.saveLog.directory).toBe('function');
+        expect(typeof Config.log.saveLog.filename).toBe('function');
+        expect(typeof Config.log.saveLog.addTimestamp).toBe('function');
+      });
+    });
+  });
 });

@@ -375,6 +375,49 @@ export const config: {
     /** Redefine a configuração de data para um objeto vazio */
     reset(): void;
   };
+  /** Configurações específicas para logging */
+  log: {
+    /** Configurações para saltools.log.error */
+    error: {
+      /** Define o diretório padrão para salvar arquivos de log de erro
+       *  @param value - O diretório para salvar os arquivos de log */
+      directory(value: string): void;
+      /** Define o nome padrão do arquivo de log de erro
+       *  @param value - O nome do arquivo de log */
+      filename(value: string): void;
+      /** Define se deve adicionar timestamp ao nome do arquivo por padrão
+       *  @param value - true para adicionar timestamp, false caso contrário */
+      addTimestamp(value: boolean): void;
+      /** Define se deve imprimir erros no console por padrão
+       *  @param value - true para imprimir, false caso contrário */
+      print(value: boolean): void;
+      /** Define se deve relançar erros após o registro por padrão
+       *  @param value - true para relançar, false caso contrário */
+      throwError(value: boolean): void;
+      /** Obtém o objeto de configuração de log de erro atual
+       *  @returns O objeto de configuração de log de erro */
+      get(): Record<string, string | boolean>;
+      /** Redefine a configuração de log de erro para um objeto vazio */
+      reset(): void;
+    };
+    /** Configurações para saltools.log.saveLog */
+    saveLog: {
+      /** Define o diretório padrão para salvar arquivos de log
+       *  @param value - O diretório para salvar os arquivos de log */
+      directory(value: string): void;
+      /** Define o nome padrão do arquivo de log
+       *  @param value - O nome do arquivo de log */
+      filename(value: string): void;
+      /** Define se deve adicionar timestamp ao nome do arquivo por padrão
+       *  @param value - true para adicionar timestamp, false caso contrário */
+      addTimestamp(value: boolean): void;
+      /** Obtém o objeto de configuração de log atual
+       *  @returns O objeto de configuração de log */
+      get(): Record<string, string | boolean>;
+      /** Redefine a configuração de log para um objeto vazio */
+      reset(): void;
+    };
+  };
 };
 
 /** Classe SaltoolsError */

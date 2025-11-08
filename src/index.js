@@ -4,6 +4,8 @@ import timestamp from './commands/timestamp.js';
 import helloWorld from './commands/hello-world.js';
 import Config from './commands/config/config.js';
 import DateConfig from './commands/config/date-config.js';
+import ErrorLogConfig from './commands/config/error-log-config.js';
+import SaveLogConfig from './commands/config/save-log-config.js';
 import DocParser from './commands/parse/doc-parser.js';
 import DateParser from './commands/parse/parse-date/date-parser.js';
 import CSVParser from './commands/parse/parse-csv/csv-parser.js';
@@ -40,6 +42,10 @@ export const config = {
   reset: Config.reset.bind(Config),
   throwError: Config.throwError.bind(Config),
   date: DateConfig,
+  log: {
+    error: ErrorLogConfig,
+    saveLog: SaveLogConfig,
+  },
 };
 
 export const errors = {

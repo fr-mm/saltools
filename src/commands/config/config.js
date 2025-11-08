@@ -1,10 +1,16 @@
 import DateConfig from './date-config.js';
+import ErrorLogConfig from './error-log-config.js';
+import SaveLogConfig from './save-log-config.js';
 import ConfigSetter from 'src/helper/config-setter.js';
 
 export default class Config {
   static #config = {};
 
   static date = DateConfig;
+  static log = {
+    error: ErrorLogConfig,
+    saveLog: SaveLogConfig,
+  };
 
   static throwError(value) {
     ConfigSetter.setBool('throwError', value, this.#config);
@@ -17,5 +23,7 @@ export default class Config {
   static reset() {
     this.#config = {};
     this.date.reset();
+    this.log.error.reset();
+    this.log.saveLog.reset();
   }
 }
