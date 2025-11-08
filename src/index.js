@@ -3,6 +3,7 @@ import LogSaver from './commands/log/log-saver.js';
 import timestamp from './commands/timestamp.js';
 import helloWorld from './commands/hello-world.js';
 import Config from './commands/config/config.js';
+import DateConfig from './commands/config/date-config.js';
 import DocParser from './commands/parse/doc-parser.js';
 import DateParser from './commands/parse/parse-date/date-parser.js';
 import CSVParser from './commands/parse/parse-csv/csv-parser.js';
@@ -38,12 +39,7 @@ export const config = {
   get: Config.get.bind(Config),
   reset: Config.reset.bind(Config),
   throwError: Config.throwError.bind(Config),
-  date: {
-    inputFormat: Config.date.inputFormat.bind(Config.date),
-    outputFormat: Config.date.outputFormat.bind(Config.date),
-    get: Config.date.get.bind(Config.date),
-    reset: Config.date.reset.bind(Config.date),
-  },
+  date: DateConfig,
 };
 
 export const errors = {
