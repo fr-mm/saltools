@@ -21,7 +21,7 @@ export { timestamp, helloWorld };
 
 export const log = {
   error: ErrorLogger.run.bind(ErrorLogger),
-  saveLog: LogSaver.run.bind(LogSaver),
+  save: LogSaver.run.bind(LogSaver),
 };
 
 export const parse = {
@@ -44,7 +44,7 @@ export const config = {
   date: DateConfig,
   log: {
     error: ErrorLogConfig,
-    saveLog: SaveLogConfig,
+    save: SaveLogConfig,
   },
 };
 

@@ -79,14 +79,14 @@ describe('Config', () => {
       });
     });
 
-    describe('Config.log.saveLog', () => {
-      test('test_logSaveLog_WHEN_accessed_THEN_returnsSaveLogConfig', () => {
-        expect(Config.log.saveLog).toBeDefined();
-        expect(typeof Config.log.saveLog.get).toBe('function');
-        expect(typeof Config.log.saveLog.reset).toBe('function');
-        expect(typeof Config.log.saveLog.directory).toBe('function');
-        expect(typeof Config.log.saveLog.filename).toBe('function');
-        expect(typeof Config.log.saveLog.addTimestamp).toBe('function');
+    describe('Config.log.save', () => {
+      test('test_logSave_WHEN_accessed_THEN_returnsSaveLogConfig', () => {
+        expect(Config.log.save).toBeDefined();
+        expect(typeof Config.log.save.get).toBe('function');
+        expect(typeof Config.log.save.reset).toBe('function');
+        expect(typeof Config.log.save.directory).toBe('function');
+        expect(typeof Config.log.save.filename).toBe('function');
+        expect(typeof Config.log.save.addTimestamp).toBe('function');
       });
     });
   });

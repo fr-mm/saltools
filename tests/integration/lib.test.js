@@ -48,8 +48,8 @@ describe('saltools - integration tests', () => {
     test('test_logExport_WHEN_accessed_THEN_exportsAllLogFunctions', () => {
       expect(saltools.log.error).toBeDefined();
       expect(typeof saltools.log.error).toBe('function');
-      expect(saltools.log.saveLog).toBeDefined();
-      expect(typeof saltools.log.saveLog).toBe('function');
+      expect(saltools.log.save).toBeDefined();
+      expect(typeof saltools.log.save).toBe('function');
     });
 
     test('test_errorsExport_WHEN_accessed_THEN_exportsErrorClass', () => {

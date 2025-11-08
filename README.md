@@ -397,16 +397,16 @@ saltools.config.log.error.reset();
 // Limpa todas as configurações de log de erro
 ```
 
-#### saltools.config.log.saveLog
+#### saltools.config.log.save
 
-Configurações específicas para `saltools.log.saveLog`.
+Configurações específicas para `saltools.log.save`.
 
 ```javascript
-saltools.config.log.saveLog.directory('./logs');
-saltools.config.log.saveLog.filename('app');
-saltools.config.log.saveLog.addTimestamp(true);
-saltools.config.log.saveLog.get();
-saltools.config.log.saveLog.reset();
+saltools.config.log.save.directory('./logs');
+saltools.config.log.save.filename('app');
+saltools.config.log.save.addTimestamp(true);
+saltools.config.log.save.get();
+saltools.config.log.save.reset();
 ```
 
 **Métodos:**
@@ -420,14 +420,14 @@ saltools.config.log.saveLog.reset();
 **Exemplo:**
 
 ```javascript
-saltools.config.log.saveLog.directory('./logs');
-saltools.config.log.saveLog.filename('app');
-saltools.config.log.saveLog.addTimestamp(true);
+saltools.config.log.save.directory('./logs');
+saltools.config.log.save.filename('app');
+saltools.config.log.save.addTimestamp(true);
 
-const config = saltools.config.log.saveLog.get();
+const config = saltools.config.log.save.get();
 // Retorna: { directory: './logs', filename: 'app', addTimestamp: true }
 
-saltools.config.log.saveLog.reset();
+saltools.config.log.save.reset();
 // Limpa todas as configurações de log
 ```
 

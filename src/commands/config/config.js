@@ -9,7 +9,7 @@ export default class Config {
   static date = DateConfig;
   static log = {
     error: ErrorLogConfig,
-    saveLog: SaveLogConfig,
+    save: SaveLogConfig,
   };
 
   static throwError(value) {
@@ -24,6 +24,6 @@ export default class Config {
     this.#config = {};
     this.date.reset();
     this.log.error.reset();
-    this.log.saveLog.reset();
+    this.log.save.reset();
   }
 }

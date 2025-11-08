@@ -124,7 +124,7 @@ export const log: {
    *  @param options.directory - Diretório para salvar o arquivo de log. Padrão: undefined
    *  @param options.filename - Nome do arquivo de log. Padrão: undefined
    *  @param options.addTimestamp - Adicionar timestamp ao nome do arquivo. Padrão: true */
-  saveLog: (
+  save: (
     content: string,
     options?: {
       /** @default undefined */
@@ -400,8 +400,8 @@ export const config: {
       /** Redefine a configuração de log de erro para um objeto vazio */
       reset(): void;
     };
-    /** Configurações para saltools.log.saveLog */
-    saveLog: {
+    /** Configurações para saltools.log.save */
+    save: {
       /** Define o diretório padrão para salvar arquivos de log
        *  @param value - O diretório para salvar os arquivos de log */
       directory(value: string): void;

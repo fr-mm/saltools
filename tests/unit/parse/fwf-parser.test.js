@@ -139,6 +139,7 @@ describe('FwfParser', () => {
     });
 
     test('test_parse_WHEN_fileWithMultipleEmptyLines_THEN_returnsEmptyArray', () => {
+      ensureTestDir();
       const filePath = path.join(testDir, 'empty-lines.txt');
       fs.writeFileSync(filePath, '\n\n\n');
 
@@ -152,6 +153,7 @@ describe('FwfParser', () => {
 
   describe('field validation', () => {
     test('test_parse_WHEN_fieldsIsNotArray_THEN_throwsError', () => {
+      ensureTestDir();
       const filePath = path.join(testDir, 'fields-not-array.txt');
       fs.writeFileSync(filePath, 'content');
 
