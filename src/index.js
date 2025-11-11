@@ -15,6 +15,7 @@ import PhoneParser from './commands/parse/parse-phone.js';
 import DNSParser from './commands/parse/parse-dns.js';
 import EmailParser from './commands/parse/email-parser.js';
 import FwfParser from './commands/parse/fwf-parser.js';
+import SFTPWrapper from './commands/sftp-wrapper.js';
 import SaltoolsError from './errors/saltools-error.js';
 
 export { timestamp, helloWorld };
@@ -50,4 +51,14 @@ export const config = {
 
 export const errors = {
   SaltoolsError,
+};
+
+export const sftp = {
+  configure: SFTPWrapper.configure.bind(SFTPWrapper),
+  connect: SFTPWrapper.connect.bind(SFTPWrapper),
+  disconnect: SFTPWrapper.disconnect.bind(SFTPWrapper),
+  testConnection: SFTPWrapper.testConnection.bind(SFTPWrapper),
+  get client() {
+    return SFTPWrapper.client;
+  },
 };

@@ -341,6 +341,160 @@ saltools.parse.doc('12.345.678/0001-90', { numbersOnly: false });
 // Retorna: "12.345.678/0001-90" (CNPJ formatado)
 ```
 
+### saltools.sftp
+
+Wrapper para gerenciar conexões SFTP. Esta biblioteca não depende de nenhuma biblioteca SFTP específica - você deve fornecer um cliente SFTP instanciado.
+
+#### saltools.sftp.configure()
+
+Configura o cliente SFTP com as credenciais e opções de conexão.
+
+```javascript
+saltools.sftp.configure({
+  client: sftpClient, // Cliente SFTP instanciado (obrigatório)
+  host: 'example.com', // Host do servidor SFTP (obrigatório)
+  username: 'user', // Nome de usuário (obrigatório)
+  password: 'password', // Senha (obrigatório)
+  port: 22, // Porta do servidor SFTP (padrão: 22)
+  readyTimeout: 10000, // Timeout para conexão em milissegundos (padrão: 10000)
+});
+```
+
+**Exemplo:**
+
+```javascript
+const Client = require('ssh2-sftp-client');
+const sftpClient = new Client();
+
+saltools.sftp.configure({
+  client: sftpClient,
+  host: 'sftp.example.com',
+  username: 'myuser',
+  password: 'mypassword',
+  port: 22,
+  readyTimeout: 10000,
+});
+```
+
+#### saltools.sftp.connect()
+
+Conecta ao servidor SFTP usando as credenciais configuradas.
+
+```javascript
+await saltools.sftp.connect();
+```
+
+**Exemplo:**
+
+```javascript
+try {
+  await saltools.sftp.connect();
+  console.log('Conectado com sucesso!');
+} catch (error) {
+  console.error('Erro ao conectar:', error.message);
+}
+```
+
+#### saltools.sftp.disconnect()
+
+Desconecta do servidor SFTP.
+
+```javascript
+await saltools.sftp.disconnect();
+```
+
+**Exemplo:**
+
+```javascript
+try {
+  await saltools.sftp.disconnect();
+  console.log('Desconectado com sucesso!');
+} catch (error) {
+  console.error('Erro ao desconectar:', error.message);
+}
+```
+
+#### saltools.sftp.testConnection()
+
+Testa a conexão SFTP conectando e desconectando automaticamente.
+
+```javascript
+await saltools.sftp.testConnection();
+```
+
+**Exemplo:**
+
+```javascript
+try {
+  await saltools.sftp.testConnection();
+  // Log: "[OK] Conexão estabelecida com SFTP"
+  console.log('Conexão testada com sucesso!');
+} catch (error) {
+  console.error('Erro ao testar conexão:', error.message);
+}
+```
+
+#### saltools.sftp.client
+
+Getter que retorna o cliente SFTP configurado. Use este cliente para realizar operações SFTP (upload, download, listar arquivos, etc.).
+
+```javascript
+const client = saltools.sftp.client;
+```
+
+**Exemplo:**
+
+```javascript
+saltools.sftp.configure({
+  client: sftpClient,
+  host: 'sftp.example.com',
+  username: 'myuser',
+  password: 'mypassword',
+});
+
+await saltools.sftp.connect();
+
+// Usar o cliente para operações SFTP
+const client = saltools.sftp.client;
+const list = await client.list('/remote/path');
+const data = await client.get('/remote/file.txt');
+
+await saltools.sftp.disconnect();
+```
+
+**Exemplo completo:**
+
+```javascript
+const Client = require('ssh2-sftp-client');
+const saltools = require('@fr-mm/saltools');
+
+const sftpClient = new Client();
+
+// Configurar
+saltools.sftp.configure({
+  client: sftpClient,
+  host: 'sftp.example.com',
+  username: 'myuser',
+  password: 'mypassword',
+  port: 22,
+});
+
+try {
+  // Conectar
+  await saltools.sftp.connect();
+  
+  // Usar o cliente para operações
+  const client = saltools.sftp.client;
+  const files = await client.list('/remote/path');
+  console.log('Arquivos:', files);
+  
+  // Desconectar
+  await saltools.sftp.disconnect();
+} catch (error) {
+  console.error('Erro:', error.message);
+}
+```
+
 ### saltools.config
 
 Configurações globais para o saltools.

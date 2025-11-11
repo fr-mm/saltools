@@ -436,3 +436,30 @@ export type SaltoolsError = new (
 export const errors: {
   SaltoolsError: SaltoolsError;
 };
+
+export const sftp: {
+  /** Configura o cliente SFTP
+   *  @param options - Objeto de opções
+   *  @param options.client - O cliente SFTP instanciado (obrigatório)
+   *  @param options.host - O host do servidor SFTP (obrigatório)
+   *  @param options.username - O nome de usuário (obrigatório)
+   *  @param options.password - A senha (obrigatório)
+   *  @param options.port - A porta do servidor SFTP. Padrão: 22
+   *  @param options.readyTimeout - Timeout para conexão em milissegundos. Padrão: 10000 */
+  configure(options: {
+    client: any;
+    host: string;
+    username: string;
+    password: string;
+    port?: number;
+    readyTimeout?: number;
+  }): void;
+  /** Conecta ao servidor SFTP */
+  connect(): Promise<void>;
+  /** Desconecta do servidor SFTP */
+  disconnect(): Promise<void>;
+  /** Testa a conexão SFTP (conecta e desconecta) */
+  testConnection(): Promise<boolean>;
+  /** Obtém o cliente SFTP configurado */
+  readonly client: any;
+};
