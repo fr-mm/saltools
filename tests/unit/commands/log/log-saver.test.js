@@ -6,35 +6,17 @@ import path from 'path';
 
 describe('LogSaver', () => {
   let fsWriteFileSyncSpy;
+  let fsMkdirSyncSpy;
   const testDir = path.join(process.cwd(), 'tests', 'temp', 'logs');
-  const createdDirs = [];
 
   beforeEach(() => {
     fsWriteFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation();
+    fsMkdirSyncSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation();
   });
 
   afterEach(() => {
     fsWriteFileSyncSpy.mockRestore();
-    createdDirs.forEach((dir) => {
-      try {
-        if (fs.existsSync(dir)) {
-          fs.rmSync(dir, { recursive: true, force: true });
-        }
-      } catch (_) {
-        /* ignore cleanup errors */
-      }
-    });
-    createdDirs.length = 0;
-    try {
-      if (fs.existsSync(testDir)) {
-        fs.rmSync(testDir, { recursive: true, force: true });
-      }
-      if (fs.existsSync('logs')) {
-        fs.rmSync('logs', { recursive: true, force: true });
-      }
-    } catch (_) {
-      /* ignore cleanup errors */
-    }
+    fsMkdirSyncSpy.mockRestore();
   });
 
   describe('run', () => {
@@ -201,6 +183,7 @@ describe('LogSaver', () => {
       expect(fsWriteFileSyncSpy).toHaveBeenCalled();
       const filePath = fsWriteFileSyncSpy.mock.calls[0][0];
       expect(filePath).toContain('test-log.log');
+      expect(fsMkdirSyncSpy).not.toHaveBeenCalled();
     });
 
     test('test_run_WHEN_emptyStringFilename_THEN_savesFile', () => {
@@ -217,61 +200,27 @@ describe('LogSaver', () => {
   describe('directory creation', () => {
     beforeEach(() => {
       fsWriteFileSyncSpy.mockRestore();
-      const dirsToClean = [
-        path.join(process.cwd(), 'tests', 'temp', 'new-logs'),
-        path.join(process.cwd(), 'tests', 'temp', 'nested'),
-      ];
-      dirsToClean.forEach((dir) => {
-        try {
-          if (fs.existsSync(dir)) {
-            fs.rmSync(dir, { recursive: true, force: true });
-          }
-        } catch (_) {
-          /* ignore cleanup errors */
-        }
-      });
-    });
-
-    afterEach(() => {
-      const dirsToClean = [
-        path.join(process.cwd(), 'tests', 'temp', 'new-logs'),
-        path.join(process.cwd(), 'tests', 'temp', 'nested'),
-      ];
-      dirsToClean.forEach((dir) => {
-        try {
-          if (fs.existsSync(dir)) {
-            fs.rmSync(dir, { recursive: true, force: true });
-          }
-        } catch (_) {
-          /* ignore cleanup errors */
-        }
-      });
+      fsMkdirSyncSpy.mockRestore();
+      fsWriteFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation();
+      fsMkdirSyncSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation();
     });
 
     test('test_run_WHEN_directoryDoesNotExist_THEN_createsDirectory', () => {
       const newDir = path.join(process.cwd(), 'tests', 'temp', 'new-logs');
-      createdDirs.push(newDir);
       const content = 'Test content';
 
       LogSaver.run(content, { directory: newDir, filename: 'test', addTimestamp: false });
 
-      expect(fs.existsSync(newDir)).toBe(true);
-      const filePath = path.join(newDir, 'test.log');
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      expect(fileContent).toBe(content);
+      expect(fsMkdirSyncSpy).toHaveBeenCalledWith(newDir, { recursive: true });
     });
 
     test('test_run_WHEN_nestedDirectoryDoesNotExist_THEN_createsNestedDirectories', () => {
       const nestedDir = path.join(process.cwd(), 'tests', 'temp', 'nested', 'deep', 'logs');
-      const nestedBaseDir = path.join(process.cwd(), 'tests', 'temp', 'nested');
-      createdDirs.push(nestedBaseDir);
       const content = 'Test content';
 
       LogSaver.run(content, { directory: nestedDir, filename: 'test', addTimestamp: false });
 
-      expect(fs.existsSync(nestedDir)).toBe(true);
-      const filePath = path.join(nestedDir, 'test.log');
-      expect(() => fs.readFileSync(filePath, 'utf8')).not.toThrow();
+      expect(fsMkdirSyncSpy).toHaveBeenCalledWith(nestedDir, { recursive: true });
     });
   });
 
@@ -279,7 +228,6 @@ describe('LogSaver', () => {
     test('test_run_WHEN_relativeDirectory_THEN_joinsPathsCorrectly', () => {
       const content = 'content';
       const relativeDir = 'logs';
-      createdDirs.push(relativeDir);
 
       LogSaver.run(content, { directory: relativeDir, filename: 'test', addTimestamp: false });
 

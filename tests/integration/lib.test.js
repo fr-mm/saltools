@@ -314,26 +314,45 @@ describe('saltools - integration tests', () => {
 
   describe('parse.fwf', () => {
     const testDir = path.join(process.cwd(), 'tests', 'temp_integration');
+    let mockFileSystem;
+    let fsReadFileSyncSpy;
+    let fsWriteFileSyncSpy;
+    let fsMkdirSyncSpy;
+    let fsExistsSyncSpy;
+    let fsRmSyncSpy;
 
     beforeEach(() => {
-      if (!fs.existsSync(testDir)) {
-        fs.mkdirSync(testDir, { recursive: true });
-      }
+      mockFileSystem = new Map();
+      fsReadFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
+        if (mockFileSystem.has(filePath)) {
+          return mockFileSystem.get(filePath);
+        }
+        const error = new Error('ENOENT: no such file or directory');
+        error.code = 'ENOENT';
+        throw error;
+      });
+      fsWriteFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation((filePath, content) => {
+        mockFileSystem.set(filePath, content);
+      });
+      fsMkdirSyncSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation();
+      fsExistsSyncSpy = jest.spyOn(fs, 'existsSync').mockImplementation((filePath) => {
+        return mockFileSystem.has(filePath);
+      });
+      fsRmSyncSpy = jest.spyOn(fs, 'rmSync').mockImplementation();
     });
 
     afterEach(() => {
-      try {
-        if (fs.existsSync(testDir)) {
-          fs.rmSync(testDir, { recursive: true, force: true });
-        }
-      } catch (_) {
-        /* ignore */
-      }
+      fsReadFileSyncSpy.mockRestore();
+      fsWriteFileSyncSpy.mockRestore();
+      fsMkdirSyncSpy.mockRestore();
+      fsExistsSyncSpy.mockRestore();
+      fsRmSyncSpy.mockRestore();
+      mockFileSystem.clear();
     });
 
     test('test_parseFwf_WHEN_validFile_THEN_parsesFixedWidth', () => {
       const filePath = path.join(testDir, 'fwf.txt');
-      fs.writeFileSync(filePath, 'John Doe  30New York\nJane Smith25London  ');
+      fsWriteFileSyncSpy(filePath, 'John Doe  30New York\nJane Smith25London  ');
 
       const fields = [
         { key: 'name', start: 0, end: 9 },

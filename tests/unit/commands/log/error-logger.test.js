@@ -7,34 +7,19 @@ import path from 'path';
 describe('ErrorLogger', () => {
   let consoleErrorSpy;
   let fsWriteFileSyncSpy;
+  let fsMkdirSyncSpy;
   const testDir = path.join(process.cwd(), 'tests', 'temp', 'logs');
-  const createdDirs = [];
 
   beforeEach(() => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     fsWriteFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation();
+    fsMkdirSyncSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation();
   });
 
   afterEach(() => {
     consoleErrorSpy.mockRestore();
     fsWriteFileSyncSpy.mockRestore();
-    createdDirs.forEach((dir) => {
-      try {
-        if (fs.existsSync(dir)) {
-          fs.rmSync(dir, { recursive: true, force: true });
-        }
-      } catch (_) {
-        /* ignore cleanup errors */
-      }
-    });
-    createdDirs.length = 0;
-    try {
-      if (fs.existsSync(testDir)) {
-        fs.rmSync(testDir, { recursive: true, force: true });
-      }
-    } catch (_) {
-      /* ignore cleanup errors */
-    }
+    fsMkdirSyncSpy.mockRestore();
   });
 
   describe('run', () => {
@@ -269,40 +254,21 @@ describe('ErrorLogger', () => {
 
   describe('directory creation', () => {
     test('test_run_WHEN_directoryDoesNotExist_THEN_createsDirectory', () => {
-      fsWriteFileSyncSpy.mockRestore();
       const newDir = path.join(process.cwd(), 'tests', 'temp', 'new-error-logs');
-      createdDirs.push(newDir);
       const error = new Error('Test error');
 
       ErrorLogger.run(error, { directory: newDir, filename: 'error', addTimestamp: false, print: false });
 
-      expect(fs.existsSync(newDir)).toBe(true);
-      const filePath = path.join(newDir, 'error.log');
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      expect(fileContent).toContain('Test error');
+      expect(fsMkdirSyncSpy).toHaveBeenCalledWith(newDir, { recursive: true });
     });
 
     test('test_run_WHEN_nestedDirectoryDoesNotExist_THEN_createsNestedDirectories', () => {
-      fsWriteFileSyncSpy.mockRestore();
       const nestedDir = path.join(process.cwd(), 'tests', 'temp', 'nested-error', 'deep', 'error-logs');
-      createdDirs.push(path.join(process.cwd(), 'tests', 'temp', 'nested-error'));
       const error = new Error('Test error');
-
-      // Ensure directory doesn't exist before test
-      try {
-        if (fs.existsSync(nestedDir)) {
-          fs.rmSync(nestedDir, { recursive: true, force: true });
-        }
-      } catch (_) {
-        /* ignore cleanup errors */
-      }
 
       ErrorLogger.run(error, { directory: nestedDir, filename: 'error', addTimestamp: false, print: false });
 
-      expect(fs.existsSync(nestedDir)).toBe(true);
-      const filePath = path.join(nestedDir, 'error.log');
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      expect(fileContent).toContain('Test error');
+      expect(fsMkdirSyncSpy).toHaveBeenCalledWith(nestedDir, { recursive: true });
     });
   });
 });

@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
 import SaltoolsError from 'src/errors/saltools-error.js';
@@ -6,27 +6,46 @@ import CSVParser from 'src/commands/parse/parse-csv/csv-parser.js';
 
 describe('parse-csv', () => {
   const testDir = path.join(process.cwd(), 'tests', 'temp');
+  let mockFileSystem;
+  let fsReadFileSyncSpy;
+  let fsWriteFileSyncSpy;
+  let fsMkdirSyncSpy;
+  let fsExistsSyncSpy;
+  let fsRmSyncSpy;
 
   beforeEach(() => {
-    if (!fs.existsSync(testDir)) {
-      fs.mkdirSync(testDir, { recursive: true });
-    }
+    mockFileSystem = new Map();
+    fsReadFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
+      if (mockFileSystem.has(filePath)) {
+        return mockFileSystem.get(filePath);
+      }
+      const error = new Error('ENOENT: no such file or directory');
+      error.code = 'ENOENT';
+      throw error;
+    });
+    fsWriteFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation((filePath, content) => {
+      mockFileSystem.set(filePath, content);
+    });
+    fsMkdirSyncSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation();
+    fsExistsSyncSpy = jest.spyOn(fs, 'existsSync').mockImplementation((filePath) => {
+      return mockFileSystem.has(filePath);
+    });
+    fsRmSyncSpy = jest.spyOn(fs, 'rmSync').mockImplementation();
   });
 
   afterEach(() => {
-    try {
-      if (fs.existsSync(testDir)) {
-        fs.rmSync(testDir, { recursive: true, force: true });
-      }
-    } catch (_) {
-      /* ignore cleanup errors */
-    }
+    fsReadFileSyncSpy.mockRestore();
+    fsWriteFileSyncSpy.mockRestore();
+    fsMkdirSyncSpy.mockRestore();
+    fsExistsSyncSpy.mockRestore();
+    fsRmSyncSpy.mockRestore();
+    mockFileSystem.clear();
   });
 
   test('test_csv_WHEN_validCSVFile_THEN_returnsArrayOfObjects', () => {
     const filePath = path.join(testDir, 'test.csv');
     const csvContent = 'name,age,city\nJohn,30,New York\nJane,25,London';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
@@ -38,7 +57,7 @@ describe('parse-csv', () => {
 
   test('test_csv_WHEN_emptyCSVFile_THEN_returnsEmptyArray', () => {
     const filePath = path.join(testDir, 'empty.csv');
-    fs.writeFileSync(filePath, '');
+    fsWriteFileSyncSpy(filePath, '');
 
     const result = CSVParser.parse(filePath);
 
@@ -47,7 +66,7 @@ describe('parse-csv', () => {
 
   test('test_csv_WHEN_onlyHeaders_THEN_returnsEmptyArray', () => {
     const filePath = path.join(testDir, 'headers-only.csv');
-    fs.writeFileSync(filePath, 'name,age,city');
+    fsWriteFileSyncSpy(filePath, 'name,age,city');
 
     const result = CSVParser.parse(filePath);
 
@@ -57,7 +76,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_quotedFields_THEN_parsesCorrectly', () => {
     const filePath = path.join(testDir, 'quoted.csv');
     const csvContent = 'name,description\nJohn,"Software Engineer"\nJane,"Product Manager"';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
@@ -70,7 +89,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_quotedFieldsWithDelimiters_THEN_parsesCorrectly', () => {
     const filePath = path.join(testDir, 'quoted-delimiter.csv');
     const csvContent = 'name,address\nJohn,"123 Main St, Apt 4"\nJane,"456 Oak Ave, Suite 2"';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
@@ -83,7 +102,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_quotedFieldsWithNewlines_THEN_parsesCorrectly', () => {
     const filePath = path.join(testDir, 'quoted-newline.csv');
     const csvContent = 'name,note\nJohn,"First line\nSecond line"\nJane,"Single note"';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
@@ -96,7 +115,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_escapedQuotes_THEN_parsesCorrectly', () => {
     const filePath = path.join(testDir, 'escaped-quotes.csv');
     const csvContent = 'name,quote\nJohn,"He said ""Hello"""\nJane,"She said ""Hi"""';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
@@ -109,7 +128,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_customDelimiter_THEN_parsesCorrectly', () => {
     const filePath = path.join(testDir, 'custom-delimiter.csv');
     const csvContent = 'name|age|city\nJohn|30|New York\nJane|25|London';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath, { delimiter: '|' });
 
@@ -122,7 +141,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_customQuoteChar_THEN_parsesCorrectly', () => {
     const filePath = path.join(testDir, 'custom-quote.csv');
     const csvContent = "name,description\nJohn,'Software Engineer'\nJane,'Product Manager'";
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath, { quoteChar: "'" });
 
@@ -135,7 +154,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_emptyFields_THEN_returnsEmptyStrings', () => {
     const filePath = path.join(testDir, 'empty-fields.csv');
     const csvContent = 'name,age,city\nJohn,,New York\n,25,London\nJane,30,';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
@@ -149,7 +168,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_blankLines_THEN_skipsBlankLines', () => {
     const filePath = path.join(testDir, 'blank-lines.csv');
     const csvContent = 'name,age\nJohn,30\n\nJane,25\n  \nBob,40';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
@@ -163,7 +182,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_whitespaceAroundFields_THEN_trimsWhitespace', () => {
     const filePath = path.join(testDir, 'whitespace.csv');
     const csvContent = 'name,age,city\n  John  ,  30  ,  New York  \n  Jane  ,  25  ,  London  ';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
@@ -176,7 +195,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_singleRow_THEN_returnsSingleObject', () => {
     const filePath = path.join(testDir, 'single-row.csv');
     const csvContent = 'name,age,city\nJohn,30,New York';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
@@ -196,11 +215,8 @@ describe('parse-csv', () => {
   });
 
   test('test_csv_WHEN_notCSVFile_THEN_throwsError', () => {
-    if (!fs.existsSync(testDir)) {
-      fs.mkdirSync(testDir, { recursive: true });
-    }
     const filePath = path.join(testDir, 'test.txt');
-    fs.writeFileSync(filePath, 'some content');
+    fsWriteFileSyncSpy(filePath, 'some content');
 
     expect(() => {
       CSVParser.parse(filePath);
@@ -220,7 +236,7 @@ describe('parse-csv', () => {
 
     test('test_csv_WHEN_notCSVFileAndThrowErrorFalse_THEN_returnsNull', () => {
       const filePath = path.join(testDir, 'notcsv.txt');
-      fs.writeFileSync(filePath, 'x');
+      fsWriteFileSyncSpy(filePath, 'x');
       const result = CSVParser.parse(filePath, { throwError: false });
       expect(result).toBeNull();
     });
@@ -228,7 +244,7 @@ describe('parse-csv', () => {
     // invalid option types are validated before reaching CSVParser; still throw
     test('test_csv_WHEN_invalidOptionTypesAndThrowErrorFalse_THEN_throwsError', () => {
       const filePath = path.join(testDir, 'opt.csv');
-      fs.writeFileSync(filePath, 'a,b');
+      fsWriteFileSyncSpy(filePath, 'a,b');
       expect(() => {
         CSVParser.parse(filePath, { delimiter: 1, throwError: false });
       }).toThrow(SaltoolsError);
@@ -243,7 +259,7 @@ describe('parse-csv', () => {
 
   test('test_csv_WHEN_delimiterIsNotString_THEN_throwsError', () => {
     const filePath = path.join(testDir, 'test.csv');
-    fs.writeFileSync(filePath, 'name,age\nJohn,30');
+    fsWriteFileSyncSpy(filePath, 'name,age\nJohn,30');
 
     expect(() => {
       CSVParser.parse(filePath, { delimiter: 123 });
@@ -252,7 +268,7 @@ describe('parse-csv', () => {
 
   test('test_csv_WHEN_quoteCharIsNotString_THEN_throwsError', () => {
     const filePath = path.join(testDir, 'test.csv');
-    fs.writeFileSync(filePath, 'name,age\nJohn,30');
+    fsWriteFileSyncSpy(filePath, 'name,age\nJohn,30');
 
     expect(() => {
       CSVParser.parse(filePath, { quoteChar: 123 });
@@ -261,7 +277,7 @@ describe('parse-csv', () => {
 
   test('test_csv_WHEN_escapeCharIsNotString_THEN_throwsError', () => {
     const filePath = path.join(testDir, 'test.csv');
-    fs.writeFileSync(filePath, 'name,age\nJohn,30');
+    fsWriteFileSyncSpy(filePath, 'name,age\nJohn,30');
 
     expect(() => {
       CSVParser.parse(filePath, { escapeChar: 123 });
@@ -271,7 +287,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_booleanValues_THEN_convertsToBooleans', () => {
     const filePath = path.join(testDir, 'boolean-values.csv');
     const csvContent = 'name,active,verified\nJohn,true,false\nJane,TRUE,FALSE\nBob,True,False';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
@@ -288,7 +304,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_numericValues_THEN_convertsToNumbers', () => {
     const filePath = path.join(testDir, 'numeric-values.csv');
     const csvContent = 'name,age,price,score\nJohn,30,99.99,100\nJane,25,49.50,85.5';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
@@ -306,7 +322,7 @@ describe('parse-csv', () => {
     const filePath = path.join(testDir, 'mixed-types.csv');
     const csvContent =
       'name,age,active,price,notes\nJohn,30,true,99.99,Description\nJane,25,false,49.50,"Special notes"';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
@@ -325,7 +341,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_zeroAndNegativeNumbers_THEN_convertsToNumbers', () => {
     const filePath = path.join(testDir, 'zero-negative.csv');
     const csvContent = 'name,count,temperature\nJohn,0,-10\nJane,-5,25';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
@@ -341,7 +357,7 @@ describe('parse-csv', () => {
   test('test_csv_WHEN_stringsThatLookLikeBooleans_THEN_keepsAsStrings', () => {
     const filePath = path.join(testDir, 'string-booleans.csv');
     const csvContent = 'name,status\nJohn,"true value"\nJane,"false alarm"';
-    fs.writeFileSync(filePath, csvContent);
+    fsWriteFileSyncSpy(filePath, csvContent);
 
     const result = CSVParser.parse(filePath);
 
