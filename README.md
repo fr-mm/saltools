@@ -55,6 +55,7 @@ saltools.parse.phone(phone, {
   addAreaCode: true, // Adiciona código de área (padrão: true)
   numbersOnly: true, // Retorna apenas números (padrão: true)
   throwError: true, // Lança erro se número inválido, senão retorna null (padrão: true)
+  fixWhatsapp9: true, // Corrige o dígito 9 em celulares: DDD < 47 deve ter 9, DDD >= 47 não deve ter (padrão: true)
 });
 ```
 
@@ -69,6 +70,12 @@ saltools.parse.phone('11987654321', { numbersOnly: false });
 
 saltools.parse.phone('11987654321', { addPlusPrefix: true });
 // Retorna: "+5511987654321"
+
+saltools.parse.phone('1188887777', { fixWhatsapp9: true });
+// Retorna: "5511988887777" (adiciona o 9 porque DDD 11 < 47)
+
+saltools.parse.phone('47988887777', { fixWhatsapp9: true });
+// Retorna: "554788887777" (remove o 9 porque DDD 47 >= 47)
 ```
 
 ### saltools.parse.string()

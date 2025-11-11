@@ -4,7 +4,6 @@ import { param } from 'src/helper/index.js';
 import CachedOptions from 'src/helper/cached-options.js';
 import OptionsService from 'src/helper/options-service.js';
 
-// todo: ddd < 47 tem 9, maior nao tem
 export default class PhoneParser {
   static #DEFAULT_OPTIONS = {
     addCountryCode: true,
@@ -12,6 +11,7 @@ export default class PhoneParser {
     addAreaCode: true,
     numbersOnly: true,
     throwError: true,
+    fixWhatsapp9: true,
   };
   static #cachedOptions = new CachedOptions();
 
@@ -34,8 +34,13 @@ export default class PhoneParser {
 
   static #parse(phone, options) {
     const country = this.#getCountryCode(phone);
-    const phoneNumber = this.#parsePhoneNumber(phone, country);
+    let phoneNumber = this.#parsePhoneNumber(phone, country);
     this.#validatePhoneNumber(phone, country);
+
+    if (options.fixWhatsapp9 && phoneNumber.country === 'BR') {
+      phoneNumber = this.#fixWhatsapp9Digit(phoneNumber);
+    }
+
     const formattedPhone = this.#formatPhoneNumber(phoneNumber, options);
     return this.#addPlusPrefix(formattedPhone, options);
   }
@@ -55,6 +60,7 @@ export default class PhoneParser {
     param.bool({ value: options.addAreaCode, name: 'addAreaCode' });
     param.bool({ value: options.numbersOnly, name: 'numbersOnly' });
     param.bool({ value: options.throwError, name: 'throwError' });
+    param.bool({ value: options.fixWhatsapp9, name: 'fixWhatsapp9' });
 
     this.#cachedOptions.cache(options);
   }
@@ -86,6 +92,45 @@ export default class PhoneParser {
     }
 
     return 'BR';
+  }
+
+  static #fixWhatsapp9Digit(phoneNumber) {
+    const nationalNumber = phoneNumber.nationalNumber;
+    const ddd = parseInt(nationalNumber.substring(0, 2), 10);
+    const restOfNumber = nationalNumber.substring(2);
+
+    if (restOfNumber.length === 8) {
+      const firstDigit = restOfNumber.charAt(0);
+      if (firstDigit >= '2' && firstDigit <= '5') {
+        return phoneNumber;
+      }
+    }
+
+    if (restOfNumber.length !== 9 && restOfNumber.length !== 8) {
+      return phoneNumber;
+    }
+
+    const has9 = restOfNumber.startsWith('9');
+    const shouldHave9 = ddd < 47;
+
+    if (shouldHave9 && !has9 && restOfNumber.length === 8) {
+      const fixedNumber = `+55${ddd}9${restOfNumber}`;
+      try {
+        const fixed = parsePhoneNumberWithError(fixedNumber);
+        if (isValidPhoneNumber(fixedNumber, 'BR')) {
+          return fixed;
+        }
+      } catch {
+        return phoneNumber;
+      }
+    }
+
+    if (!shouldHave9 && has9 && restOfNumber.length === 9) {
+      const fixedNumber = `+55${ddd}${restOfNumber.substring(1)}`;
+      return parsePhoneNumberWithError(fixedNumber);
+    }
+
+    return phoneNumber;
   }
 
   static #formatPhoneNumber(phoneNumber, options) {

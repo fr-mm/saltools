@@ -43,6 +43,7 @@ describe('PhoneParser', () => {
       addAreaCode: true,
       numbersOnly: true,
       throwError: true,
+      fixWhatsapp9: false,
     });
     expect(result).toBe('5571988887777');
   });
@@ -54,6 +55,7 @@ describe('PhoneParser', () => {
       addAreaCode: true,
       numbersOnly: false,
       throwError: true,
+      fixWhatsapp9: false,
     });
     expect(result).toBe('55 (71) 98888-7777');
   });
@@ -316,5 +318,104 @@ describe('PhoneParser', () => {
       throwError: true,
     });
     expect(result).toBe('5511987654321');
+  });
+
+  test('test_phone_WHEN_cellphoneWithDDDLessThan47Missing9_THEN_adds9', () => {
+    const result = PhoneParser.parse('1188887777', {
+      fixWhatsapp9: true,
+    });
+    expect(result).toBe('5511988887777');
+  });
+
+  test('test_phone_WHEN_cellphoneWithDDDLessThan47Has9_THEN_keeps9', () => {
+    const result = PhoneParser.parse('11988887777', {
+      fixWhatsapp9: true,
+    });
+    expect(result).toBe('5511988887777');
+  });
+
+  test('test_phone_WHEN_cellphoneWithDDDGreaterThanOrEqual47Has9_THEN_removes9', () => {
+    const result = PhoneParser.parse('47988887777', {
+      fixWhatsapp9: true,
+    });
+    expect(result).toBe('554788887777');
+  });
+
+  test('test_phone_WHEN_cellphoneWithDDDGreaterThanOrEqual47No9_THEN_keepsWithout9', () => {
+    const result = PhoneParser.parse('4788887777', {
+      fixWhatsapp9: true,
+    });
+    expect(result).toBe('554788887777');
+  });
+
+  test('test_phone_WHEN_homeNumberWithDDDLessThan47_THEN_neverAdds9', () => {
+    const result = PhoneParser.parse('1133334444', {
+      fixWhatsapp9: true,
+    });
+    expect(result).toBe('551133334444');
+  });
+
+  test('test_phone_WHEN_homeNumberWithDDDGreaterThanOrEqual47_THEN_neverAdds9', () => {
+    const result = PhoneParser.parse('4733334444', {
+      fixWhatsapp9: true,
+    });
+    expect(result).toBe('554733334444');
+  });
+
+  test('test_phone_WHEN_homeNumberStartsWith2_THEN_neverAdds9', () => {
+    const result = PhoneParser.parse('1123334444', {
+      fixWhatsapp9: true,
+    });
+    expect(result).toBe('551123334444');
+  });
+
+  test('test_phone_WHEN_homeNumberStartsWith3_THEN_neverAdds9', () => {
+    const result = PhoneParser.parse('1133334444', {
+      fixWhatsapp9: true,
+    });
+    expect(result).toBe('551133334444');
+  });
+
+  test('test_phone_WHEN_homeNumberStartsWith4_THEN_neverAdds9', () => {
+    const result = PhoneParser.parse('1144445555', {
+      fixWhatsapp9: true,
+    });
+    expect(result).toBe('551144445555');
+  });
+
+  test('test_phone_WHEN_homeNumberStartsWith5_THEN_neverAdds9', () => {
+    const result = PhoneParser.parse('1155556666', {
+      fixWhatsapp9: true,
+    });
+    expect(result).toBe('551155556666');
+  });
+
+  test('test_phone_WHEN_fixWhatsapp9False_THEN_doesNotFix9', () => {
+    const result = PhoneParser.parse('1188887777', {
+      fixWhatsapp9: false,
+    });
+    expect(result).toBe('551188887777');
+  });
+
+  test('test_phone_WHEN_fixWhatsapp9FalseAndHas9_THEN_keeps9', () => {
+    const result = PhoneParser.parse('47988887777', {
+      fixWhatsapp9: false,
+    });
+    expect(result).toBe('5547988887777');
+  });
+
+  test('test_phone_WHEN_nonBrazilianPhone_THEN_doesNotFix9', () => {
+    const result = PhoneParser.parse('+12125551234', {
+      fixWhatsapp9: true,
+    });
+    expect(result).toBe('12125551234');
+  });
+
+  test('test_phone_WHEN_fixWhatsapp9IsNotBoolean_THEN_throwsSaltoolsError', () => {
+    expect(() => {
+      PhoneParser.parse('+5511987654321', {
+        fixWhatsapp9: 'true',
+      });
+    }).toThrow(SaltoolsError);
   });
 });

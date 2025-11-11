@@ -38,6 +38,7 @@ export interface PhoneParseOptions {
   addAreaCode?: boolean;
   numbersOnly?: boolean;
   throwError?: boolean;
+  fixWhatsapp9?: boolean;
 }
 
 export interface DateParseOptions {
@@ -314,7 +315,8 @@ export const parse: {
    *  @param options.addPlusPrefix - Padrão: false
    *  @param options.addAreaCode - Padrão: true
    *  @param options.numbersOnly - Padrão: true
-   *  @param options.throwError - Padrão: true */
+   *  @param options.throwError - Padrão: true
+   *  @param options.fixWhatsapp9 - Padrão: true */
   phone(
     phone: string,
     options?: {
@@ -328,6 +330,8 @@ export const parse: {
       numbersOnly?: boolean;
       /** @default true */
       throwError?: boolean;
+      /** @default true */
+      fixWhatsapp9?: boolean;
     }
   ): string | null;
   /** Faz o parse de um arquivo CSV
