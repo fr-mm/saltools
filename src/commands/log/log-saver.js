@@ -19,7 +19,7 @@ export default class LogSaver {
       specificConfig: SaveLogConfig,
     });
     LogSaver.#validateParameters(content, options);
-    if (options.directory && !fs.existsSync(options.directory)) {
+    if (options.directory) {
       fs.mkdirSync(options.directory, { recursive: true });
     }
     const stamp = options.addTimestamp ? `-${timestamp()}` : '';

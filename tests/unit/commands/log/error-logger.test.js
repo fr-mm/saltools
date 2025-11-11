@@ -278,7 +278,6 @@ describe('ErrorLogger', () => {
 
       expect(fs.existsSync(newDir)).toBe(true);
       const filePath = path.join(newDir, 'error.log');
-      expect(fs.existsSync(filePath)).toBe(true);
       const fileContent = fs.readFileSync(filePath, 'utf8');
       expect(fileContent).toContain('Test error');
     });
@@ -302,7 +301,6 @@ describe('ErrorLogger', () => {
 
       expect(fs.existsSync(nestedDir)).toBe(true);
       const filePath = path.join(nestedDir, 'error.log');
-      expect(fs.existsSync(filePath)).toBe(true);
       const fileContent = fs.readFileSync(filePath, 'utf8');
       expect(fileContent).toContain('Test error');
     });

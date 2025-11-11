@@ -215,8 +215,40 @@ describe('LogSaver', () => {
   });
 
   describe('directory creation', () => {
-    test('test_run_WHEN_directoryDoesNotExist_THEN_createsDirectory', () => {
+    beforeEach(() => {
       fsWriteFileSyncSpy.mockRestore();
+      const dirsToClean = [
+        path.join(process.cwd(), 'tests', 'temp', 'new-logs'),
+        path.join(process.cwd(), 'tests', 'temp', 'nested'),
+      ];
+      dirsToClean.forEach((dir) => {
+        try {
+          if (fs.existsSync(dir)) {
+            fs.rmSync(dir, { recursive: true, force: true });
+          }
+        } catch (_) {
+          /* ignore cleanup errors */
+        }
+      });
+    });
+
+    afterEach(() => {
+      const dirsToClean = [
+        path.join(process.cwd(), 'tests', 'temp', 'new-logs'),
+        path.join(process.cwd(), 'tests', 'temp', 'nested'),
+      ];
+      dirsToClean.forEach((dir) => {
+        try {
+          if (fs.existsSync(dir)) {
+            fs.rmSync(dir, { recursive: true, force: true });
+          }
+        } catch (_) {
+          /* ignore cleanup errors */
+        }
+      });
+    });
+
+    test('test_run_WHEN_directoryDoesNotExist_THEN_createsDirectory', () => {
       const newDir = path.join(process.cwd(), 'tests', 'temp', 'new-logs');
       createdDirs.push(newDir);
       const content = 'Test content';
@@ -225,22 +257,21 @@ describe('LogSaver', () => {
 
       expect(fs.existsSync(newDir)).toBe(true);
       const filePath = path.join(newDir, 'test.log');
-      expect(fs.existsSync(filePath)).toBe(true);
       const fileContent = fs.readFileSync(filePath, 'utf8');
       expect(fileContent).toBe(content);
     });
 
     test('test_run_WHEN_nestedDirectoryDoesNotExist_THEN_createsNestedDirectories', () => {
-      fsWriteFileSyncSpy.mockRestore();
       const nestedDir = path.join(process.cwd(), 'tests', 'temp', 'nested', 'deep', 'logs');
-      createdDirs.push(path.join(process.cwd(), 'tests', 'temp', 'nested'));
+      const nestedBaseDir = path.join(process.cwd(), 'tests', 'temp', 'nested');
+      createdDirs.push(nestedBaseDir);
       const content = 'Test content';
 
       LogSaver.run(content, { directory: nestedDir, filename: 'test', addTimestamp: false });
 
       expect(fs.existsSync(nestedDir)).toBe(true);
       const filePath = path.join(nestedDir, 'test.log');
-      expect(fs.existsSync(filePath)).toBe(true);
+      expect(() => fs.readFileSync(filePath, 'utf8')).not.toThrow();
     });
   });
 
@@ -285,4 +316,3 @@ describe('LogSaver', () => {
     });
   });
 });
-

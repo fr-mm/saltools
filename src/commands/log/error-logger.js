@@ -54,7 +54,7 @@ export default class ErrorLogger {
 
   static #saveLog({ parsedError, directory, filename, addTimestamp }) {
     if (!directory || !filename) return;
-    if (directory && !fs.existsSync(directory)) {
+    if (directory) {
       fs.mkdirSync(directory, { recursive: true });
     }
     const stamp = addTimestamp ? `-${timestamp()}` : '';
