@@ -10,6 +10,7 @@ export default class LogSaver {
     directory: undefined,
     filename: undefined,
     addTimestamp: true,
+    print: true,
   };
 
   static run(content, options = {}) {
@@ -19,6 +20,7 @@ export default class LogSaver {
       specificConfig: SaveLogConfig,
     });
     LogSaver.#validateParameters(content, options);
+    if (options.print) console.log(content);
     if (options.directory) {
       fs.mkdirSync(options.directory, { recursive: true });
     }
@@ -32,5 +34,6 @@ export default class LogSaver {
     param.string({ value: options.directory, name: 'directory', required: true });
     param.string({ value: options.filename, name: 'filename', required: true });
     param.bool({ value: options.addTimestamp, name: 'addTimestamp' });
+    param.bool({ value: options.print, name: 'print' });
   }
 }

@@ -304,6 +304,54 @@ saltools.parse.fwf('./data.txt', fields, {
 // Retorna: Array apenas com linhas que têm 10 ou mais caracteres
 ```
 
+### saltools.parse.bool()
+
+Converte valores para boolean.
+
+```javascript
+saltools.parse.bool(value, {
+  throwError: true, // Lança erro se inválido, senão retorna undefined (padrão: true)
+});
+```
+
+**Valores aceitos:**
+- Strings: `'true'`, `'TRUE'`, `'false'`, `'FALSE'`, `'1'`, `'0'` (case-insensitive, com ou sem espaços)
+- Numbers: `1` (true), `0` (false)
+- Booleans: retornados como estão
+
+**Exemplo:**
+```javascript
+saltools.parse.bool('true');
+// Retorna: true
+
+saltools.parse.bool('TRUE');
+// Retorna: true
+
+saltools.parse.bool('1');
+// Retorna: true
+
+saltools.parse.bool('false');
+// Retorna: false
+
+saltools.parse.bool('0');
+// Retorna: false
+
+saltools.parse.bool(' true ');
+// Retorna: true (espaços são removidos)
+
+saltools.parse.bool(1);
+// Retorna: true
+
+saltools.parse.bool(0);
+// Retorna: false
+
+saltools.parse.bool(true);
+// Retorna: true
+
+saltools.parse.bool('invalid', { throwError: false });
+// Retorna: undefined (não lança erro)
+```
+
 ### saltools.parse.doc()
 
 Valida e formata documentos CPF ou CNPJ.

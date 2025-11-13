@@ -15,6 +15,7 @@ import PhoneParser from './commands/parse/parse-phone.js';
 import DNSParser from './commands/parse/parse-dns.js';
 import EmailParser from './commands/parse/email-parser.js';
 import FwfParser from './commands/parse/fwf-parser.js';
+import BoolParser from './commands/parse/bool-parser.js';
 import SFTPWrapper from './commands/sftp-wrapper.js';
 import SaltoolsError from './errors/saltools-error.js';
 
@@ -36,6 +37,7 @@ export const parse = {
   integer: NumberParser.parseInteger.bind(NumberParser),
   phone: PhoneParser.parse.bind(PhoneParser),
   csv: CSVParser.parse.bind(CSVParser),
+  bool: BoolParser.parse.bind(BoolParser),
 };
 
 export const config = {

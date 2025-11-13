@@ -68,6 +68,10 @@ export interface DocParseOptions {
   throwError?: boolean;
 }
 
+export interface BoolParseOptions {
+  throwError?: boolean;
+}
+
 export interface ErrorLoggerOptions {
   directory?: string;
   filename?: string;
@@ -354,6 +358,17 @@ export const parse: {
       throwError?: boolean;
     }
   ): Array<Record<string, string | number | boolean>> | null;
+  /** Faz o parse de um valor booleano
+   *  @param value - O valor a ser parseado (string, number ou boolean)
+   *  @param options - Objeto de opções
+   *  @param options.throwError - Lançar erro se inválido, caso contrário retorna undefined. Padrão: true */
+  bool(
+    value: string | number | boolean,
+    options?: {
+      /** Lançar erro se inválido, caso contrário retorna undefined. @default true */
+      throwError?: boolean;
+    }
+  ): boolean | undefined;
 };
 
 export const config: {
