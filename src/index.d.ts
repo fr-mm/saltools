@@ -84,6 +84,7 @@ export interface LogSaverOptions {
   directory?: string;
   filename?: string;
   addTimestamp?: boolean;
+  print?: boolean;
 }
 
 export interface FwfField {
@@ -128,7 +129,8 @@ export const log: {
    *  @param options - Objeto de opções
    *  @param options.directory - Diretório para salvar o arquivo de log. Padrão: undefined
    *  @param options.filename - Nome do arquivo de log. Padrão: undefined
-   *  @param options.addTimestamp - Adicionar timestamp ao nome do arquivo. Padrão: true */
+   *  @param options.addTimestamp - Adicionar timestamp ao nome do arquivo. Padrão: true
+   *  @param options.print - Imprimir conteúdo no console. Padrão: true */
   save: (
     content: string,
     options?: {
@@ -138,6 +140,8 @@ export const log: {
       filename?: string;
       /** @default true */
       addTimestamp?: boolean;
+      /** @default true */
+      print?: boolean;
     }
   ) => void;
 };
@@ -430,6 +434,9 @@ export const config: {
       /** Define se deve adicionar timestamp ao nome do arquivo por padrão
        *  @param value - true para adicionar timestamp, false caso contrário */
       addTimestamp(value: boolean): void;
+      /** Define se deve imprimir conteúdo no console por padrão
+       *  @param value - true para imprimir, false caso contrário */
+      print(value: boolean): void;
       /** Obtém o objeto de configuração de log atual
        *  @returns O objeto de configuração de log */
       get(): Record<string, string | boolean>;

@@ -15,6 +15,10 @@ export default class SaveLogConfig {
     ConfigSetter.setBool('addTimestamp', value, this.#config);
   }
 
+  static print(value) {
+    ConfigSetter.setBool('print', value, this.#config);
+  }
+
   static get() {
     return this.#config;
   }
